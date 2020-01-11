@@ -24,19 +24,12 @@ struct RegisterInstruction
 	unsigned int funct : 6;
 };
 
-struct CopInstruction
-{
-	unsigned int op : 6;
-	unsigned int 
-};
-
 class Cpu
 {
 public:
 	void reset();
 	void run();
 
-private:
 	static const int num_gp_registers = 32;
 	static const int num_cp0_registers = 16;
 
@@ -78,8 +71,9 @@ private:
 	void sub(const RegisterInstruction& instr);
 	void sub_unsigned(const RegisterInstruction& instr);
 	void set_on_less_than(const RegisterInstruction& instr);
-	void set_on_less_than_immediate(const RegisterInstruction& instr);
+	void set_on_less_than_unsigned(const RegisterInstruction& instr);
 	void and(const RegisterInstruction& instr);
+	void or (const RegisterInstruction& instr);
 	void xor(const RegisterInstruction& instr);
 	void nor(const RegisterInstruction& instr);
 
