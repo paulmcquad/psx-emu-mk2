@@ -6,7 +6,9 @@ include_directories(includes/)
 add_executable(psx-mk2 
                main.cpp
 			   Cpu.hpp
-			   Cpu.cpp)
+			   Cpu.cpp
+			   Ram.hpp
+			   Ram.cpp)
 
 add_executable(psx-mk2-test 
                main_test.cpp)

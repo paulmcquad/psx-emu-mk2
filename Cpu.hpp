@@ -1,4 +1,4 @@
-#include <string>
+#include "Ram.hpp"
 
 struct ImmediateInstruction
 {
@@ -27,14 +27,14 @@ struct RegisterInstruction
 class Cpu
 {
 public:
+	Ram ram;
+
 	void reset();
 	void run();
+	void execute(unsigned int _pc);
 
-	static const int num_gp_registers = 32;
-	static const int num_cp0_registers = 16;
-
-	int gp_registers[num_gp_registers] = { 0 };
-	int cp0_registers[num_cp0_registers] = { 0 };
+	int gp_registers[32] = { 0 };
+	int cp0_registers[16] = { 0 };
 
 	int hi = 0;
 	int lo = 0;
