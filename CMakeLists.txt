@@ -8,7 +8,9 @@ add_executable(psx-mk2
 			   Cpu.hpp
 			   Cpu.cpp
 			   Ram.hpp
-			   Ram.cpp)
+			   Ram.cpp
+			   Coprocessor.hpp
+			   InstructionTypes.hpp)
 
 add_executable(psx-mk2-test 
                main_test.cpp)

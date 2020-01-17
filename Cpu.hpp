@@ -1,40 +1,34 @@
 #include "Ram.hpp"
 
-struct ImmediateInstruction
-{
-	unsigned int op : 6;
-	unsigned int rs : 5;
-	unsigned int rt : 5;
-	unsigned int immediate : 16;
-};
+#include <memory>
+#include <map>
 
-struct JumpInstruction
-{
-	unsigned int op : 6;
-	unsigned int target : 26;
-};
+class Coprocessor;
 
-struct RegisterInstruction
-{
-	unsigned int op : 6;
-	unsigned int rs : 5;
-	unsigned int rt : 5;
-	unsigned int rd : 5;
-	unsigned int shamt : 5;
-	unsigned int funct : 6;
-};
+struct ImmediateInstruction;
+struct RegisterInstruction;
+struct JumpInstruction;
 
 class Cpu
 {
+private:
+	std::map<unsigned int, Coprocessor*> coprocessors;
+	std::shared_ptr<Ram> ram = nullptr;
+
 public:
-	Ram ram;
+	Cpu(std::shared_ptr<Ram> ram);
 
 	void reset();
 	void run();
 	void execute(unsigned int _pc);
 
+	unsigned int get_register(int index);
+	void set_register(int index, unsigned int value);
+
 	int gp_registers[32] = { 0 };
 	int cp0_registers[16] = { 0 };
+	int cp2_data_registers[32] = { 0 };
+	int cp2_control_registers[32] = { 0 };
 
 	int hi = 0;
 	int lo = 0;
