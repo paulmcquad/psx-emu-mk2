@@ -1,4 +1,5 @@
 #include "Cpu.hpp"
+#include "Coprocessor.hpp"
 #include "InstructionTypes.hpp"
 
 constexpr unsigned int BIOS_START = 0xbfc00000;
@@ -386,7 +387,7 @@ void Cpu::jump_and_link(const JumpInstruction& instr)
 void Cpu::jump_register(const RegisterInstruction& instr)
 {
 	execute(pc + 4);
-	pc = gp_registers[instr.rs];
+	pc = get_register(instr.rs);
 }
 
 // JALR rs, rd
@@ -395,7 +396,7 @@ void Cpu::jump_and_link_register(const RegisterInstruction& instr)
 	unsigned int _pc = pc;
 	execute(_pc + 4);
 	gp_registers[31] = _pc + 8;
-	pc = gp_registers[instr.rs];
+	pc = get_register(instr.rs);
 }
 
 // branch instructions
@@ -492,11 +493,9 @@ void Cpu::breakpoint(){}
 // LWCz rt, offset(base)
 void Cpu::load_word_to_cop(const ImmediateInstruction& instr)
 {
-	unsigned int addr = (short)instr.immediate + (int)gp_registers[instr.rs];
-	unsigned int& value = (unsigned int&)ram[addr];
-
-	int cop_number = instr.op & 0x3f;
-
+	/*unsigned int addr = (short)instr.immediate + (int)gp_registers[instr.rs];
+	unsigned int value = *ram->get_word(addr);
+	
 	if (cop_number == 0)
 	{
 		cp0_registers[instr.rt] = value;
@@ -505,22 +504,27 @@ void Cpu::load_word_to_cop(const ImmediateInstruction& instr)
 	{
 		cp2_data_registers[instr.rt] = value;
 	}
+	*/
+
+	unsigned int cop_number = instr.op & 0x3f;
+	coprocessors[cop_number]->load_word_to_cop(instr);
 }
 
 // SWCz rt, offset(base)
 void Cpu::store_word_from_cop(const ImmediateInstruction& instr)
 {
-	unsigned int addr = (short)instr.immediate + (int)gp_registers[instr.rs];
-	int cop_number = instr.op & 0x3f;
-
+	/*unsigned int addr = (short)instr.immediate + (int)gp_registers[instr.rs];
 	if (cop_number == 0)
 	{
 		(unsigned int&)(ram[addr]) = cp0_registers[instr.rt];
 	}
 	else if (cop_number == 2)
 	{
-		(unsigned int&)(ram[addr]) =  cp2_data_registers[instr.rt];
-	}
+		(unsigned int&)(ram[addr]) = cp2_data_registers[instr.rt];
+	}*/
+
+	int cop_number = instr.op & 0x3f;
+	coprocessors[cop_number]->store_word_from_cop(instr);
 }
 
 // MTCz rt, rd
