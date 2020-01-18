@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# PSX files
+*.BIN
+*.bin
+*.iso
