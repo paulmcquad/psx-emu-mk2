@@ -18,7 +18,7 @@ int main(int num_args, char ** args )
 
 	while (true)
 	{
-		cpu->run();
+		cpu->run_cycle();
 	}
 
 	return 0;

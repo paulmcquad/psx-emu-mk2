@@ -18,24 +18,26 @@ public:
 
 	void init(std::shared_ptr<Ram> _ram);
 	void reset();
-	void run();
-	void execute(unsigned int _pc);
-	void execute_special(unsigned int _pc);
-	void execute_bcond(unsigned int _pc);
+	void run_cycle();
+	void execute(unsigned int instruction);
+	void execute_special(unsigned int instruction);
+	void execute_bcond(unsigned int instruction);
 
 	unsigned int get_register(int index);
 	void set_register(int index, unsigned int value);
 
 	unsigned int get_immediate_base_addr(const ImmediateInstruction& instr);
 
-	int gp_registers[32] = { 0 };
-	int cp0_registers[16] = { 0 };
-	int cp2_data_registers[32] = { 0 };
-	int cp2_control_registers[32] = { 0 };
+	unsigned int gp_registers[32] = { 0 };
+	unsigned int cp0_registers[16] = { 0 };
+	unsigned int cp2_data_registers[32] = { 0 };
+	unsigned int cp2_control_registers[32] = { 0 };
 
-	int hi = 0;
-	int lo = 0;
-	int pc = 0;
+	unsigned int hi = 0;
+	unsigned int lo = 0;
+	unsigned int pc = 0;
+
+	unsigned int next_instruction = 0x0;
 
 	// load/store
 	void load_byte(const ImmediateInstruction& instr);

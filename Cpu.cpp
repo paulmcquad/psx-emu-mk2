@@ -102,17 +102,19 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 void Cpu::reset()
 {
 	pc = BIOS_START;
+	next_instruction = 0x0;
 }
 
-void Cpu::run()
+void Cpu::run_cycle()
 {
-	execute(pc);
+	unsigned int current_instruction = next_instruction;
+	next_instruction = *ram->get_word(pc);
+	execute(current_instruction);	
 	pc += 4;
 }
 
-void Cpu::execute(unsigned int _pc)
+void Cpu::execute(unsigned int instruction)
 {
-	unsigned int instruction = *ram->get_word(_pc);
 	ImmediateInstruction imm_instr(instruction);
 	JumpInstruction jmp_instr(instruction);
 	opcodes opcode = static_cast<opcodes>(instruction >> 26);
@@ -121,12 +123,12 @@ void Cpu::execute(unsigned int _pc)
 	{
 		case opcodes::SPECIAL:
 		{
-			execute_special(_pc);
+			execute_special(instruction);
 		} break;
 
 		case opcodes::BCOND:
 		{
-			execute_bcond(_pc);
+			execute_bcond(instruction);
 		} break;
 
 		case opcodes::J:
@@ -264,9 +266,8 @@ void Cpu::execute(unsigned int _pc)
 	}
 }
 
-void Cpu::execute_special(unsigned int _pc)
+void Cpu::execute_special(unsigned int instruction)
 {
-	unsigned int instruction = *ram->get_word(_pc);
 	RegisterInstruction reg_instr(instruction);
 	special_funcs func = static_cast<special_funcs>(reg_instr.funct);
 
@@ -413,9 +414,8 @@ void Cpu::execute_special(unsigned int _pc)
 	}
 }
 
-void Cpu::execute_bcond(unsigned int _pc)
+void Cpu::execute_bcond(unsigned int instruction)
 {
-	unsigned int instruction = *ram->get_word(_pc);
 	ImmediateInstruction imm_instr(instruction);
 	bconds cond = static_cast<bconds>(imm_instr.rt);
 
@@ -792,33 +792,26 @@ void Cpu::move_to_lo(const RegisterInstruction& instr)
 // J target
 void Cpu::jump(const JumpInstruction& instr)
 {
-	unsigned int _pc = pc;
-	execute(_pc + 4);
-	pc = (unsigned int)instr.target << 2 & (0xF0000000 & _pc);
+	pc = (unsigned int)instr.target << 2 | (0xF0000000 & pc);
 }
 
 // JAL target
 void Cpu::jump_and_link(const JumpInstruction& instr)
 {
-	unsigned int _pc = pc;
-	execute(_pc + 4);
-	gp_registers[31] = _pc + 8;
-	pc = (unsigned int)instr.target << 2 & (0xF0000000 & _pc);
+	gp_registers[31] = pc + 8;
+	pc = (unsigned int)instr.target << 2 | (0xF0000000 & pc);
 }
 
 // JR rs
 void Cpu::jump_register(const RegisterInstruction& instr)
 {
-	execute(pc + 4);
 	pc = get_register(instr.rs);
 }
 
 // JALR rs, rd
 void Cpu::jump_and_link_register(const RegisterInstruction& instr)
 {
-	unsigned int _pc = pc;
-	execute(_pc + 4);
-	gp_registers[31] = _pc + 8;
+	gp_registers[31] = pc + 8;
 	pc = get_register(instr.rs);
 }
 
@@ -827,9 +820,7 @@ void Cpu::jump_and_link_register(const RegisterInstruction& instr)
 void Cpu::branch_on_equal(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rt) == get_register(instr.rs)) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -837,9 +828,7 @@ void Cpu::branch_on_equal(const ImmediateInstruction& instr)
 void Cpu::branch_on_not_equal(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rt) != get_register(instr.rs)) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -847,9 +836,7 @@ void Cpu::branch_on_not_equal(const ImmediateInstruction& instr)
 void Cpu::branch_on_less_than_or_equal_zero(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) <= 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -857,9 +844,7 @@ void Cpu::branch_on_less_than_or_equal_zero(const ImmediateInstruction& instr)
 void Cpu::branch_on_greater_than_zero(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) > 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -867,9 +852,7 @@ void Cpu::branch_on_greater_than_zero(const ImmediateInstruction& instr)
 void Cpu::branch_on_less_than_zero(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) < 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -877,9 +860,7 @@ void Cpu::branch_on_less_than_zero(const ImmediateInstruction& instr)
 void Cpu::branch_on_greater_than_or_equal_zero(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) <= 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		pc = delay_addr + (int)instr.immediate << 2;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -887,10 +868,8 @@ void Cpu::branch_on_greater_than_or_equal_zero(const ImmediateInstruction& instr
 void Cpu::branch_on_less_than_zero_and_link(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) < 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		gp_registers[31] = delay_addr + 4;
-		pc = delay_addr + (int)instr.immediate << 2;
+		gp_registers[31] = (pc + 4) + 4;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
@@ -898,10 +877,8 @@ void Cpu::branch_on_less_than_zero_and_link(const ImmediateInstruction& instr)
 void Cpu::branch_on_greater_than_or_equal_zero_and_link(const ImmediateInstruction& instr)
 {
 	if (get_register(instr.rs) >= 0) {
-		unsigned int delay_addr = pc + 4;
-		execute(pc + 4);
-		gp_registers[31] = delay_addr + 4;
-		pc = delay_addr + (int)instr.immediate << 2;
+		gp_registers[31] = (pc + 4) + 4;
+		pc = (pc + 4) + (int)instr.immediate << 2;
 	}
 }
 
