@@ -10,6 +10,10 @@ add_executable(psx-mk2
 			   Ram.hpp
 			   Ram.cpp
 			   Coprocessor.hpp
+			   Coprocessor0.hpp
+			   Coprocessor0.cpp
+			   Coprocessor2.hpp
+			   Coprocessor2.cpp
 			   InstructionTypes.hpp)
 
 add_executable(psx-mk2-test 

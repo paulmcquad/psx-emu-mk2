@@ -1,29 +1,32 @@
-#include "Ram.hpp"
-
 #include <memory>
 #include <map>
 
 class Coprocessor;
+class Ram;
 
 struct ImmediateInstruction;
 struct RegisterInstruction;
 struct JumpInstruction;
 
-class Cpu
+class Cpu : public std::enable_shared_from_this<Cpu>
 {
 private:
-	std::map<unsigned int, Coprocessor*> coprocessors;
+	std::map<unsigned int, std::shared_ptr<Coprocessor>> coprocessors;
 	std::shared_ptr<Ram> ram = nullptr;
 
 public:
-	Cpu(std::shared_ptr<Ram> ram);
 
+	void init(std::shared_ptr<Ram> _ram);
 	void reset();
 	void run();
 	void execute(unsigned int _pc);
+	void execute_special(unsigned int _pc);
+	void execute_bcond(unsigned int _pc);
 
 	unsigned int get_register(int index);
 	void set_register(int index, unsigned int value);
+
+	unsigned int get_immediate_base_addr(const ImmediateInstruction& instr);
 
 	int gp_registers[32] = { 0 };
 	int cp0_registers[16] = { 0 };

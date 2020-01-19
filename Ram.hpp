@@ -1,5 +1,9 @@
+#include <string>
+
 class Ram {
 public:
+	void init(std::string bios_filepath);
+
 	unsigned char* get_byte(unsigned int address);
 	unsigned short* get_halfword(unsigned int address);
 	unsigned int* get_word(unsigned int address);

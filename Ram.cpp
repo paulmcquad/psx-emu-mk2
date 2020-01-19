@@ -1,5 +1,8 @@
 #include "Ram.hpp"
 #include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <assert.h>
 
 constexpr unsigned int KUSEG_START    = 0x00000000;
 constexpr unsigned int KUSEG_END      = 0x001fffff;
@@ -21,6 +24,19 @@ constexpr unsigned int HARDWARE_END   = 0x1f802fff;
 
 constexpr unsigned int BIOS_START     = 0xbfc00000;
 constexpr unsigned int BIOS_END       = 0xbfc7ffff;
+
+void Ram::init(std::string bios_filepath)
+{
+	std::ifstream bios_file(bios_filepath);
+	bios_file.seekg(0, std::ios::end);
+	unsigned int len = bios_file.tellg();
+
+	assert(len == 1024 * 512);
+
+	bios_file.seekg(0, std::ios::beg);
+	bios_file.read((char*)&bios, len);
+	bios_file.close();
+}
 
 unsigned char* Ram::get_byte(unsigned int address)
 {
