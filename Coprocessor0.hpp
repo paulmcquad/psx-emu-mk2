@@ -10,8 +10,8 @@ public:
 	void execute(unsigned int instruction) final;
 
 private:
-	unsigned int get_register(unsigned int index);
-	void set_register(unsigned int index, unsigned int value);
+	unsigned int get_control_register(unsigned int index);
+	void set_control_register(unsigned int index, unsigned int value);
 
 	void load_word_to_cop(const ImmediateInstruction& instr) final;
 	void store_word_from_cop(const ImmediateInstruction& instr) final;

@@ -91,12 +91,12 @@ void Coprocessor0::execute(unsigned int instruction)
 	}
 }
 
-unsigned int Coprocessor0::get_register(unsigned int index)
+unsigned int Coprocessor0::get_control_register(unsigned int index)
 {
 	return control_registers[index];
 }
 
-void Coprocessor0::set_register(unsigned int index, unsigned int value)
+void Coprocessor0::set_control_register(unsigned int index, unsigned int value)
 {
 	control_registers[index] = value;
 }
@@ -104,30 +104,30 @@ void Coprocessor0::set_register(unsigned int index, unsigned int value)
 // LWCz rt, offset(base)
 void Coprocessor0::load_word_to_cop(const ImmediateInstruction& instr) 
 {
-	unsigned int addr = (short)instr.immediate + (int)get_register(instr.rs);
+	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
 	unsigned int *word = ram->get_word(addr);
-	set_register(instr.rt,*word);
+	set_control_register(instr.rt,*word);
 }
 
 // SWCz rt, offset(base)
 void Coprocessor0::store_word_from_cop(const ImmediateInstruction& instr) 
 {
-	unsigned int addr = (short)instr.immediate + (int)get_register(instr.rs);
+	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
 	unsigned int *word = ram->get_word(addr);
-	*word = get_register(instr.rt);
+	*word = get_control_register(instr.rt);
 }
 
 // MTCz rt, rd
 void Coprocessor0::move_to_cop(const RegisterInstruction& instr) 
 {
 	unsigned int value = cpu->get_register(instr.rt);
-	set_register(instr.rs, value);
+	set_control_register(instr.rs, value);
 }
 
 // MFCz rt, rd
 void Coprocessor0::move_from_cop(const RegisterInstruction& instr) 
 {
-	unsigned int value = get_register(instr.rd);
+	unsigned int value = get_control_register(instr.rd);
 	cpu->set_register(instr.rt, value);
 }
 
