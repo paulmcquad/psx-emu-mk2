@@ -22,6 +22,7 @@ public:
 	void execute(unsigned int instruction);
 	void execute_special(unsigned int instruction);
 	void execute_bcond(unsigned int instruction);
+	void execute_cop(unsigned int instruction);
 
 	unsigned int get_register(int index);
 	void set_register(int index, unsigned int value);

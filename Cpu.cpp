@@ -261,6 +261,16 @@ void Cpu::execute(unsigned int instruction)
 			store_word_right(imm_instr);
 		} break;
 
+		case opcodes::COP0:
+		case opcodes::COP2:
+		case opcodes::LWC0:
+		case opcodes::LWC2:
+		case opcodes::SWC0:
+		case opcodes::SWC2:
+		{
+			execute_cop(instruction);
+		} break;
+
 		default:
 			throw std::logic_error("unimplemented opcode");
 	}
@@ -441,6 +451,12 @@ void Cpu::execute_bcond(unsigned int instruction)
 			branch_on_greater_than_or_equal_zero_and_link(imm_instr);
 		} break;
 	}
+}
+
+void Cpu::execute_cop(unsigned int instruction) 
+{
+	unsigned int cop_number = (instruction >> 26) & 0x3f;
+	coprocessors[cop_number]->execute(instruction);
 }
 
 unsigned int Cpu::get_register(int index) 

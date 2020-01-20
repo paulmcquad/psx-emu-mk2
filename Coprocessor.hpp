@@ -7,6 +7,15 @@ struct RegisterInstruction;
 class Ram;
 class Cpu;
 
+enum class copz : unsigned char
+{
+	MF = 000,
+	CF = 002,
+	MT = 004,
+	CT = 006,
+	BC = 010
+};
+
 class Coprocessor
 {
 public:
@@ -14,6 +23,8 @@ public:
 		ram = _ram;
 		cpu = _cpu;
 	};
+
+	virtual void execute(unsigned int instruction) = 0;
 
 	virtual void load_word_to_cop(const ImmediateInstruction& instr) = 0;
 	virtual void store_word_from_cop(const ImmediateInstruction& instr) = 0;
