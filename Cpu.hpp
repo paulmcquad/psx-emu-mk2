@@ -17,8 +17,7 @@ private:
 public:
 
 	void init(std::shared_ptr<Ram> _ram);
-	void reset();
-	void run_cycle();
+	void tick();
 	void execute(unsigned int instruction);
 	void execute_special(unsigned int instruction);
 	void execute_bcond(unsigned int instruction);

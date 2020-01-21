@@ -12,20 +12,15 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 {
 	pc = BIOS_START;
 	ram = _ram;
+	next_instruction = 0x0;
 	coprocessors[0] = std::make_shared<Coprocessor0>(ram, shared_from_this());
 	coprocessors[2] = std::make_shared<Coprocessor2>(ram, shared_from_this());
 }
 
-void Cpu::reset()
-{
-	pc = BIOS_START;
-	next_instruction = 0x0;
-}
-
-void Cpu::run_cycle()
+void Cpu::tick()
 {
 	unsigned int current_instruction = next_instruction;
-	next_instruction = *ram->get_word(pc);
+	next_instruction = ram->load_word(pc);
 	execute(current_instruction);	
 	pc += 4;
 }
@@ -399,7 +394,7 @@ unsigned int Cpu::get_immediate_base_addr(const immediate_instruction& instr)
 void Cpu::load_byte(const immediate_instruction& instr) 
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned char value = *ram->get_byte(addr);
+	unsigned char value = ram->load_byte(addr);
 
 	set_register(instr.rt, value);
 }
@@ -408,7 +403,7 @@ void Cpu::load_byte(const immediate_instruction& instr)
 void Cpu::load_byte_unsigned(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned char value = *ram->get_byte(addr);
+	unsigned char value = ram->load_byte(addr);
 
 	set_register(instr.rt, value);
 }
@@ -417,7 +412,7 @@ void Cpu::load_byte_unsigned(const immediate_instruction& instr)
 void Cpu::load_halfword(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned short value = *ram->get_halfword(addr);
+	unsigned short value = ram->load_halfword(addr);
 
 	set_register(instr.rt, value);
 }
@@ -426,7 +421,7 @@ void Cpu::load_halfword(const immediate_instruction& instr)
 void Cpu::load_halfword_unsigned(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned short value = *ram->get_halfword(addr);
+	unsigned short value = ram->load_halfword(addr);
 
 	set_register(instr.rt, value);
 }
@@ -435,7 +430,7 @@ void Cpu::load_halfword_unsigned(const immediate_instruction& instr)
 void Cpu::load_word(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned int value = *ram->get_word(addr);
+	unsigned int value = ram->load_word(addr);
 
 	set_register(instr.rt, value);
 }
@@ -456,21 +451,21 @@ void Cpu::load_word_right(const immediate_instruction& instr)
 void Cpu::store_byte(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	*ram->get_byte(addr) = get_register(instr.rt);
+	ram->store_byte(addr, get_register(instr.rt));
 }
 
 // SH rt, offset(base)
 void Cpu::store_halfword(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	*ram->get_halfword(addr) = get_register(instr.rt);
+	ram->store_halfword(addr, get_register(instr.rt));
 }
 
 // SW rt, offset(base)
 void Cpu::store_word(const immediate_instruction& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	*ram->get_word(addr) = get_register(instr.rt);
+	ram->store_word(addr, get_register(instr.rt));
 }
 
 // SWL rt, offset(base)

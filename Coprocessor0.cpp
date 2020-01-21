@@ -96,16 +96,15 @@ void Coprocessor0::set_control_register(unsigned int index, unsigned int value)
 void Coprocessor0::load_word_to_cop(const immediate_instruction& instr) 
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
-	unsigned int *word = ram->get_word(addr);
-	set_control_register(instr.rt,*word);
+	unsigned int word = ram->load_word(addr);
+	set_control_register(instr.rt,word);
 }
 
 // SWCz rt, offset(base)
 void Coprocessor0::store_word_from_cop(const immediate_instruction& instr) 
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
-	unsigned int *word = ram->get_word(addr);
-	*word = get_control_register(instr.rt);
+	ram->store_word(addr, get_control_register(instr.rt));
 }
 
 // MTCz rt, rd

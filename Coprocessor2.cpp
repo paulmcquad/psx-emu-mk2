@@ -76,14 +76,14 @@ void Coprocessor2::set_control_register(unsigned int index, unsigned int value)
 void Coprocessor2::load_word_to_cop(const immediate_instruction& instr)
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
-	unsigned int *word = ram->get_word(addr);
-	set_data_register(instr.rt, *word);
+	unsigned int word = ram->load_word(addr);
+	set_data_register(instr.rt, word);
 }
 
 void Coprocessor2::store_word_from_cop(const immediate_instruction& instr)
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
-	*ram->get_word(addr) = get_data_register(instr.rt);
+	ram->store_word(addr,get_data_register(instr.rt));
 }
 
 void Coprocessor2::move_to_cop(const register_instruction& instr)

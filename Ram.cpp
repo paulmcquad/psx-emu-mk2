@@ -38,6 +38,36 @@ void Ram::init(std::string bios_filepath)
 	bios_file.close();
 }
 
+unsigned char Ram::load_byte(unsigned int address)
+{
+	return *get_byte(address);
+}
+
+unsigned short Ram::load_halfword(unsigned int address)
+{
+	return *reinterpret_cast<unsigned short*>(get_byte(address));
+}
+
+unsigned int Ram::load_word(unsigned int address)
+{
+	return *reinterpret_cast<unsigned int*>(get_byte(address));
+}
+
+void Ram::store_byte(unsigned int address, unsigned char value)
+{
+	*get_byte(address) = value;
+}
+
+void Ram::store_halfword(unsigned int address, unsigned short value)
+{
+	*reinterpret_cast<unsigned short*>(get_byte(address)) = value;
+}
+
+void Ram::store_word(unsigned int address, unsigned int value)
+{
+	*reinterpret_cast<unsigned int*>(get_byte(address)) = value;
+}
+
 unsigned char* Ram::get_byte(unsigned int address)
 {
 	// user memory mirroring
@@ -64,14 +94,4 @@ unsigned char* Ram::get_byte(unsigned int address)
 	}
 
 	return nullptr;
-}
-
-unsigned short* Ram::get_halfword(unsigned int address)
-{
-	return (unsigned short*)get_byte(address);
-}
-
-unsigned int* Ram::get_word(unsigned int address)
-{
-	return (unsigned int*)get_byte(address);
 }
