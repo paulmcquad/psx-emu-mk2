@@ -1,6 +1,6 @@
-struct ImmediateInstruction
+struct immediate_instruction
 {
-	ImmediateInstruction(unsigned int instruction) {
+	immediate_instruction(unsigned int instruction) {
 		immediate = instruction;
 
 		instruction >>= 16;
@@ -9,7 +9,7 @@ struct ImmediateInstruction
 		instruction >>= 5;
 		rs = instruction;
 
-		instruction >> 5;
+		instruction >>= 5;
 		op = instruction;
 	}
 
@@ -19,9 +19,9 @@ struct ImmediateInstruction
 	unsigned int immediate : 16;
 };
 
-struct JumpInstruction
+struct jump_instruction
 {
-	JumpInstruction(unsigned int instruction) {
+	jump_instruction(unsigned int instruction) {
 		target = instruction;
 		op = instruction >> 26;
 	}
@@ -30,9 +30,9 @@ struct JumpInstruction
 	unsigned int target : 26;
 };
 
-struct RegisterInstruction
+struct register_instruction
 {
-	RegisterInstruction(unsigned int instruction) {
+	register_instruction(unsigned int instruction) {
 		funct = instruction;
 
 		instruction >>= 6;
@@ -44,10 +44,10 @@ struct RegisterInstruction
 		instruction >>= 5;
 		rt = instruction;
 
-		instruction >= 5;
+		instruction >>= 5;
 		rs = instruction;
 
-		instruction >= 5;
+		instruction >>= 5;
 		op = instruction;
 	}
 

@@ -1,17 +1,9 @@
 #include "Coprocessor0.hpp"
 #include "InstructionTypes.hpp"
+#include "InstructionEnums.hpp"
 #include "Ram.hpp"
 #include "Cpu.hpp"
 #include <stdexcept>
-
-enum class cop0 : unsigned char
-{
-	TLBR = 001,
-	TLBWI = 002,
-	TLBWR = 006,
-	TLBP = 010,
-	RFE = 020
-};
 
 Coprocessor0::Coprocessor0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Coprocessor(_ram, _cpu)
@@ -20,45 +12,44 @@ Coprocessor0::Coprocessor0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu)
 
 void Coprocessor0::execute(unsigned int instruction)
 {
-	ImmediateInstruction imm_instr(instruction);
-	switch (imm_instr.op)
+	immediate_instruction imm_instr(instruction);
+	switch (static_cast<cpu_instructions>(imm_instr.op))
 	{
 		// LWC0
-		case 060:
+		case cpu_instructions::LWC0:
 		{
 			load_word_to_cop(imm_instr);
 		} return;
 
-		// SWC0
-		case 070:
+		case cpu_instructions::SWC0:
 		{
 			store_word_from_cop(imm_instr);
 		} return;
 	}
 
-	RegisterInstruction reg_instr(instruction);
+	register_instruction reg_instr(instruction);
 	
 	if (reg_instr.rs == 040)
 	{
-		cop0 func = static_cast<cop0>(reg_instr.shamt);
+		cop0_instructions func = static_cast<cop0_instructions>(reg_instr.shamt);
 		switch (func) {
-			case cop0::TLBR:
+			case cop0_instructions::TLBR:
 			{
 				read_indexed_tlb_entry(reg_instr);
 			} break;
-			case cop0::TLBWI:
+			case cop0_instructions::TLBWI:
 			{
 				write_indexed_tlb_entry(reg_instr);
 			} break;
-			case cop0::TLBWR:
+			case cop0_instructions::TLBWR:
 			{
 				write_random_tlb_entry(reg_instr);
 			} break;
-			case cop0::TLBP:
+			case cop0_instructions::TLBP:
 			{
 				probe_tlb_for_matching_entry(reg_instr);
 			} break;
-			case cop0::RFE:
+			case cop0_instructions::RFE:
 			{
 				restore_from_exception(reg_instr);
 			} break;
@@ -66,24 +57,24 @@ void Coprocessor0::execute(unsigned int instruction)
 	}
 	else
 	{
-		copz function = static_cast<copz>(reg_instr.rs);
+		copz_instructions function = static_cast<copz_instructions>(reg_instr.rs);
 		switch (function) {
-			case copz::MF:
+			case copz_instructions::MF:
 			{
 				move_from_cop(reg_instr);
 			} break;
 
-			case copz::CF:
+			case copz_instructions::CF:
 			{
 				move_control_from_cop(reg_instr);
 			} break;
 
-			case copz::MT:
+			case copz_instructions::MT:
 			{
 				move_to_cop(reg_instr);
 			} break;
 
-			case copz::CT:
+			case copz_instructions::CT:
 			{
 				move_control_to_cop(reg_instr);
 			} break;
@@ -102,7 +93,7 @@ void Coprocessor0::set_control_register(unsigned int index, unsigned int value)
 }
 
 // LWCz rt, offset(base)
-void Coprocessor0::load_word_to_cop(const ImmediateInstruction& instr) 
+void Coprocessor0::load_word_to_cop(const immediate_instruction& instr) 
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
 	unsigned int *word = ram->get_word(addr);
@@ -110,7 +101,7 @@ void Coprocessor0::load_word_to_cop(const ImmediateInstruction& instr)
 }
 
 // SWCz rt, offset(base)
-void Coprocessor0::store_word_from_cop(const ImmediateInstruction& instr) 
+void Coprocessor0::store_word_from_cop(const immediate_instruction& instr) 
 {
 	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
 	unsigned int *word = ram->get_word(addr);
@@ -118,68 +109,68 @@ void Coprocessor0::store_word_from_cop(const ImmediateInstruction& instr)
 }
 
 // MTCz rt, rd
-void Coprocessor0::move_to_cop(const RegisterInstruction& instr) 
+void Coprocessor0::move_to_cop(const register_instruction& instr) 
 {
 	unsigned int value = cpu->get_register(instr.rt);
 	set_control_register(instr.rs, value);
 }
 
 // MFCz rt, rd
-void Coprocessor0::move_from_cop(const RegisterInstruction& instr) 
+void Coprocessor0::move_from_cop(const register_instruction& instr) 
 {
 	unsigned int value = get_control_register(instr.rd);
 	cpu->set_register(instr.rt, value);
 }
 
 // CTCz rt, rd
-void Coprocessor0::move_control_to_cop(const RegisterInstruction& instr) 
+void Coprocessor0::move_control_to_cop(const register_instruction& instr) 
 {
 	move_to_cop(instr);
 }
 
 // CFCz rt, rd
-void Coprocessor0::move_control_from_cop(const RegisterInstruction& instr) 
+void Coprocessor0::move_control_from_cop(const register_instruction& instr) 
 {
 	move_from_cop(instr);
 }
 
 // COPz cofun
-void Coprocessor0::move_control_to_cop_fun(const RegisterInstruction& instr)
+void Coprocessor0::move_control_to_cop_fun(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Coprocessor0::move_to_cp0(const RegisterInstruction& instr)
+void Coprocessor0::move_to_cp0(const register_instruction& instr)
 {
 	move_to_cop(instr);
 }
 
-void Coprocessor0::move_from_cp0(const RegisterInstruction& instr)
+void Coprocessor0::move_from_cp0(const register_instruction& instr)
 {
 	move_from_cop(instr);
 }
 
-void Coprocessor0::read_indexed_tlb_entry(const RegisterInstruction& instr)
+void Coprocessor0::read_indexed_tlb_entry(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Coprocessor0::write_indexed_tlb_entry(const RegisterInstruction& instr)
+void Coprocessor0::write_indexed_tlb_entry(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Coprocessor0::write_random_tlb_entry(const RegisterInstruction& instr)
+void Coprocessor0::write_random_tlb_entry(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Coprocessor0::probe_tlb_for_matching_entry(const RegisterInstruction& instr)
+void Coprocessor0::probe_tlb_for_matching_entry(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Coprocessor0::restore_from_exception(const RegisterInstruction& instr)
+void Coprocessor0::restore_from_exception(const register_instruction& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
