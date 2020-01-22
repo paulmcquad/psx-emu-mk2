@@ -25,6 +25,9 @@ constexpr unsigned int HARDWARE_END   = 0x1f802fff;
 constexpr unsigned int BIOS_START     = 0xbfc00000;
 constexpr unsigned int BIOS_END       = 0xbfc7ffff;
 
+constexpr unsigned int CACHE_CONTROL_START = 0xfffe0000;
+constexpr unsigned int CACHE_CONTROL_END = 0xfffe0200;
+
 void Ram::init(std::string bios_filepath)
 {
 	std::ifstream bios_file(bios_filepath);
@@ -36,6 +39,42 @@ void Ram::init(std::string bios_filepath)
 	bios_file.seekg(0, std::ios::beg);
 	bios_file.read((char*)&bios, len);
 	bios_file.close();
+}
+
+void Ram::tick()
+{
+	if (store_queue.empty()) {
+		return;
+	}
+
+	// 1 opcode delay to store instructions
+	for (auto& iter : store_queue)
+	{
+		iter.tick_wait--;
+	}
+
+	store_entry& front = store_queue.front();
+	if (front.tick_wait == 0)
+	{
+		unsigned char * location = get_byte(front.addr);
+		switch (front.type) {
+			case store_entry::store_type::type_byte:
+			{
+				*location = front.byte_value;
+			} break;
+
+			case store_entry::store_type::type_halfword:
+			{
+				*reinterpret_cast<unsigned short*>(location) = front.halfword_value;
+			} break;
+
+			case store_entry::store_type::type_word:
+			{
+				*reinterpret_cast<unsigned int*>(location) = front.word_value;
+			} break;
+		}
+		store_queue.pop_front();
+	}
 }
 
 unsigned char Ram::load_byte(unsigned int address)
@@ -55,17 +94,44 @@ unsigned int Ram::load_word(unsigned int address)
 
 void Ram::store_byte(unsigned int address, unsigned char value)
 {
-	*get_byte(address) = value;
+	if (address % 4 != 0)
+	{
+		throw std::logic_error("unaligned access");
+	}
+
+	store_entry entry;
+	entry.type = store_entry::store_type::type_byte;
+	entry.byte_value = value;
+	entry.addr = address;
+	store_queue.push_back(entry);
 }
 
 void Ram::store_halfword(unsigned int address, unsigned short value)
 {
-	*reinterpret_cast<unsigned short*>(get_byte(address)) = value;
+	if (address % 4 != 0)
+	{
+		throw std::logic_error("unaligned access");
+	}
+
+	store_entry entry;
+	entry.type = store_entry::store_type::type_halfword;
+	entry.halfword_value = value;
+	entry.addr = address;
+	store_queue.push_back(entry);
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
 {
-	*reinterpret_cast<unsigned int*>(get_byte(address)) = value;
+	if (address % 4 != 0)
+	{
+		throw std::logic_error("unaligned access");
+	}
+
+	store_entry entry;
+	entry.type = store_entry::store_type::type_word;
+	entry.word_value = value;
+	entry.addr = address;
+	store_queue.push_back(entry);
 }
 
 unsigned char* Ram::get_byte(unsigned int address)
@@ -91,6 +157,9 @@ unsigned char* Ram::get_byte(unsigned int address)
 	}
 	else if (address >= BIOS_START && address <= BIOS_END) {
 		return &bios[address - BIOS_START];
+	}
+	else if (address >= CACHE_CONTROL_START && address <= CACHE_CONTROL_END) {
+		return &cache_control[address - CACHE_CONTROL_START];
 	}
 
 	return nullptr;

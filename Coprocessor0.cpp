@@ -111,7 +111,7 @@ void Coprocessor0::store_word_from_cop(const immediate_instruction& instr)
 void Coprocessor0::move_to_cop(const register_instruction& instr) 
 {
 	unsigned int value = cpu->get_register(instr.rt);
-	set_control_register(instr.rs, value);
+	set_control_register(instr.rd, value);
 }
 
 // MFCz rt, rd

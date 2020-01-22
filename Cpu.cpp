@@ -19,10 +19,13 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 
 void Cpu::tick()
 {
+	unsigned int current_pc = pc;
 	unsigned int current_instruction = next_instruction;
-	next_instruction = ram->load_word(pc);
-	execute(current_instruction);	
-	pc += 4;
+
+	next_instruction = ram->load_word(current_pc);
+
+	pc = current_pc + 4;
+	execute(current_instruction);
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -367,7 +370,7 @@ void Cpu::execute_bcond(unsigned int instruction)
 
 void Cpu::execute_cop(unsigned int instruction) 
 {
-	unsigned int cop_number = (instruction >> 26) & 0x3f;
+	unsigned int cop_number = (instruction >> 26) & 0x3;
 	coprocessors[cop_number]->execute(instruction);
 }
 
@@ -484,14 +487,37 @@ void Cpu::store_word_right(const immediate_instruction& instr)
 // ADDI rt, rs, immediate
 void Cpu::add_immediate(const immediate_instruction& instr)
 {
-	int value = get_register(instr.rs) + (signed)instr.immediate;
+	int immediate = instr.immediate;
+	int rs_value = get_register(instr.rs);
+
+	unsigned int value = (unsigned int)rs_value + (unsigned int)immediate;
+
+	bool overflow = false;
+	if (immediate > 0 && rs_value > 0) {
+		if ((int)value < 0)
+		{
+			overflow = true;
+		}
+	}
+	else if (immediate < 0 && rs_value < 0) {
+		if ((int)value > 0)
+		{
+			overflow = true;
+		}
+	}
+
+	if (overflow)
+	{
+		throw std::logic_error("overflow not implemented");
+	}
+
 	set_register(instr.rt, value);
 }
 
 // ADDIU rt, rs, immediate
 void Cpu::add_immediate_unsigned(const immediate_instruction& instr)
 {
-	int value = get_register(instr.rs) + (signed)instr.immediate;
+	unsigned int value = get_register(instr.rs) + (int)instr.immediate;
 	set_register(instr.rt, value);
 }
 
@@ -756,7 +782,8 @@ void Cpu::branch_on_equal(const immediate_instruction& instr)
 void Cpu::branch_on_not_equal(const immediate_instruction& instr)
 {
 	if (get_register(instr.rt) != get_register(instr.rs)) {
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		unsigned int offset = (int)instr.immediate << 2;
+		pc += offset - 4;
 	}
 }
 
@@ -764,7 +791,8 @@ void Cpu::branch_on_not_equal(const immediate_instruction& instr)
 void Cpu::branch_on_less_than_or_equal_zero(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) <= 0) {
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		unsigned int offset = (int)instr.immediate << 2;
+		pc += offset - 4;
 	}
 }
 
@@ -772,7 +800,8 @@ void Cpu::branch_on_less_than_or_equal_zero(const immediate_instruction& instr)
 void Cpu::branch_on_greater_than_zero(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) > 0) {
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		unsigned int offset = (int)instr.immediate << 2;
+		pc += offset - 4;
 	}
 }
 
@@ -780,7 +809,8 @@ void Cpu::branch_on_greater_than_zero(const immediate_instruction& instr)
 void Cpu::branch_on_less_than_zero(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) < 0) {
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		unsigned int offset = (int)instr.immediate << 2;
+		pc += offset - 4;
 	}
 }
 
@@ -788,7 +818,8 @@ void Cpu::branch_on_less_than_zero(const immediate_instruction& instr)
 void Cpu::branch_on_greater_than_or_equal_zero(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) <= 0) {
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		unsigned int offset = (int)instr.immediate << 2;
+		pc += offset - 4;
 	}
 }
 
@@ -796,8 +827,7 @@ void Cpu::branch_on_greater_than_or_equal_zero(const immediate_instruction& inst
 void Cpu::branch_on_less_than_zero_and_link(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) < 0) {
-		gp_registers[31] = (pc + 4) + 4;
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		throw std::logic_error("not implemented");
 	}
 }
 
@@ -805,8 +835,7 @@ void Cpu::branch_on_less_than_zero_and_link(const immediate_instruction& instr)
 void Cpu::branch_on_greater_than_or_equal_zero_and_link(const immediate_instruction& instr)
 {
 	if (get_register(instr.rs) >= 0) {
-		gp_registers[31] = (pc + 4) + 4;
-		pc = (pc + 4) + ((int)instr.immediate << 2);
+		throw std::logic_error("not implemented");
 	}
 }
 
@@ -827,49 +856,49 @@ void Cpu::breakpoint()
 // LWCz rt, offset(base)
 void Cpu::load_word_to_cop(const immediate_instruction& instr)
 {
-	unsigned int cop_number = instr.op & 0x3f;
+	unsigned int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->load_word_to_cop(instr);
 }
 
 // SWCz rt, offset(base)
 void Cpu::store_word_from_cop(const immediate_instruction& instr)
 {
-	int cop_number = instr.op & 0x3f;
+	int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->store_word_from_cop(instr);
 }
 
 // MTCz rt, rd
 void Cpu::move_to_cop(const register_instruction& instr)
 {
-	int cop_number = instr.op & 0x3f;
+	int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->move_to_cop(instr);
 }
 
 // MFCz rt, rd
 void Cpu::move_from_cop(const register_instruction& instr)
 {
-	int cop_number = instr.op & 0x3f;
+	int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->move_from_cop(instr);
 }
 
 // CTCz rt, rd
 void Cpu::move_control_to_cop(const register_instruction& instr)
 {
-	int cop_number = instr.op & 0x3f;
+	int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->move_control_to_cop(instr);
 }
 
 // CFCz rt, rd
 void Cpu::move_control_from_cop(const register_instruction& instr)
 {
-	int cop_number = instr.op & 0x3f;
+	int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->move_control_from_cop(instr);
 }
 
 // COPz cofun
 void Cpu::move_control_to_cop_fun(const register_instruction& instr)
 {
-	unsigned int cop_number = instr.op & 0x3f;
+	unsigned int cop_number = instr.op & 0x3;
 	coprocessors[cop_number]->move_control_to_cop_fun(instr);
 }
 

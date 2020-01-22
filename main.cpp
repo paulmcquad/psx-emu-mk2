@@ -18,6 +18,7 @@ int main(int num_args, char ** args )
 
 	while (true)
 	{
+		ram->tick();
 		cpu->tick();
 	}
 
