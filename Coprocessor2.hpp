@@ -4,7 +4,7 @@ class Coprocessor2 : public Coprocessor {
 public:
 	Coprocessor2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
-	void execute(unsigned int instruction) final;
+	void execute(const instruction_union& instruction) final;
 
 private:
 	unsigned int get_data_register(unsigned int index);
@@ -13,13 +13,13 @@ private:
 	unsigned int get_control_register(unsigned int index);
 	void set_control_register(unsigned int index, unsigned int value);
 
-	void load_word_to_cop(const immediate_instruction& instr) final;
-	void store_word_from_cop(const immediate_instruction& instr) final;
-	void move_to_cop(const register_instruction& instr) final;
-	void move_from_cop(const register_instruction& instr) final;
-	void move_control_to_cop(const register_instruction& instr) final;
-	void move_control_from_cop(const register_instruction& instr) final;
-	void move_control_to_cop_fun(const register_instruction& instr) final;
+	void load_word_to_cop(const instruction_union& instr) final;
+	void store_word_from_cop(const instruction_union& instr) final;
+	void move_to_cop(const instruction_union& instr) final;
+	void move_from_cop(const instruction_union& instr) final;
+	void move_control_to_cop(const instruction_union& instr) final;
+	void move_control_from_cop(const instruction_union& instr) final;
+	void move_control_to_cop_fun(const instruction_union& instr) final;
 
 	unsigned int data_registers[32] = { 0 };
 	unsigned int control_registers[32] = { 0 };

@@ -11,44 +11,41 @@ Coprocessor2::Coprocessor2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu)
 
 }
 
-void Coprocessor2::execute(unsigned int instruction)
+void Coprocessor2::execute(const instruction_union& instruction)
 {
-	immediate_instruction imm_instr(instruction);
-	switch (static_cast<cpu_instructions>(imm_instr.op))
+	switch (static_cast<cpu_instructions>(instruction.immediate_instruction.op))
 	{
 		case cpu_instructions::LWC2:
 		{
-			load_word_to_cop(imm_instr);
+			load_word_to_cop(instruction);
 		} return;
 
 		case cpu_instructions::SWC2:
 		{
-			store_word_from_cop(imm_instr);
+			store_word_from_cop(instruction);
 		} return;
 	}
 
-	register_instruction reg_instr(instruction);
-
-	copz_instructions function = static_cast<copz_instructions>(reg_instr.rs);
+	copz_instructions function = static_cast<copz_instructions>(instruction.register_instruction.rs);
 	switch (function) {
 		case copz_instructions::MF:
 		{
-			move_from_cop(reg_instr);
+			move_from_cop(instruction);
 		} break;
 
 		case copz_instructions::CF:
 		{
-			move_control_from_cop(reg_instr);
+			move_control_from_cop(instruction);
 		} break;
 
 		case copz_instructions::MT:
 		{
-			move_to_cop(reg_instr);
+			move_to_cop(instruction);
 		} break;
 
 		case copz_instructions::CT:
 		{
-			move_control_to_cop(reg_instr);
+			move_control_to_cop(instruction);
 		} break;
 	}
 }
@@ -73,44 +70,44 @@ void Coprocessor2::set_control_register(unsigned int index, unsigned int value)
 	control_registers[index] = value;
 }
 
-void Coprocessor2::load_word_to_cop(const immediate_instruction& instr)
+void Coprocessor2::load_word_to_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
-	set_data_register(instr.rt, word);
+	set_data_register(instr.immediate_instruction.rt, word);
 }
 
-void Coprocessor2::store_word_from_cop(const immediate_instruction& instr)
+void Coprocessor2::store_word_from_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate + (int)cpu->get_register(instr.rs);
-	ram->store_word(addr,get_data_register(instr.rt));
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
+	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
-void Coprocessor2::move_to_cop(const register_instruction& instr)
+void Coprocessor2::move_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->get_register(instr.rt);
-	set_data_register(instr.rd, value);
+	unsigned int value = cpu->get_register(instr.register_instruction.rt);
+	set_data_register(instr.register_instruction.rd, value);
 }
 
-void Coprocessor2::move_from_cop(const register_instruction& instr)
+void Coprocessor2::move_from_cop(const instruction_union& instr)
 {
-	unsigned value = get_data_register(instr.rd);
-	cpu->set_register(instr.rs, value);
+	unsigned value = get_data_register(instr.register_instruction.rd);
+	cpu->set_register(instr.register_instruction.rs, value);
 }
 
-void Coprocessor2::move_control_to_cop(const register_instruction& instr)
+void Coprocessor2::move_control_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->get_register(instr.rt);
-	set_control_register(instr.rd, value);
+	unsigned int value = cpu->get_register(instr.register_instruction.rt);
+	set_control_register(instr.register_instruction.rd, value);
 }
 
-void Coprocessor2::move_control_from_cop(const register_instruction& instr)
+void Coprocessor2::move_control_from_cop(const instruction_union& instr)
 {
-	unsigned int value = get_control_register(instr.rd);
-	cpu->set_register(instr.rt, value);
+	unsigned int value = get_control_register(instr.register_instruction.rd);
+	cpu->set_register(instr.register_instruction.rt, value);
 }
 
-void Coprocessor2::move_control_to_cop_fun(const register_instruction& instr)
+void Coprocessor2::move_control_to_cop_fun(const instruction_union& instr)
 {
 	throw std::logic_error("not implemented");
 }
