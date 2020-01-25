@@ -119,22 +119,4 @@ public:
 	// special instructions
 	void system_call(const instruction_union& instr);
 	void breakpoint(const instruction_union& instr);
-
-	// co-processor instructions
-	void load_word_to_cop(const instruction_union& instr);
-	void store_word_from_cop(const instruction_union& instr);
-	void move_to_cop(const instruction_union& instr);
-	void move_from_cop(const instruction_union& instr);
-	void move_control_to_cop(const instruction_union& instr);
-	void move_control_from_cop(const instruction_union& instr);
-	void move_control_to_cop_fun(const instruction_union& instr);
-
-	// system control
-	void move_to_cp0(const instruction_union& instr);
-	void move_from_cp0(const instruction_union& instr);
-	void read_indexed_tlb(const instruction_union& instr);
-	void write_indexed_tlb(const instruction_union& instr);
-	void write_random_tlb(const instruction_union& instr);
-	void probe_tlb_for_matching_entry(const instruction_union& instr);
-	void restore_from_exception(const instruction_union& instr);
 };
