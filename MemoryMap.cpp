@@ -4,30 +4,24 @@
 #include <fstream>
 #include <assert.h>
 
+enum class memory_segment : unsigned char
+{
+	KUSEG = 0b000,
+	KSEG0 = 0b100,
+	KSEG1 = 0b101,
+	KSEG2 = 0b111
+};
+
 constexpr unsigned int KUSEG_START    = 0x00000000;
-constexpr unsigned int KUSEG_END      = 0x001fffff;
-
 constexpr unsigned int KSEG0_START    = 0x80000000;
-constexpr unsigned int KSEG0_END      = 0x801fffff;
-
 constexpr unsigned int KSEG1_START    = 0xa0000000;
-constexpr unsigned int KSEG1_END      = 0xa01fffff;
+constexpr unsigned int KSEG2_START    = 0xfffe0000;
 
-// expansion region 1
+constexpr unsigned int MAIN_MEMORY_START = 0x00000000;
 constexpr unsigned int PARALLEL_START = 0x1f000000;
-constexpr unsigned int PARALLEL_END   = 0x1f00ffff;
-
 constexpr unsigned int SCRATCH_START  = 0x1f800000;
-constexpr unsigned int SCRATCH_END    = 0x1f8003ff;
-
-constexpr unsigned int HARDWARE_START = 0x1f801000;
-constexpr unsigned int HARDWARE_END   = 0x1f802fff;
-
-constexpr unsigned int BIOS_START     = 0xbfc00000;
-constexpr unsigned int BIOS_END       = 0xbfc7ffff;
-
-constexpr unsigned int CACHE_CONTROL_START = 0xfffe0000;
-constexpr unsigned int CACHE_CONTROL_END = 0xfffe0200;
+constexpr unsigned int IO_START = 0x1f801000;
+constexpr unsigned int BIOS_START     = 0x1fc00000;
 
 void Ram::init(std::string bios_filepath)
 {
@@ -54,7 +48,8 @@ unsigned short Ram::load_halfword(unsigned int address)
 
 unsigned int Ram::load_word(unsigned int address)
 {
-	return *reinterpret_cast<unsigned int*>(get_byte(address));
+	unsigned char * loc = get_byte(address);
+	return *reinterpret_cast<unsigned int*>(loc);
 }
 
 void Ram::store_byte(unsigned int address, unsigned char value)
@@ -69,7 +64,8 @@ void Ram::store_halfword(unsigned int address, unsigned short value)
 		throw std::logic_error("unaligned access");
 	}
 
-	*reinterpret_cast<unsigned short*>(get_byte(address)) = value;
+	unsigned char * loc = get_byte(address);
+	*reinterpret_cast<unsigned short*>(loc) = value;
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
@@ -79,35 +75,51 @@ void Ram::store_word(unsigned int address, unsigned int value)
 		throw std::logic_error("unaligned access");
 	}
 
-	*reinterpret_cast<unsigned int*>(get_byte(address)) = value;
+	unsigned char * loc = get_byte(address);
+	*reinterpret_cast<unsigned int*>(loc) = value;
 }
 
 unsigned char* Ram::get_byte(unsigned int address)
 {
-	// user memory mirroring
-	if (address >= KUSEG_START && address <= KUSEG_END) {
+	// determine memory region
+	unsigned char segment_value = address >> 29;
+	memory_segment segment = memory_segment::KUSEG;
+	if (segment_value > 0b011)
+	{
+		segment = static_cast<memory_segment>(segment_value);
+	}
+
+	unsigned int segment_offset = 0;
+	switch (segment) {
+		case memory_segment::KSEG0:
+			segment_offset = KSEG0_START;
+			break;
+		case memory_segment::KSEG1:
+			segment_offset = KSEG1_START;
+			break;
+		case memory_segment::KSEG2:
+			return &cache_control[address - KSEG2_START];
+			break;
+		case memory_segment::KUSEG:
+			segment_offset = KUSEG_START;
+			break;
+	}
+
+	address -= segment_offset;
+	if (address >= MAIN_MEMORY_START && address < MAIN_MEMORY_START + MAIN_MEMORY_SIZE) {
 		return &memory[address];
 	}
-	else if (address >= KSEG0_START && address <= KSEG0_END) {
-		return &memory[address - KSEG0_START];
-	}
-	else if (address >= KSEG1_START && address <= KSEG1_END) {
-		return &memory[address - KSEG1_START];
-	}
-	else if (address >= PARALLEL_START && address <= PARALLEL_END) {
+	else if (address >= PARALLEL_START && address < PARALLEL_START + PARALLEL_PORT_SIZE) {
 		return &parallel_port[address - PARALLEL_START];
 	}
-	else if (address >= SCRATCH_START && address <= SCRATCH_END) {
+	else if (address >= SCRATCH_START && address <= SCRATCH_START + SCRATCH_PAD_SIZE) {
 		return &scratch_pad[address - SCRATCH_START];
 	}
-	else if (address >= HARDWARE_START && address <= HARDWARE_END) {
-		return &hardware_registers[address - HARDWARE_START];
+	else if (address >= IO_START && address < IO_START + IO_PORTS_SIZE) {
+		return &io_ports[address - IO_START];
 	}
-	else if (address >= BIOS_START && address <= BIOS_END) {
+	else if (address >= BIOS_START && address < BIOS_START + BIOS_SIZE) {
 		return &bios[address - BIOS_START];
-	}
-	else if (address >= CACHE_CONTROL_START && address <= CACHE_CONTROL_END) {
-		return &cache_control[address - CACHE_CONTROL_START];
 	}
 
 	return nullptr;

@@ -445,7 +445,6 @@ void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 void Cpu::mult(const instruction_union& instr)
 {
 	long long result = (int)(get_register(instr.register_instruction.rs)) * (int)(get_register(instr.register_instruction.rt));
-	// TODO double check correct registers
 	hi = result >> 32;
 	lo = result & 0xFFFF;
 }
@@ -454,7 +453,6 @@ void Cpu::mult(const instruction_union& instr)
 void Cpu::mult_unsigned(const instruction_union& instr)
 {
 	unsigned long long result = get_register(instr.register_instruction.rs) * get_register(instr.register_instruction.rt);
-	// TODO double check correct registers
 	hi = result >> 32;
 	lo = result & 0xFFFF;
 }
