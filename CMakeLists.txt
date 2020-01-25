@@ -7,8 +7,8 @@ add_executable(psx-mk2
                main.cpp
 			   Cpu.hpp
 			   Cpu.cpp
-			   Ram.hpp
-			   Ram.cpp
+			   MemoryMap.hpp
+			   MemoryMap.cpp
 			   Coprocessor.hpp
 			   Coprocessor0.hpp
 			   Coprocessor0.cpp

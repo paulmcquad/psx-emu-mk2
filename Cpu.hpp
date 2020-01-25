@@ -1,5 +1,5 @@
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include "InstructionTypes.hpp"
 
 class Coprocessor;
@@ -12,12 +12,12 @@ enum class cpu_bconds : unsigned char;
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 private:
-	std::map<unsigned int, std::shared_ptr<Coprocessor>> coprocessors;
+	std::unordered_map<unsigned int, std::shared_ptr<Coprocessor>> coprocessors;
 	std::shared_ptr<Ram> ram = nullptr;
 
-	std::map<cpu_instructions, void (Cpu::*)(const instruction_union&)> main_instructions;
-	std::map<cpu_special_funcs, void (Cpu::*)(const instruction_union&)> special_instructions;
-	std::map<cpu_bconds, void (Cpu::*)(const instruction_union&)> bcond_instructions;
+	std::unordered_map<cpu_instructions, void (Cpu::*)(const instruction_union&)> main_instructions;
+	std::unordered_map<cpu_special_funcs, void (Cpu::*)(const instruction_union&)> special_instructions;
+	std::unordered_map<cpu_bconds, void (Cpu::*)(const instruction_union&)> bcond_instructions;
 
 public:
 	Cpu();

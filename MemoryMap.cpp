@@ -1,4 +1,4 @@
-#include "Ram.hpp"
+#include "MemoryMap.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
@@ -13,6 +13,7 @@ constexpr unsigned int KSEG0_END      = 0x801fffff;
 constexpr unsigned int KSEG1_START    = 0xa0000000;
 constexpr unsigned int KSEG1_END      = 0xa01fffff;
 
+// expansion region 1
 constexpr unsigned int PARALLEL_START = 0x1f000000;
 constexpr unsigned int PARALLEL_END   = 0x1f00ffff;
 
@@ -41,42 +42,6 @@ void Ram::init(std::string bios_filepath)
 	bios_file.close();
 }
 
-void Ram::tick()
-{
-	if (store_queue.empty()) {
-		return;
-	}
-
-	// 1 opcode delay to store instructions
-	for (auto& iter : store_queue)
-	{
-		iter.tick_wait--;
-	}
-
-	store_entry& front = store_queue.front();
-	if (front.tick_wait == 0)
-	{
-		unsigned char * location = get_byte(front.addr);
-		switch (front.type) {
-			case store_entry::store_type::type_byte:
-			{
-				*location = front.byte_value;
-			} break;
-
-			case store_entry::store_type::type_halfword:
-			{
-				*reinterpret_cast<unsigned short*>(location) = front.halfword_value;
-			} break;
-
-			case store_entry::store_type::type_word:
-			{
-				*reinterpret_cast<unsigned int*>(location) = front.word_value;
-			} break;
-		}
-		store_queue.pop_front();
-	}
-}
-
 unsigned char Ram::load_byte(unsigned int address)
 {
 	return *get_byte(address);
@@ -94,30 +59,17 @@ unsigned int Ram::load_word(unsigned int address)
 
 void Ram::store_byte(unsigned int address, unsigned char value)
 {
-	if (address % 4 != 0)
-	{
-		throw std::logic_error("unaligned access");
-	}
-
-	store_entry entry;
-	entry.type = store_entry::store_type::type_byte;
-	entry.byte_value = value;
-	entry.addr = address;
-	store_queue.push_back(entry);
+	*get_byte(address) = value;
 }
 
 void Ram::store_halfword(unsigned int address, unsigned short value)
 {
-	if (address % 4 != 0)
+	if (address % 2 != 0)
 	{
 		throw std::logic_error("unaligned access");
 	}
 
-	store_entry entry;
-	entry.type = store_entry::store_type::type_halfword;
-	entry.halfword_value = value;
-	entry.addr = address;
-	store_queue.push_back(entry);
+	*reinterpret_cast<unsigned short*>(get_byte(address)) = value;
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
@@ -127,11 +79,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 		throw std::logic_error("unaligned access");
 	}
 
-	store_entry entry;
-	entry.type = store_entry::store_type::type_word;
-	entry.word_value = value;
-	entry.addr = address;
-	store_queue.push_back(entry);
+	*reinterpret_cast<unsigned int*>(get_byte(address)) = value;
 }
 
 unsigned char* Ram::get_byte(unsigned int address)

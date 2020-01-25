@@ -2,7 +2,7 @@
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Cpu.hpp"
-#include "Ram.hpp"
+#include "MemoryMap.hpp"
 #include <stdexcept>
 
 Coprocessor2::Coprocessor2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :

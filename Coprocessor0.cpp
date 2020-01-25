@@ -1,7 +1,7 @@
 #include "Coprocessor0.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
-#include "Ram.hpp"
+#include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include <stdexcept>
 

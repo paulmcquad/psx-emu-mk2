@@ -1,4 +1,4 @@
-#include "Ram.hpp"
+#include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include "Coprocessor.hpp"
 #include "Coprocessor0.hpp"
@@ -529,7 +529,7 @@ void Cpu::jump_and_link_register(const instruction_union& instr)
 void Cpu::branch_on_equal(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rt) == get_register(instr.immediate_instruction.rs)) {
-		pc = (pc + 4) + ((int)instr.immediate_instruction.immediate << 2);
+		pc = (pc + 4) + ((short)instr.immediate_instruction.immediate << 2);
 	}
 }
 
@@ -537,7 +537,7 @@ void Cpu::branch_on_equal(const instruction_union& instr)
 void Cpu::branch_on_not_equal(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rt) != get_register(instr.immediate_instruction.rs)) {
-		unsigned int offset = (int)instr.immediate_instruction.immediate << 2;
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset - 4;
 	}
 }
@@ -546,7 +546,7 @@ void Cpu::branch_on_not_equal(const instruction_union& instr)
 void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rs) <= 0) {
-		unsigned int offset = (int)instr.immediate_instruction.immediate << 2;
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset - 4;
 	}
 }
@@ -555,7 +555,7 @@ void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rs) > 0) {
-		unsigned int offset = (int)instr.immediate_instruction.immediate << 2;
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset - 4;
 	}
 }
@@ -564,7 +564,7 @@ void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rs) < 0) {
-		unsigned int offset = (int)instr.immediate_instruction.immediate << 2;
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset - 4;
 	}
 }
@@ -573,7 +573,7 @@ void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 {
 	if (get_register(instr.immediate_instruction.rs) <= 0) {
-		unsigned int offset = (int)instr.immediate_instruction.immediate << 2;
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset - 4;
 	}
 }
