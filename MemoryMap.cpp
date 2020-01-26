@@ -65,7 +65,16 @@ unsigned int Ram::load_word(unsigned int address)
 
 void Ram::store_byte(unsigned int address, unsigned char value)
 {
-	*get_byte(address) = value;
+	unsigned char * loc = get_byte(address);
+	if (loc)
+	{
+		*get_byte(address) = value;
+	}
+	else
+	{
+		printf("ERROR - store");
+	}
+	
 }
 
 void Ram::store_halfword(unsigned int address, unsigned short value)
@@ -76,7 +85,14 @@ void Ram::store_halfword(unsigned int address, unsigned short value)
 	}
 
 	unsigned char * loc = get_byte(address);
-	*reinterpret_cast<unsigned short*>(loc) = value;
+	if (loc)
+	{
+		*reinterpret_cast<unsigned short*>(loc) = value;
+	}
+	else
+	{
+		printf("ERROR - store");
+	}
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
@@ -87,7 +103,15 @@ void Ram::store_word(unsigned int address, unsigned int value)
 	}
 
 	unsigned char * loc = get_byte(address);
-	*reinterpret_cast<unsigned int*>(loc) = value;
+
+	if (loc)
+	{
+		*reinterpret_cast<unsigned int*>(loc) = value;
+	}
+	else
+	{
+		printf("ERROR - store");
+	}
 }
 
 unsigned char* Ram::get_byte(unsigned int address)

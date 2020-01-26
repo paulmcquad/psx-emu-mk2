@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include "Coprocessor.hpp"
@@ -242,21 +244,24 @@ void Cpu::load_word_right(const instruction_union& instr)
 void Cpu::store_byte(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	ram->store_byte(addr, get_register(instr.immediate_instruction.rt));
+	unsigned int value = get_register(instr.immediate_instruction.rt);
+	ram->store_byte(addr, value);
 }
 
 // SH rt, offset(base)
 void Cpu::store_halfword(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	ram->store_halfword(addr, get_register(instr.immediate_instruction.rt));
+	unsigned int value = get_register(instr.immediate_instruction.rt);
+	ram->store_halfword(addr, value);
 }
 
 // SW rt, offset(base)
 void Cpu::store_word(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	ram->store_word(addr, get_register(instr.immediate_instruction.rt));
+	unsigned int value = get_register(instr.immediate_instruction.rt);
+	ram->store_word(addr, value);
 }
 
 // SWL rt, offset(base)
@@ -305,7 +310,10 @@ void Cpu::add_immediate(const instruction_union& instr)
 // ADDIU rt, rs, immediate
 void Cpu::add_immediate_unsigned(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.immediate_instruction.rs) + (int)instr.immediate_instruction.immediate;
+	int immediate = instr.immediate_instruction.immediate;
+	int rs_value = get_register(instr.immediate_instruction.rs);
+
+	unsigned int value = (unsigned int)rs_value + (unsigned int)immediate;
 	set_register(instr.immediate_instruction.rt, value);
 }
 
@@ -330,28 +338,28 @@ void Cpu::set_on_less_than_unsigned_immediate(const instruction_union& instr)
 // ANDI rt, rs, immediate
 void Cpu::and_immediate(const instruction_union& instr)
 {
-	unsigned int value = (unsigned int)instr.immediate_instruction.immediate & get_register(instr.immediate_instruction.rs);
+	unsigned int value = instr.immediate_instruction.immediate & get_register(instr.immediate_instruction.rs);
 	set_register(instr.immediate_instruction.rt, value);
 }
 
 // ORI rt, rs, immediate
 void Cpu::or_immediate(const instruction_union& instr)
 {
-	unsigned int value = (unsigned int)instr.immediate_instruction.immediate | gp_registers[instr.immediate_instruction.rs];
+	unsigned int value = instr.immediate_instruction.immediate | get_register(instr.immediate_instruction.rs);
 	set_register(instr.immediate_instruction.rt, value);
 }
 
 // XORI rt, rs, immediate
 void Cpu::xor_immediate(const instruction_union& instr)
 {
-	unsigned int value = (unsigned int)instr.immediate_instruction.immediate ^ get_register(instr.immediate_instruction.rs);
+	unsigned int value = instr.immediate_instruction.immediate ^ get_register(instr.immediate_instruction.rs);
 	set_register(instr.immediate_instruction.rt, value);
 }
 
 // LUI rt, immediate
 void Cpu::load_upper_immediate(const instruction_union& instr)
 {
-	unsigned int value = (unsigned int)(instr.immediate_instruction.immediate) << 16;
+	unsigned int value = instr.immediate_instruction.immediate << 16;
 	set_register(instr.immediate_instruction.rt, value);
 }
 
@@ -532,14 +540,16 @@ void Cpu::move_to_lo(const instruction_union& instr)
 // J target
 void Cpu::jump(const instruction_union& instr)
 {
-	pc = (unsigned int)instr.jump_instruction.target << 2 | (0xF0000000 & pc);
+	unsigned int target = instr.jump_instruction.target << 2;
+	pc = target | (0xF0000000 & pc);
 }
 
 // JAL target
 void Cpu::jump_and_link(const instruction_union& instr)
 {
 	gp_registers[31] = pc + 8;
-	pc = (unsigned int)instr.jump_instruction.target << 2 | (0xF0000000 & pc);
+	unsigned int target = instr.jump_instruction.target << 2;
+	pc = target | (0xF0000000 & pc);
 }
 
 // JR rs
