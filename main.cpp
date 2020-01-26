@@ -11,7 +11,6 @@ int main(int num_args, char ** args )
 	}
 
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-	io_ports->init();
 
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
 	std::string bios_file(args[1]);
