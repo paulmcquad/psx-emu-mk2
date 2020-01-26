@@ -1,4 +1,5 @@
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include "InstructionTypes.hpp"
 
@@ -19,6 +20,14 @@ private:
 	std::unordered_map<cpu_special_funcs, void (Cpu::*)(const instruction_union&)> special_instructions;
 	std::unordered_map<cpu_bconds, void (Cpu::*)(const instruction_union&)> bcond_instructions;
 
+	struct load_delay_entry
+	{
+		unsigned int value;
+		unsigned int delay;
+	};
+
+	std::map<unsigned int, load_delay_entry> delayed_loads;
+
 public:
 	Cpu();
 
@@ -30,7 +39,7 @@ public:
 	void execute_cop(const instruction_union& instr);
 
 	unsigned int get_register(int index);
-	void set_register(int index, unsigned int value);
+	void set_register(int index, unsigned int value, bool delay = false);
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
 

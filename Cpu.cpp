@@ -97,6 +97,24 @@ void Cpu::tick()
 
 	pc = current_pc + 4;
 	execute(current_instruction);
+
+	std::vector<unsigned int> to_delete;
+	for (auto it = delayed_loads.begin(); it != delayed_loads.end(); /* no increment */)
+	{
+		if (it->second.delay == 0)
+		{
+			if (it->first != 0) {
+				gp_registers[it->first] = it->second.value;
+			}
+			
+			it = delayed_loads.erase(it);
+		}
+		else
+		{
+			it->second.delay--;
+			++it;
+		}
+	}
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -134,11 +152,26 @@ unsigned int Cpu::get_register(int index)
 	return gp_registers[index];
 }
 
-void Cpu::set_register(int index, unsigned int value) 
+void Cpu::set_register(int index, unsigned int value, bool delay) 
 {
 	if (index != 0)
 	{
-		gp_registers[index] = value;
+		if (delay)
+		{
+			load_delay_entry entry;
+			entry.delay = 1;
+			entry.value = value;
+			delayed_loads[index] = entry;
+		}
+		else
+		{
+			auto it = delayed_loads.find(index);
+			if (it != delayed_loads.end())
+			{
+				delayed_loads.erase(it);
+			}
+			gp_registers[index] = value;
+		}
 	}
 }
 
@@ -154,7 +187,7 @@ void Cpu::load_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned char value = ram->load_byte(addr);
 
-	set_register(instr.immediate_instruction.rt, value);
+	set_register(instr.immediate_instruction.rt, value, true);
 }
 
 // LBU rt, offset(base)
@@ -163,7 +196,7 @@ void Cpu::load_byte_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned char value = ram->load_byte(addr);
 
-	set_register(instr.immediate_instruction.rt, value);
+	set_register(instr.immediate_instruction.rt, value, true);
 }
 
 // LH rt, offset(base)
@@ -172,7 +205,7 @@ void Cpu::load_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load_halfword(addr);
 
-	set_register(instr.immediate_instruction.rt, value);
+	set_register(instr.immediate_instruction.rt, value, true);
 }
 
 // LHU rt, offset(base)
@@ -181,7 +214,7 @@ void Cpu::load_halfword_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load_halfword(addr);
 
-	set_register(instr.immediate_instruction.rt, value);
+	set_register(instr.immediate_instruction.rt, value, true);
 }
 
 // LW rt, offset(base)
@@ -190,7 +223,7 @@ void Cpu::load_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = ram->load_word(addr);
 
-	set_register(instr.immediate_instruction.rt, value);
+	set_register(instr.immediate_instruction.rt, value, true);
 }
 
 // LWL rt, offset(base)

@@ -43,11 +43,22 @@ unsigned char Ram::load_byte(unsigned int address)
 
 unsigned short Ram::load_halfword(unsigned int address)
 {
-	return *reinterpret_cast<unsigned short*>(get_byte(address));
+	if (address % 2 != 0)
+	{
+		throw std::logic_error("unaligned access");
+	}
+
+	unsigned char * loc = get_byte(address);
+	return *reinterpret_cast<unsigned short*>(loc);
 }
 
 unsigned int Ram::load_word(unsigned int address)
 {
+	if (address % 4 != 0)
+	{
+		throw std::logic_error("unaligned access");
+	}
+
 	unsigned char * loc = get_byte(address);
 	return *reinterpret_cast<unsigned int*>(loc);
 }
