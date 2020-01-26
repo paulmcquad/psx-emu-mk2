@@ -1,4 +1,5 @@
 #include "MemoryMap.hpp"
+#include "IOPorts.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
@@ -23,7 +24,7 @@ constexpr unsigned int SCRATCH_START  = 0x1f800000;
 constexpr unsigned int IO_START = 0x1f801000;
 constexpr unsigned int BIOS_START     = 0x1fc00000;
 
-void Ram::init(std::string bios_filepath)
+void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 {
 	std::ifstream bios_file(bios_filepath);
 	bios_file.seekg(0, std::ios::end);
@@ -34,6 +35,8 @@ void Ram::init(std::string bios_filepath)
 	bios_file.seekg(0, std::ios::beg);
 	bios_file.read((char*)&bios, len);
 	bios_file.close();
+
+	io_ports = _io_ports;
 }
 
 unsigned char Ram::load_byte(unsigned int address)
@@ -72,7 +75,7 @@ void Ram::store_byte(unsigned int address, unsigned char value)
 	}
 	else
 	{
-		printf("ERROR - store");
+		throw std::logic_error("out of bounds access");
 	}
 	
 }
@@ -91,7 +94,7 @@ void Ram::store_halfword(unsigned int address, unsigned short value)
 	}
 	else
 	{
-		printf("ERROR - store");
+		throw std::logic_error("out of bounds access");
 	}
 }
 
@@ -110,7 +113,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 	}
 	else
 	{
-		printf("ERROR - store");
+		throw std::logic_error("out of bounds access");
 	}
 }
 
@@ -147,11 +150,11 @@ unsigned char* Ram::get_byte(unsigned int address)
 	else if (address >= PARALLEL_START && address < PARALLEL_START + PARALLEL_PORT_SIZE) {
 		return &parallel_port[address - PARALLEL_START];
 	}
-	else if (address >= SCRATCH_START && address <= SCRATCH_START + SCRATCH_PAD_SIZE) {
+	else if (address >= SCRATCH_START && address < SCRATCH_START + SCRATCH_PAD_SIZE) {
 		return &scratch_pad[address - SCRATCH_START];
 	}
 	else if (address >= IO_START && address < IO_START + IO_PORTS_SIZE) {
-		return &io_ports[address - IO_START];
+		return (*io_ports)[address - IO_START];
 	}
 	else if (address >= BIOS_START && address < BIOS_START + BIOS_SIZE) {
 		return &bios[address - BIOS_START];

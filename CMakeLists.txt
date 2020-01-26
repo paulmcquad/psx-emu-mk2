@@ -15,7 +15,9 @@ add_executable(psx-mk2
 			   Coprocessor2.hpp
 			   Coprocessor2.cpp
 			   InstructionTypes.hpp
-			   InstructionEnums.hpp)
+			   InstructionEnums.hpp
+			   IOPorts.hpp
+			   IOPorts.cpp)
 
 add_executable(psx-mk2-test 
                main_test.cpp)
