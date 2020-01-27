@@ -41,7 +41,15 @@ void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 
 unsigned char Ram::load_byte(unsigned int address)
 {
-	return *get_byte(address);
+	unsigned char * loc = get_byte(address);
+	if (loc)
+	{
+		return *get_byte(address);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 unsigned short Ram::load_halfword(unsigned int address)
@@ -52,7 +60,15 @@ unsigned short Ram::load_halfword(unsigned int address)
 	}
 
 	unsigned char * loc = get_byte(address);
-	return *reinterpret_cast<unsigned short*>(loc);
+	if (loc)
+	{
+		return *reinterpret_cast<unsigned short*>(loc);
+	}
+	else
+	{
+		return 0;
+	}
+	
 }
 
 unsigned int Ram::load_word(unsigned int address)
@@ -63,7 +79,14 @@ unsigned int Ram::load_word(unsigned int address)
 	}
 
 	unsigned char * loc = get_byte(address);
-	return *reinterpret_cast<unsigned int*>(loc);
+	if (loc)
+	{
+		return *reinterpret_cast<unsigned int*>(loc);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void Ram::store_byte(unsigned int address, unsigned char value)
@@ -113,7 +136,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 	}
 	else
 	{
-		throw std::logic_error("out of bounds access");
+		//throw std::logic_error("out of bounds access");
 	}
 }
 

@@ -34,6 +34,15 @@ enum class io_registers : unsigned int
 	I_MASK = 0x1F801074,
 
 	// dma registers
+	/*
+		DMA0
+		0x1F801080 - 0x1F80108F
+
+		DMA1
+		0x1F801090 - 0x1F80109F
+
+		etc
+	*/
 	DMA0 = 0x1F801080,
 	DMA1 = 0x1F801090,
 	DMA2 = 0x1F8010A0,
@@ -50,7 +59,7 @@ enum class io_registers : unsigned int
 	TIMER2 = 0x1F801120,
 
 	// cdrom registers
-
+	CDROM_REGISTERS = 0x1F801800,
 
 	// memory control 3
 	CACHE_CONTROL = 0xFFFE0130

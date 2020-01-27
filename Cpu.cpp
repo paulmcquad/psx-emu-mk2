@@ -1,5 +1,5 @@
 #include <assert.h>
-
+#include <iostream>
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include "Coprocessor.hpp"
@@ -125,6 +125,8 @@ void Cpu::execute(unsigned int instruction)
 	instr.raw = instruction;
 
 	cpu_instructions opcode = static_cast<cpu_instructions>(instruction >> 26);
+	//std::cout << "Opcode: " << std::oct << (instruction >> 26) << std::endl;
+
 	auto fn_ptr = main_instructions[opcode];
 	(this->*fn_ptr)(instr);
 }
@@ -541,15 +543,15 @@ void Cpu::move_to_lo(const instruction_union& instr)
 void Cpu::jump(const instruction_union& instr)
 {
 	unsigned int target = instr.jump_instruction.target << 2;
+
 	pc = target | (0xF0000000 & pc);
 }
 
 // JAL target
 void Cpu::jump_and_link(const instruction_union& instr)
 {
-	gp_registers[31] = pc + 8;
-	unsigned int target = instr.jump_instruction.target << 2;
-	pc = target | (0xF0000000 & pc);
+	gp_registers[31] = pc;
+	jump(instr);
 }
 
 // JR rs
@@ -561,78 +563,61 @@ void Cpu::jump_register(const instruction_union& instr)
 // JALR rs, rd
 void Cpu::jump_and_link_register(const instruction_union& instr)
 {
-	gp_registers[31] = pc + 8;
-	pc = get_register(instr.register_instruction.rs);
+	throw std::logic_error("not implemented");
 }
 
 // branch instructions
 // BEQ rs, rt, offset
 void Cpu::branch_on_equal(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rt) == get_register(instr.immediate_instruction.rs)) {
-		pc = (pc + 4) + ((short)instr.immediate_instruction.immediate << 2);
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BNE rs, rt, offset
 void Cpu::branch_on_not_equal(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rt) != get_register(instr.immediate_instruction.rs)) {
+	if (get_register(instr.immediate_instruction.rs) != get_register(instr.immediate_instruction.rt))
+	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset - 4;
+		pc += offset;
+		pc -= 4;
 	}
 }
 
 // BLEZ rs, offset
 void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) <= 0) {
-		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset - 4;
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BGTZ rs, offset
 void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) > 0) {
-		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset - 4;
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BLTZ rs, offset
 void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) < 0) {
-		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset - 4;
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BGEZ rs, offset
 void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) <= 0) {
-		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset - 4;
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BLTZAL rs, offset
 void Cpu::branch_on_less_than_zero_and_link(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) < 0) {
-		throw std::logic_error("not implemented");
-	}
+	throw std::logic_error("not implemented");
 }
 
 // BGEZAL rs, offset
 void Cpu::branch_on_greater_than_or_equal_zero_and_link(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) >= 0) {
-		throw std::logic_error("not implemented");
-	}
+	throw std::logic_error("not implemented");
 }
 
 // special instructions
