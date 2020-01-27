@@ -159,6 +159,11 @@ unsigned int Cpu::get_register(int index)
 
 void Cpu::set_register(int index, unsigned int value, bool delay) 
 {
+	if (value == 0x801fff00)
+	{
+		printf("break");
+	}
+
 	if (index != 0)
 	{
 		if (delay)
@@ -182,7 +187,11 @@ void Cpu::set_register(int index, unsigned int value, bool delay)
 
 unsigned int Cpu::get_immediate_base_addr(const instruction_union& instr)
 {
-	return (short)instr.immediate_instruction.immediate + (int)get_register(instr.immediate_instruction.rs);
+	unsigned int offset = (short)instr.immediate_instruction.immediate;
+	unsigned int base = get_register(instr.immediate_instruction.rs);
+
+	unsigned int addr = offset + base;
+	return addr;
 }
 
 // load/store
@@ -288,23 +297,17 @@ void Cpu::add_immediate(const instruction_union& instr)
 
 	unsigned int value = (unsigned int)rs_value + (unsigned int)immediate;
 
-	bool overflow = false;
 	if (immediate > 0 && rs_value > 0) {
 		if ((int)value < 0)
 		{
-			overflow = true;
+			throw overflow_exception();
 		}
 	}
 	else if (immediate < 0 && rs_value < 0) {
 		if ((int)value > 0)
 		{
-			overflow = true;
+			throw overflow_exception();
 		}
-	}
-
-	if (overflow)
-	{
-		throw overflow_exception();
 	}
 
 	set_register(instr.immediate_instruction.rt, value);
@@ -317,6 +320,7 @@ void Cpu::add_immediate_unsigned(const instruction_union& instr)
 	int rs_value = get_register(instr.immediate_instruction.rs);
 
 	unsigned int value = (unsigned int)rs_value + (unsigned int)immediate;
+
 	set_register(instr.immediate_instruction.rt, value);
 }
 
@@ -348,7 +352,8 @@ void Cpu::and_immediate(const instruction_union& instr)
 // ORI rt, rs, immediate
 void Cpu::or_immediate(const instruction_union& instr)
 {
-	unsigned int value = instr.immediate_instruction.immediate | get_register(instr.immediate_instruction.rs);
+	unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+	unsigned int value = instr.immediate_instruction.immediate | rs_value;
 	set_register(instr.immediate_instruction.rt, value);
 }
 
@@ -370,28 +375,46 @@ void Cpu::load_upper_immediate(const instruction_union& instr)
 // ADD rd, rs, rt
 void Cpu::add(const instruction_union& instr)
 {
-	unsigned int value = gp_registers[instr.register_instruction.rs] + gp_registers[instr.register_instruction.rt];
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value + rt_value;
+
+	if ((int)rt_value > 0 && (int)rs_value > 0) {
+		if ((int)value < 0)
+		{
+			throw overflow_exception();
+		}
+	}
+	else if ((int)rt_value < 0 && (int)rs_value < 0) {
+		if ((int)value > 0)
+		{
+			throw overflow_exception();
+		}
+	}
+
 	set_register(instr.register_instruction.rd, value);
 }
 
 // ADDU rd, rs, rt
 void Cpu::add_unsigned(const instruction_union& instr)
 {
-	unsigned int value = gp_registers[instr.register_instruction.rs] + gp_registers[instr.register_instruction.rt];
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value + rt_value;
 	set_register(instr.register_instruction.rd, value);
 }
 
 // SUB rd, rs, rt
 void Cpu::sub(const instruction_union& instr)
 {
-	unsigned int value = gp_registers[instr.register_instruction.rs] - gp_registers[instr.register_instruction.rt];
+	unsigned int value = get_register(instr.register_instruction.rs) - get_register(instr.register_instruction.rt);
 	set_register(instr.register_instruction.rd, value);
 }
 
 // SUBU rd, rs, rt
 void Cpu::sub_unsigned(const instruction_union& instr)
 {
-	unsigned int value = gp_registers[instr.register_instruction.rs] - gp_registers[instr.register_instruction.rt];
+	unsigned int value = get_register(instr.register_instruction.rs) - get_register(instr.register_instruction.rt);
 	set_register(instr.register_instruction.rd, value);
 }
 
