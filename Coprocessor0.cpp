@@ -79,6 +79,12 @@ void Coprocessor0::execute(const instruction_union& instruction)
 	}
 }
 
+unsigned int Coprocessor0::get_control_register(Coprocessor0::register_names register_name)
+{
+	unsigned int index = static_cast<unsigned int>(register_name);
+	return control_registers[index];
+}
+
 unsigned int Coprocessor0::get_control_register(unsigned int index)
 {
 	return control_registers[index];

@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include "InstructionTypes.hpp"
 
-class Coprocessor;
+class Coprocessor0;
+class Coprocessor2;
 class Ram;
 
 enum class cpu_instructions : unsigned char;
@@ -13,7 +14,9 @@ enum class cpu_bconds : unsigned char;
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 private:
-	std::unordered_map<unsigned int, std::shared_ptr<Coprocessor>> coprocessors;
+	std::shared_ptr<Coprocessor0> cop0 = nullptr;
+	std::shared_ptr<Coprocessor2> cop2 = nullptr;
+
 	std::shared_ptr<Ram> ram = nullptr;
 
 	std::unordered_map<cpu_instructions, void (Cpu::*)(const instruction_union&)> main_instructions;
@@ -42,6 +45,7 @@ public:
 	void set_register(int index, unsigned int value, bool delay = false);
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
+	unsigned int get_immediate_base_addr_unsigned(const instruction_union& instr);
 
 	unsigned int gp_registers[32] = { 0 };
 	unsigned int cp0_registers[16] = { 0 };

@@ -2,7 +2,6 @@
 #include <iostream>
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
-#include "Coprocessor.hpp"
 #include "Coprocessor0.hpp"
 #include "Coprocessor2.hpp"
 #include "InstructionEnums.hpp"
@@ -87,8 +86,8 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 	pc = BIOS_START;
 	ram = _ram;
 	next_instruction = 0x0;
-	coprocessors[0] = std::make_shared<Coprocessor0>(ram, shared_from_this());
-	coprocessors[2] = std::make_shared<Coprocessor2>(ram, shared_from_this());
+	cop0 = std::make_shared<Coprocessor0>(ram, shared_from_this());
+	cop2 = std::make_shared<Coprocessor2>(ram, shared_from_this());
 }
 
 void Cpu::tick()
@@ -97,6 +96,8 @@ void Cpu::tick()
 	unsigned int current_instruction = next_instruction;
 
 	next_instruction = ram->load_word(current_pc);
+
+	//std::cout << std::hex << pc << std::endl;
 
 	pc = current_pc + 4;
 	execute(current_instruction);
@@ -149,7 +150,14 @@ void Cpu::execute_bcond(const instruction_union& instr)
 void Cpu::execute_cop(const instruction_union& instr)
 {
 	unsigned int cop_number = (instr.raw >> 26) & 0x3;
-	coprocessors[cop_number]->execute(instr);
+	if (cop_number == 0)
+	{
+		cop0->execute(instr);
+	}
+	else if (cop_number == 1)
+	{
+		cop2->execute(instr);
+	}
 }
 
 unsigned int Cpu::get_register(int index) 
@@ -159,21 +167,6 @@ unsigned int Cpu::get_register(int index)
 
 void Cpu::set_register(int index, unsigned int value, bool delay) 
 {
-	if (index == 0x1d)
-	{
-		printf("break");
-	}
-
-	if (value == 0x801fff00)
-	{
-		printf("break");
-	}
-
-	if (value == 0x801f0000 || value == 0x8020fee8)
-	{
-		printf("break");
-	}
-
 	if (index != 0)
 	{
 		if (delay)
@@ -197,7 +190,16 @@ void Cpu::set_register(int index, unsigned int value, bool delay)
 
 unsigned int Cpu::get_immediate_base_addr(const instruction_union& instr)
 {
-	unsigned int offset = (short)instr.immediate_instruction.immediate;
+	int offset = (short)instr.immediate_instruction.immediate;
+	int base = get_register(instr.immediate_instruction.rs);
+
+	unsigned int addr = offset + base;
+	return addr;
+}
+
+unsigned int Cpu::get_immediate_base_addr_unsigned(const instruction_union& instr)
+{
+	unsigned int offset = (unsigned short)instr.immediate_instruction.immediate;
 	unsigned int base = get_register(instr.immediate_instruction.rs);
 
 	unsigned int addr = offset + base;
@@ -217,7 +219,7 @@ void Cpu::load_byte(const instruction_union& instr)
 // LBU rt, offset(base)
 void Cpu::load_byte_unsigned(const instruction_union& instr)
 {
-	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr = get_immediate_base_addr_unsigned(instr);
 	unsigned char value = ram->load_byte(addr);
 
 	set_register(instr.immediate_instruction.rt, value, true);
@@ -229,16 +231,28 @@ void Cpu::load_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load_halfword(addr);
 
-	set_register(instr.immediate_instruction.rt, value, true);
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		set_register(instr.immediate_instruction.rt, value, true);
+	}
 }
 
 // LHU rt, offset(base)
 void Cpu::load_halfword_unsigned(const instruction_union& instr)
 {
-	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr = get_immediate_base_addr_unsigned(instr);
 	unsigned short value = ram->load_halfword(addr);
 
-	set_register(instr.immediate_instruction.rt, value, true);
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		set_register(instr.immediate_instruction.rt, value, true);
+	}
 }
 
 // LW rt, offset(base)
@@ -247,7 +261,13 @@ void Cpu::load_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = ram->load_word(addr);
 
-	set_register(instr.immediate_instruction.rt, value, true);
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		set_register(instr.immediate_instruction.rt, value, true);
+	}
 }
 
 // LWL rt, offset(base)
@@ -267,7 +287,14 @@ void Cpu::store_byte(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
-	ram->store_byte(addr, value);
+
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		ram->store_byte(addr, value);
+	}
 }
 
 // SH rt, offset(base)
@@ -275,7 +302,14 @@ void Cpu::store_halfword(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
-	ram->store_halfword(addr, value);
+
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		ram->store_halfword(addr, value);
+	}
 }
 
 // SW rt, offset(base)
@@ -283,7 +317,14 @@ void Cpu::store_word(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
-	ram->store_word(addr, value);
+
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		ram->store_word(addr, value);
+	}
 }
 
 // SWL rt, offset(base)
@@ -385,17 +426,17 @@ void Cpu::load_upper_immediate(const instruction_union& instr)
 // ADD rd, rs, rt
 void Cpu::add(const instruction_union& instr)
 {
-	unsigned int rs_value = get_register(instr.register_instruction.rs);
-	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
 	unsigned int value = rs_value + rt_value;
 
-	if ((int)rt_value > 0 && (int)rs_value > 0) {
+	if (rt_value > 0 && rs_value > 0) {
 		if ((int)value < 0)
 		{
 			throw overflow_exception();
 		}
 	}
-	else if ((int)rt_value < 0 && (int)rs_value < 0) {
+	else if (rt_value < 0 && rs_value < 0) {
 		if ((int)value > 0)
 		{
 			throw overflow_exception();
@@ -408,8 +449,8 @@ void Cpu::add(const instruction_union& instr)
 // ADDU rd, rs, rt
 void Cpu::add_unsigned(const instruction_union& instr)
 {
-	unsigned int rs_value = get_register(instr.register_instruction.rs);
-	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
 	unsigned int value = rs_value + rt_value;
 
 	set_register(instr.register_instruction.rd, value);
@@ -418,17 +459,17 @@ void Cpu::add_unsigned(const instruction_union& instr)
 // SUB rd, rs, rt
 void Cpu::sub(const instruction_union& instr)
 {
-	unsigned int rs_value = get_register(instr.register_instruction.rs);
-	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
 	unsigned int value = rs_value - rt_value;
 	
-	if ((int)rt_value > 0 && (int)rs_value > 0) {
+	if (rt_value > 0 && rs_value > 0) {
 		if ((int)value < 0)
 		{
 			throw overflow_exception();
 		}
 	}
-	else if ((int)rt_value < 0 && (int)rs_value < 0) {
+	else if (rt_value < 0 && rs_value < 0) {
 		if ((int)value > 0)
 		{
 			throw overflow_exception();
@@ -441,7 +482,9 @@ void Cpu::sub(const instruction_union& instr)
 // SUBU rd, rs, rt
 void Cpu::sub_unsigned(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) - get_register(instr.register_instruction.rt);
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value - rt_value;
 	set_register(instr.register_instruction.rd, value);
 }
 
@@ -466,7 +509,9 @@ void Cpu::set_on_less_than_unsigned(const instruction_union& instr)
 // AND rd, rs, rt
 void Cpu::and(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) & get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value & rt_value;
 	set_register(instr.register_instruction.rd, value);
 }
 
@@ -601,7 +646,7 @@ void Cpu::jump(const instruction_union& instr)
 // JAL target
 void Cpu::jump_and_link(const instruction_union& instr)
 {
-	gp_registers[31] = pc;
+	set_register(31, pc);
 	jump(instr);
 }
 
@@ -621,7 +666,14 @@ void Cpu::jump_and_link_register(const instruction_union& instr)
 // BEQ rs, rt, offset
 void Cpu::branch_on_equal(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+	unsigned int rt_value = get_register(instr.immediate_instruction.rt);
+	if (rs_value == rt_value)
+	{
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		pc += offset;
+		pc -= 4;
+	}
 }
 
 // BNE rs, rt, offset
