@@ -659,7 +659,8 @@ void Cpu::jump_register(const instruction_union& instr)
 // JALR rs, rd
 void Cpu::jump_and_link_register(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	set_register(instr.register_instruction.rd, pc);
+	pc - get_register(instr.register_instruction.rs);
 }
 
 // branch instructions
@@ -679,7 +680,9 @@ void Cpu::branch_on_equal(const instruction_union& instr)
 // BNE rs, rt, offset
 void Cpu::branch_on_not_equal(const instruction_union& instr)
 {
-	if (get_register(instr.immediate_instruction.rs) != get_register(instr.immediate_instruction.rt))
+	unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+	unsigned int rt_value = get_register(instr.immediate_instruction.rt);
+	if (rs_value != rt_value)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		pc += offset;
@@ -690,19 +693,37 @@ void Cpu::branch_on_not_equal(const instruction_union& instr)
 // BLEZ rs, offset
 void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value <= 0)
+	{
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		pc += offset;
+		pc -= 4;
+	}
 }
 
 // BGTZ rs, offset
 void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value > 0)
+	{
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		pc += offset;
+		pc -= 4;
+	}
 }
 
 // BLTZ rs, offset
 void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value < 0)
+	{
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		pc += offset;
+		pc -= 4;
+	}
 }
 
 // BGEZ rs, offset
