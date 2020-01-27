@@ -1,5 +1,6 @@
 #include "MemoryMap.hpp"
 #include "IOPorts.hpp"
+#include "Exceptions.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
@@ -48,7 +49,7 @@ unsigned char Ram::load_byte(unsigned int address)
 	}
 	else
 	{
-		return 0;
+		throw bus_error();
 	}
 }
 
@@ -56,7 +57,7 @@ unsigned short Ram::load_halfword(unsigned int address)
 {
 	if (address % 2 != 0)
 	{
-		throw std::logic_error("unaligned access");
+		throw address_error();
 	}
 
 	unsigned char * loc = get_byte(address);
@@ -66,7 +67,7 @@ unsigned short Ram::load_halfword(unsigned int address)
 	}
 	else
 	{
-		return 0;
+		throw bus_error();
 	}
 	
 }
@@ -75,7 +76,7 @@ unsigned int Ram::load_word(unsigned int address)
 {
 	if (address % 4 != 0)
 	{
-		throw std::logic_error("unaligned access");
+		throw address_error();
 	}
 
 	unsigned char * loc = get_byte(address);
@@ -85,7 +86,7 @@ unsigned int Ram::load_word(unsigned int address)
 	}
 	else
 	{
-		return 0;
+		throw bus_error();
 	}
 }
 
@@ -98,7 +99,7 @@ void Ram::store_byte(unsigned int address, unsigned char value)
 	}
 	else
 	{
-		throw std::logic_error("out of bounds access");
+		throw bus_error();
 	}
 	
 }
@@ -107,7 +108,7 @@ void Ram::store_halfword(unsigned int address, unsigned short value)
 {
 	if (address % 2 != 0)
 	{
-		throw std::logic_error("unaligned access");
+		throw address_error();
 	}
 
 	unsigned char * loc = get_byte(address);
@@ -117,7 +118,7 @@ void Ram::store_halfword(unsigned int address, unsigned short value)
 	}
 	else
 	{
-		throw std::logic_error("out of bounds access");
+		throw bus_error();
 	}
 }
 
@@ -125,7 +126,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 {
 	if (address % 4 != 0)
 	{
-		throw std::logic_error("unaligned access");
+		throw address_error();
 	}
 
 	unsigned char * loc = get_byte(address);
@@ -136,7 +137,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 	}
 	else
 	{
-		//throw std::logic_error("out of bounds access");
+		throw bus_error();
 	}
 }
 

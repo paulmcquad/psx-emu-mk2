@@ -6,6 +6,7 @@
 #include "Coprocessor0.hpp"
 #include "Coprocessor2.hpp"
 #include "InstructionEnums.hpp"
+#include "Exceptions.hpp"
 
 constexpr unsigned int BIOS_START = 0xbfc00000;
 
@@ -303,7 +304,7 @@ void Cpu::add_immediate(const instruction_union& instr)
 
 	if (overflow)
 	{
-		throw std::logic_error("overflow not implemented");
+		throw overflow_exception();
 	}
 
 	set_register(instr.immediate_instruction.rt, value);
@@ -624,11 +625,11 @@ void Cpu::branch_on_greater_than_or_equal_zero_and_link(const instruction_union&
 // SYSCALL
 void Cpu::system_call(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	throw sys_call();
 }
 
 // BREAK
 void Cpu::breakpoint(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	throw breakpoint_exception();
 }

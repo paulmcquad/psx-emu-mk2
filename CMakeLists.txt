@@ -17,7 +17,8 @@ add_executable(psx-mk2
 			   InstructionTypes.hpp
 			   InstructionEnums.hpp
 			   IOPorts.hpp
-			   IOPorts.cpp)
+			   IOPorts.cpp
+			   Exceptions.hpp)
 
 add_executable(psx-mk2-test 
                main_test.cpp)
