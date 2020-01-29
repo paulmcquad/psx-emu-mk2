@@ -83,9 +83,10 @@ Cpu::Cpu()
 
 void Cpu::init(std::shared_ptr<Ram> _ram)
 {
+	current_instruction = 0;
 	next_instruction = 0;
-	pc = BIOS_START;
-	next_pc = pc + 4;
+	current_pc = BIOS_START;
+	next_pc = current_pc + 4;
 	ram = _ram;
 	cop0 = std::make_shared<Coprocessor0>(ram, shared_from_this());
 	cop2 = std::make_shared<Coprocessor2>(ram, shared_from_this());
@@ -93,24 +94,23 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 
 void Cpu::tick()
 {
-	unsigned int current_pc = pc;
-	unsigned int current_instuction = next_instruction;
+	current_pc = next_pc;
+	current_instruction = next_instruction;
 
-	next_instruction = ram->load_word(current_pc);
-
-	pc = current_pc + 4;
+	next_pc += 4;
+	next_instruction = ram->load_word(next_pc);
 
 	try
 	{
-		execute(current_instuction);
+		execute(current_instruction);
 	}
-	catch(...)
+	catch(sys_call& /*e*/)
 	{
-		cop0->set_control_register(Coprocessor0::register_names::EPC, pc);
+		cop0->set_control_register(Coprocessor0::register_names::EPC, current_pc);
 
 		unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
-		pc = sr & (1 << 22) != 0 ? 0xbfc00180 : 0x80000080;
-		next_pc = pc + 4;
+		bool bev = sr & (1 << 22) != 0;
+		next_pc = bev ? 0xbfc00180 : 0x80000080;
 
 		unsigned int mode = sr & 0x3f;
 		sr &= ~0x3f;
@@ -165,7 +165,7 @@ void Cpu::execute_cop(const instruction_union& instr)
 
 unsigned int Cpu::get_register(int index) 
 {
-	return register_file.gp_registers[index];
+	return gp_registers[index];
 }
 
 void Cpu::set_register(int index, unsigned int value, bool delay) 
@@ -678,27 +678,27 @@ void Cpu::jump(const instruction_union& instr)
 {
 	unsigned int target = instr.jump_instruction.target << 2;
 
-	pc = target | (0xF0000000 & pc);
+	next_pc = target | (0xF0000000 & next_pc);
 }
 
 // JAL target
 void Cpu::jump_and_link(const instruction_union& instr)
 {
-	set_register(31, pc);
+	set_register(31, next_pc);
 	jump(instr);
 }
 
 // JR rs
 void Cpu::jump_register(const instruction_union& instr)
 {
-	pc = get_register(instr.register_instruction.rs);
+	next_pc = get_register(instr.register_instruction.rs);
 }
 
 // JALR rs, rd
 void Cpu::jump_and_link_register(const instruction_union& instr)
 {
-	set_register(instr.register_instruction.rd, pc);
-	pc = get_register(instr.register_instruction.rs);
+	set_register(instr.register_instruction.rd, next_pc);
+	next_pc = get_register(instr.register_instruction.rs);
 }
 
 // branch instructions
@@ -710,8 +710,8 @@ void Cpu::branch_on_equal(const instruction_union& instr)
 	if (rs_value == rt_value)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 
@@ -723,8 +723,8 @@ void Cpu::branch_on_not_equal(const instruction_union& instr)
 	if (rs_value != rt_value)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 
@@ -735,8 +735,8 @@ void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 	if (rs_value <= 0)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 
@@ -747,8 +747,8 @@ void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 	if (rs_value > 0)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 
@@ -759,8 +759,8 @@ void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 	if (rs_value < 0)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 
@@ -771,8 +771,8 @@ void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 	if (rs_value >= 0)
 	{
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
-		pc += offset;
-		pc -= 4;
+		next_pc += offset;
+		next_pc -= 4;
 	}
 }
 

@@ -27,6 +27,20 @@ private:
 	std::unordered_map<cpu_special_funcs, void (Cpu::*)(const instruction_union&)> special_instructions;
 	std::unordered_map<cpu_bconds, void (Cpu::*)(const instruction_union&)> bcond_instructions;
 
+	// 3 stage register file to simulate the load delay
+	// shadow first -> shadow second -> gp_registers
+	struct
+	{
+		unsigned int gp_registers[32] = { 0 };
+		unsigned int shadow_gp_registers_last[32] = { 0 };
+		unsigned int shadow_gp_registers_first[32] = { 0 };
+		void merge()
+		{
+			memcpy(&gp_registers, &shadow_gp_registers_last, sizeof(unsigned int) * 32);
+			memcpy(&shadow_gp_registers_last, &shadow_gp_registers_first, sizeof(unsigned int) * 32);
+		}
+	} register_file;
+
 public:
 	Cpu();
 
@@ -42,25 +56,15 @@ public:
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
 
-	// 3 stage register file to simulate the load delay
-	// shadow first -> shadow second -> gp_registers
-	struct
-	{
-		unsigned int gp_registers[32] = { 0 };
-		unsigned int shadow_gp_registers_last[32] = { 0 };
-		unsigned int shadow_gp_registers_first[32] = { 0 };
-		void merge()
-		{
-			memcpy(&gp_registers, &shadow_gp_registers_last, sizeof(unsigned int) * 32);
-			memcpy(&shadow_gp_registers_last, &shadow_gp_registers_first, sizeof(unsigned int) * 32);
-		}
-	} register_file;
+	unsigned int gp_registers[32] = { 0 };
 
 	unsigned int hi = 0;
 	unsigned int lo = 0;
 
-	unsigned int pc = 0;
+	unsigned int current_pc = 0;
 	unsigned int next_pc = 0;
+
+	unsigned int current_instruction = 0;
 	unsigned int next_instruction = 0;
 
 	// load/store

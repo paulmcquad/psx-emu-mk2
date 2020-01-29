@@ -134,7 +134,7 @@ void Ram::store_word(unsigned int address, unsigned int value)
 	if (loc)
 	{
 		*reinterpret_cast<unsigned int*>(loc) = value;
-	}
+	} 
 	else
 	{
 		throw bus_error();
@@ -160,8 +160,13 @@ unsigned char* Ram::get_byte(unsigned int address)
 			segment_offset = KSEG1_START;
 			break;
 		case memory_segment::KSEG2:
+		{
+			if (address > KSEG2_START + 512)
+			{
+				return nullptr;
+			}
 			return &cache_control[address - KSEG2_START];
-			break;
+		} break;
 		case memory_segment::KUSEG:
 			segment_offset = KUSEG_START;
 			break;
