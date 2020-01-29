@@ -11,6 +11,10 @@ enum class cpu_instructions : unsigned char;
 enum class cpu_special_funcs : unsigned char;
 enum class cpu_bconds : unsigned char;
 
+// ref:
+// https://svkt.org/~simias/guide.pdf
+// https://problemkaputt.de/psx-spx.htm
+// http://hitmen.c02.at/files/docs/psx/psx.pdf
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 private:
