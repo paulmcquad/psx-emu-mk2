@@ -83,9 +83,10 @@ Cpu::Cpu()
 
 void Cpu::init(std::shared_ptr<Ram> _ram)
 {
+	next_instruction = 0;
 	pc = BIOS_START;
+	next_pc = pc + 4;
 	ram = _ram;
-	next_instruction = 0x0;
 	cop0 = std::make_shared<Coprocessor0>(ram, shared_from_this());
 	cop2 = std::make_shared<Coprocessor2>(ram, shared_from_this());
 }
@@ -93,32 +94,35 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 void Cpu::tick()
 {
 	unsigned int current_pc = pc;
-	unsigned int current_instruction = next_instruction;
+	unsigned int current_instuction = next_instruction;
 
 	next_instruction = ram->load_word(current_pc);
 
-	//std::cout << std::hex << pc << std::endl;
-
 	pc = current_pc + 4;
-	execute(current_instruction);
 
-	std::vector<unsigned int> to_delete;
-	for (auto it = delayed_loads.begin(); it != delayed_loads.end(); /* no increment */)
+	try
 	{
-		if (it->second.delay == 0)
-		{
-			if (it->first != 0) {
-				gp_registers[it->first] = it->second.value;
-			}
-			
-			it = delayed_loads.erase(it);
-		}
-		else
-		{
-			it->second.delay--;
-			++it;
-		}
+		execute(next_instruction);
 	}
+	catch(...)
+	{
+		cop0->set_control_register(Coprocessor0::register_names::EPC, pc);
+
+		unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+		pc = sr & (1 << 22) != 0 ? 0xbfc00180 : 0x80000080;
+		next_pc = pc + 4;
+
+		unsigned int mode = sr & 0x3f;
+		sr &= ~0x3f;
+		sr |= (mode << 2) & 0x3f;
+		cop0->set_control_register(Coprocessor0::register_names::SR, sr);
+
+		unsigned int cause = cop0->get_control_register(Coprocessor0::register_names::CAUSE);
+		cause <<= 2;
+		cop0->set_control_register(Coprocessor0::register_names::CAUSE, cause);
+	}
+
+	register_file.merge();
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -127,7 +131,6 @@ void Cpu::execute(unsigned int instruction)
 	instr.raw = instruction;
 
 	cpu_instructions opcode = static_cast<cpu_instructions>(instruction >> 26);
-	//std::cout << "Opcode: " << std::oct << (instruction >> 26) << std::endl;
 
 	auto fn_ptr = main_instructions[opcode];
 	(this->*fn_ptr)(instr);
@@ -162,7 +165,7 @@ void Cpu::execute_cop(const instruction_union& instr)
 
 unsigned int Cpu::get_register(int index) 
 {
-	return gp_registers[index];
+	return register_file.gp_registers[index];
 }
 
 void Cpu::set_register(int index, unsigned int value, bool delay) 
@@ -171,19 +174,13 @@ void Cpu::set_register(int index, unsigned int value, bool delay)
 	{
 		if (delay)
 		{
-			load_delay_entry entry;
-			entry.delay = 1;
-			entry.value = value;
-			delayed_loads[index] = entry;
+			register_file.shadow_gp_registers_first[index] = value;
 		}
 		else
 		{
-			auto it = delayed_loads.find(index);
-			if (it != delayed_loads.end())
-			{
-				delayed_loads.erase(it);
-			}
-			gp_registers[index] = value;
+			register_file.gp_registers[index] = value;
+			register_file.shadow_gp_registers_first[index] = value;
+			register_file.shadow_gp_registers_last[index] = value;
 		}
 	}
 }
@@ -197,15 +194,6 @@ unsigned int Cpu::get_immediate_base_addr(const instruction_union& instr)
 	return addr;
 }
 
-unsigned int Cpu::get_immediate_base_addr_unsigned(const instruction_union& instr)
-{
-	unsigned int offset = (unsigned short)instr.immediate_instruction.immediate;
-	unsigned int base = get_register(instr.immediate_instruction.rs);
-
-	unsigned int addr = offset + base;
-	return addr;
-}
-
 // load/store
 // LB rt, offset(base)
 void Cpu::load_byte(const instruction_union& instr) 
@@ -213,23 +201,35 @@ void Cpu::load_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned char value = ram->load_byte(addr);
 
-	set_register(instr.immediate_instruction.rt, value, true);
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		set_register(instr.immediate_instruction.rt, value, true);
+	}
 }
 
 // LBU rt, offset(base)
 void Cpu::load_byte_unsigned(const instruction_union& instr)
 {
-	unsigned int addr = get_immediate_base_addr_unsigned(instr);
-	unsigned char value = ram->load_byte(addr);
+	unsigned int addr = get_immediate_base_addr(instr);
+	int value = (char)ram->load_byte(addr);
 
-	set_register(instr.immediate_instruction.rt, value, true);
+	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	bool isolate_cache = sr & 0x00010000;
+
+	if (isolate_cache == false)
+	{
+		set_register(instr.immediate_instruction.rt, value, true);
+	}
 }
 
 // LH rt, offset(base)
 void Cpu::load_halfword(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned short value = ram->load_halfword(addr);
+	int value = (short)ram->load_halfword(addr);
 
 	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
@@ -243,7 +243,7 @@ void Cpu::load_halfword(const instruction_union& instr)
 // LHU rt, offset(base)
 void Cpu::load_halfword_unsigned(const instruction_union& instr)
 {
-	unsigned int addr = get_immediate_base_addr_unsigned(instr);
+	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load_halfword(addr);
 
 	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
@@ -583,6 +583,8 @@ void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 // MULT rs, rt
 void Cpu::mult(const instruction_union& instr)
 {
+	throw std::logic_error("not implemented");
+
 	long long result = (int)(get_register(instr.register_instruction.rs)) * (int)(get_register(instr.register_instruction.rt));
 	hi = result >> 32;
 	lo = result & 0xFFFF;
@@ -591,6 +593,8 @@ void Cpu::mult(const instruction_union& instr)
 // MULTU rs, rt
 void Cpu::mult_unsigned(const instruction_union& instr)
 {
+	throw std::logic_error("not implemented");
+
 	unsigned long long result = get_register(instr.register_instruction.rs) * get_register(instr.register_instruction.rt);
 	hi = result >> 32;
 	lo = result & 0xFFFF;
@@ -599,15 +603,49 @@ void Cpu::mult_unsigned(const instruction_union& instr)
 // DIV rs, rt
 void Cpu::div(const instruction_union& instr)
 {
-	hi = (int)get_register(instr.register_instruction.rs) / (int)get_register(instr.register_instruction.rt);
-	lo = (int)get_register(instr.register_instruction.rs) % (int)get_register(instr.register_instruction.rt);
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
+
+	if (rt_value == 0)
+	{
+		hi = rs_value;
+		if (rs_value >= 0)
+		{
+			lo = 0xffffffff;
+		}
+		else
+		{
+			lo = 1;
+		}
+	}
+	else if (rs_value == 0x80000000 && rt_value == -1)
+	{
+		hi = 0;
+		lo = 0x80000000;
+	}
+	else
+	{
+		hi = rs_value % rt_value;
+		lo = rs_value / rt_value;
+	}
 }
 
 // DIVU rs, rt
 void Cpu::div_unsigned(const instruction_union& instr)
 {
-	hi = get_register(instr.register_instruction.rs) / get_register(instr.register_instruction.rt);
-	lo = get_register(instr.register_instruction.rs) % get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+
+	if (rt_value == 0)
+	{
+		hi = rs_value;
+		lo = 0xffffffff;
+	}
+	else
+	{
+		hi = rs_value % rt_value;
+		lo = rs_value / rt_value;
+	}
 }
 
 // MFHI rd
@@ -660,7 +698,7 @@ void Cpu::jump_register(const instruction_union& instr)
 void Cpu::jump_and_link_register(const instruction_union& instr)
 {
 	set_register(instr.register_instruction.rd, pc);
-	pc - get_register(instr.register_instruction.rs);
+	pc = get_register(instr.register_instruction.rs);
 }
 
 // branch instructions
@@ -729,7 +767,13 @@ void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 // BGEZ rs, offset
 void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value >= 0)
+	{
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		pc += offset;
+		pc -= 4;
+	}
 }
 
 // BLTZAL rs, offset

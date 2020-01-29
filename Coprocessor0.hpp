@@ -25,6 +25,7 @@ public:
 	void execute(const instruction_union& instruction) final;
 
 	unsigned int get_control_register(register_names register_name);
+	void set_control_register(register_names register_name, unsigned int value);
 
 private:
 	unsigned int get_control_register(unsigned int index);

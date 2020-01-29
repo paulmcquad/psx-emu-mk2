@@ -23,14 +23,6 @@ private:
 	std::unordered_map<cpu_special_funcs, void (Cpu::*)(const instruction_union&)> special_instructions;
 	std::unordered_map<cpu_bconds, void (Cpu::*)(const instruction_union&)> bcond_instructions;
 
-	struct load_delay_entry
-	{
-		unsigned int value;
-		unsigned int delay;
-	};
-
-	std::map<unsigned int, load_delay_entry> delayed_loads;
-
 public:
 	Cpu();
 
@@ -45,18 +37,25 @@ public:
 	void set_register(int index, unsigned int value, bool delay = false);
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
-	unsigned int get_immediate_base_addr_unsigned(const instruction_union& instr);
 
-	unsigned int gp_registers[32] = { 0 };
-	unsigned int cp0_registers[16] = { 0 };
-	unsigned int cp2_data_registers[32] = { 0 };
-	unsigned int cp2_control_registers[32] = { 0 };
+	struct
+	{
+		unsigned int gp_registers[32] = { 0 };
+		unsigned int shadow_gp_registers_last[32] = { 0 };
+		unsigned int shadow_gp_registers_first[32] = { 0 };
+		void merge()
+		{
+			memcpy(&gp_registers, &shadow_gp_registers_last, sizeof(unsigned int) * 32);
+			memcpy(&shadow_gp_registers_last, &shadow_gp_registers_first, sizeof(unsigned int) * 32);
+		}
+	} register_file;
 
 	unsigned int hi = 0;
 	unsigned int lo = 0;
-	unsigned int pc = 0;
 
-	unsigned int next_instruction = 0x0;
+	unsigned int pc = 0;
+	unsigned int next_pc = 0;
+	unsigned int next_instruction = 0;
 
 	// load/store
 	void load_byte(const instruction_union& instr);

@@ -85,6 +85,12 @@ unsigned int Coprocessor0::get_control_register(Coprocessor0::register_names reg
 	return control_registers[index];
 }
 
+void Coprocessor0::set_control_register(Coprocessor0::register_names register_name, unsigned int value)
+{
+	unsigned int index = static_cast<unsigned int>(register_name);
+	control_registers[index] = value;
+}
+
 unsigned int Coprocessor0::get_control_register(unsigned int index)
 {
 	return control_registers[index];
