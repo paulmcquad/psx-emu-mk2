@@ -38,6 +38,8 @@ public:
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
 
+	// 3 stage register file to simulate the load delay
+	// shadow first -> shadow second -> gp_registers
 	struct
 	{
 		unsigned int gp_registers[32] = { 0 };

@@ -102,7 +102,7 @@ void Cpu::tick()
 
 	try
 	{
-		execute(next_instruction);
+		execute(current_instuction);
 	}
 	catch(...)
 	{
