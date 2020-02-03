@@ -97,8 +97,8 @@ void Cpu::tick()
 	current_pc = next_pc;
 	current_instruction = next_instruction;
 
-	next_pc += 4;
-	next_instruction = ram->load_word(next_pc);
+	next_instruction = ram->load_word(current_pc);
+	next_pc = current_pc + 4;
 
 	try
 	{
