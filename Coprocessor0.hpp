@@ -3,7 +3,7 @@
 class Ram;
 class Cpu;
 
-class Coprocessor0 : public Coprocessor {
+class Cop0 : public Cop {
 public:
 	enum class register_names : unsigned int
 	{
@@ -20,7 +20,7 @@ public:
 		PRID = 15
 	};
 
-	Coprocessor0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void execute(const instruction_union& instruction) final;
 

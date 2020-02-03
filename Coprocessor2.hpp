@@ -1,8 +1,8 @@
 #include "Coprocessor.hpp"
 
-class Coprocessor2 : public Coprocessor {
+class Cop2 : public Cop {
 public:
-	Coprocessor2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void execute(const instruction_union& instruction) final;
 
