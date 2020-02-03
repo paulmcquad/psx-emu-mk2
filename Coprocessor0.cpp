@@ -26,30 +26,16 @@ void Cop0::execute(const instruction_union& instruction)
 		} return;
 	}
 	
-	if (instruction.register_instruction.rs == 040)
+	if (instruction.register_instruction.rs == 0b10000)
 	{
-		cop0_instructions func = static_cast<cop0_instructions>(instruction.register_instruction.shamt);
+		cop0_instructions func = static_cast<cop0_instructions>(instruction.register_instruction.funct);
 		switch (func) {
-			case cop0_instructions::TLBR:
-			{
-				read_indexed_tlb_entry(instruction);
-			} break;
-			case cop0_instructions::TLBWI:
-			{
-				write_indexed_tlb_entry(instruction);
-			} break;
-			case cop0_instructions::TLBWR:
-			{
-				write_random_tlb_entry(instruction);
-			} break;
-			case cop0_instructions::TLBP:
-			{
-				probe_tlb_for_matching_entry(instruction);
-			} break;
 			case cop0_instructions::RFE:
 			{
 				restore_from_exception(instruction);
 			} break;
+			default:
+				throw std::logic_error("not supported on cop0");
 		}
 	}
 	else
@@ -156,26 +142,6 @@ void Cop0::move_to_cp0(const instruction_union& instr)
 void Cop0::move_from_cp0(const instruction_union& instr)
 {
 	move_from_cop(instr);
-}
-
-void Cop0::read_indexed_tlb_entry(const instruction_union& instr)
-{
-	throw std::logic_error("not supported on cop0");
-}
-
-void Cop0::write_indexed_tlb_entry(const instruction_union& instr)
-{
-	throw std::logic_error("not supported on cop0");
-}
-
-void Cop0::write_random_tlb_entry(const instruction_union& instr)
-{
-	throw std::logic_error("not supported on cop0");
-}
-
-void Cop0::probe_tlb_for_matching_entry(const instruction_union& instr)
-{
-	throw std::logic_error("not supported on cop0");
 }
 
 void Cop0::restore_from_exception(const instruction_union& instr)
