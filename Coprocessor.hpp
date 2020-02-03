@@ -5,10 +5,10 @@
 class Ram;
 class Cpu;
 
-class Coprocessor
+class Cop
 {
 public:
-	Coprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) { 
+	Cop(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) { 
 		ram = _ram;
 		cpu = _cpu;
 	};

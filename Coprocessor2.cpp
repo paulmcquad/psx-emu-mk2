@@ -5,13 +5,13 @@
 #include "MemoryMap.hpp"
 #include <stdexcept>
 
-Coprocessor2::Coprocessor2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
-	Coprocessor(_ram, _cpu)
+Cop2::Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
+	Cop(_ram, _cpu)
 {
 
 }
 
-void Coprocessor2::execute(const instruction_union& instruction)
+void Cop2::execute(const instruction_union& instruction)
 {
 	switch (static_cast<cpu_instructions>(instruction.immediate_instruction.op))
 	{
@@ -50,64 +50,64 @@ void Coprocessor2::execute(const instruction_union& instruction)
 	}
 }
 
-unsigned int Coprocessor2::get_data_register(unsigned int index)
+unsigned int Cop2::get_data_register(unsigned int index)
 {
 	return data_registers[index];
 }
 
-void Coprocessor2::set_data_register(unsigned int index, unsigned int value)
+void Cop2::set_data_register(unsigned int index, unsigned int value)
 {
 	data_registers[index] = value;
 }
 
-unsigned int Coprocessor2::get_control_register(unsigned int index)
+unsigned int Cop2::get_control_register(unsigned int index)
 {
 	return control_registers[index];
 }
 
-void Coprocessor2::set_control_register(unsigned int index, unsigned int value)
+void Cop2::set_control_register(unsigned int index, unsigned int value)
 {
 	control_registers[index] = value;
 }
 
-void Coprocessor2::load_word_to_cop(const instruction_union& instr)
+void Cop2::load_word_to_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
-void Coprocessor2::store_word_from_cop(const instruction_union& instr)
+void Cop2::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
 	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
-void Coprocessor2::move_to_cop(const instruction_union& instr)
+void Cop2::move_to_cop(const instruction_union& instr)
 {
 	unsigned int value = cpu->get_register(instr.register_instruction.rt);
 	set_data_register(instr.register_instruction.rd, value);
 }
 
-void Coprocessor2::move_from_cop(const instruction_union& instr)
+void Cop2::move_from_cop(const instruction_union& instr)
 {
 	unsigned value = get_data_register(instr.register_instruction.rd);
 	cpu->set_register(instr.register_instruction.rs, value);
 }
 
-void Coprocessor2::move_control_to_cop(const instruction_union& instr)
+void Cop2::move_control_to_cop(const instruction_union& instr)
 {
 	unsigned int value = cpu->get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
-void Coprocessor2::move_control_from_cop(const instruction_union& instr)
+void Cop2::move_control_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
 	cpu->set_register(instr.register_instruction.rt, value);
 }
 
-void Coprocessor2::move_control_to_cop_fun(const instruction_union& instr)
+void Cop2::move_control_to_cop_fun(const instruction_union& instr)
 {
 	throw std::logic_error("not implemented");
 }

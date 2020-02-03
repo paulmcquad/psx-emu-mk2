@@ -88,8 +88,8 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 	current_pc = BIOS_START;
 	next_pc = current_pc + 4;
 	ram = _ram;
-	cop0 = std::make_shared<Coprocessor0>(ram, shared_from_this());
-	cop2 = std::make_shared<Coprocessor2>(ram, shared_from_this());
+	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
+	cop2 = std::make_shared<Cop2>(ram, shared_from_this());
 }
 
 void Cpu::tick()
@@ -106,23 +106,21 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
-		cop0->set_control_register(Coprocessor0::register_names::EPC, current_pc);
+		cop0->set_control_register(Cop0::register_names::EPC, current_pc);
 
-		unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+		unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 		bool bev = sr & (1 << 22) != 0;
 		next_pc = bev ? 0xbfc00180 : 0x80000080;
 
 		unsigned int mode = sr & 0x3f;
 		sr &= ~0x3f;
 		sr |= (mode << 2) & 0x3f;
-		cop0->set_control_register(Coprocessor0::register_names::SR, sr);
+		cop0->set_control_register(Cop0::register_names::SR, sr);
 
-		unsigned int cause = cop0->get_control_register(Coprocessor0::register_names::CAUSE);
+		unsigned int cause = cop0->get_control_register(Cop0::register_names::CAUSE);
 		cause <<= 2;
-		cop0->set_control_register(Coprocessor0::register_names::CAUSE, cause);
+		cop0->set_control_register(Cop0::register_names::CAUSE, cause);
 	}
-
-	register_file.merge();
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -168,19 +166,17 @@ unsigned int Cpu::get_register(int index)
 	return gp_registers[index];
 }
 
-void Cpu::set_register(int index, unsigned int value, bool delay) 
+void Cpu::set_register(int index, unsigned int value, bool load_delay) 
 {
 	if (index != 0)
 	{
-		if (delay)
+		if (load_delay)
 		{
-			register_file.shadow_gp_registers_first[index] = value;
+			throw std::logic_error("load delay not implemented");
 		}
 		else
 		{
 			register_file.gp_registers[index] = value;
-			register_file.shadow_gp_registers_first[index] = value;
-			register_file.shadow_gp_registers_last[index] = value;
 		}
 	}
 }
@@ -201,7 +197,7 @@ void Cpu::load_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned char value = ram->load_byte(addr);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -216,7 +212,7 @@ void Cpu::load_byte_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	int value = (char)ram->load_byte(addr);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -231,7 +227,7 @@ void Cpu::load_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	int value = (short)ram->load_halfword(addr);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -246,7 +242,7 @@ void Cpu::load_halfword_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load_halfword(addr);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -261,7 +257,7 @@ void Cpu::load_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = ram->load_word(addr);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -288,7 +284,7 @@ void Cpu::store_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -303,7 +299,7 @@ void Cpu::store_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)
@@ -318,7 +314,7 @@ void Cpu::store_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	unsigned int sr = cop0->get_control_register(Coprocessor0::register_names::SR);
+	unsigned int sr = cop0->get_control_register(Cop0::register_names::SR);
 	bool isolate_cache = sr & 0x00010000;
 
 	if (isolate_cache == false)

@@ -3,8 +3,8 @@
 #include <unordered_map>
 #include "InstructionTypes.hpp"
 
-class Coprocessor0;
-class Coprocessor2;
+class Cop0;
+class Cop2;
 class Ram;
 
 enum class cpu_instructions : unsigned char;
@@ -18,8 +18,8 @@ enum class cpu_bconds : unsigned char;
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 private:
-	std::shared_ptr<Coprocessor0> cop0 = nullptr;
-	std::shared_ptr<Coprocessor2> cop2 = nullptr;
+	std::shared_ptr<Cop0> cop0 = nullptr;
+	std::shared_ptr<Cop2> cop2 = nullptr;
 
 	std::shared_ptr<Ram> ram = nullptr;
 
