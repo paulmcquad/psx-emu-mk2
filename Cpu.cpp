@@ -121,6 +121,8 @@ void Cpu::tick()
 		cause <<= 2;
 		cop0->set_control_register(Cop0::register_names::CAUSE, cause);
 	}
+
+	register_file.merge();
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -163,7 +165,7 @@ void Cpu::execute_cop(const instruction_union& instr)
 
 unsigned int Cpu::get_register(int index) 
 {
-	return gp_registers[index];
+	return register_file.gp_registers[index];
 }
 
 void Cpu::set_register(int index, unsigned int value, bool load_delay) 
@@ -172,11 +174,13 @@ void Cpu::set_register(int index, unsigned int value, bool load_delay)
 	{
 		if (load_delay)
 		{
-			throw std::logic_error("load delay not implemented");
+			register_file.shadow_gp_registers_first[index] = value;
 		}
 		else
 		{
 			register_file.gp_registers[index] = value;
+			register_file.shadow_gp_registers_first[index] = value;
+			register_file.shadow_gp_registers_last[index] = value;
 		}
 	}
 }

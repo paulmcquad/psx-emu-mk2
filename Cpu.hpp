@@ -56,8 +56,6 @@ public:
 
 	unsigned int get_immediate_base_addr(const instruction_union& instr);
 
-	unsigned int gp_registers[32] = { 0 };
-
 	unsigned int hi = 0;
 	unsigned int lo = 0;
 
