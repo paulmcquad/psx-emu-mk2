@@ -147,5 +147,5 @@ void Cop0::move_from_cp0(const instruction_union& instr)
 
 void Cop0::restore_from_exception(const instruction_union& instr)
 {
-	throw std::logic_error("not supported on cop0");
+	throw rfe();
 }

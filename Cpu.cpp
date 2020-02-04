@@ -118,7 +118,7 @@ void Cpu::tick()
 		Cop0::status_register sr;
 		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
 
-		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::COP0_BREAK_BEV0 : Cop0::exception_vector::COP0_BREAK_BEV1);
+		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::GENERAL_BEV0 : Cop0::exception_vector::GENERAL_BEV1);
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
