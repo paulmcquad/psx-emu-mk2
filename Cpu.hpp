@@ -65,6 +65,8 @@ public:
 	unsigned int current_instruction = 0;
 	unsigned int next_instruction = 0;
 
+	bool in_delay_slot = false;
+
 	// load/store
 	void load_byte(const instruction_union& instr);
 	void load_byte_unsigned(const instruction_union& instr);

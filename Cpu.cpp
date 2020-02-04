@@ -106,7 +106,14 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
-		cop0->set_control_register(Cop0::register_names::EPC, current_pc);
+		if (in_delay_slot) {
+			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
+			throw std::logic_error("not implented");
+			// todo add cause register setting
+		}
+		else {
+			cop0->set_control_register(Cop0::register_names::EPC, current_pc);
+		}
 
 		Cop0::status_register sr;
 		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -121,6 +128,7 @@ void Cpu::tick()
 
 		unsigned int cause = cop0->get_control_register(Cop0::register_names::CAUSE);
 		cause <<= 2;
+		// TODO haven't actually set the cause here
 		cop0->set_control_register(Cop0::register_names::CAUSE, cause);
 
 		// dump the next instruction
@@ -128,10 +136,25 @@ void Cpu::tick()
 	}
 	catch (rfe& /*e*/)
 	{
+		Cop0::status_register sr;
+		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
 
+		unsigned int mode = sr.raw & 0x3f;
+		sr.raw &= ~0x3f;
+		sr.raw |= mode >> 2;
+
+		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
+
+		// dump the next instruction (double check this is necessary)
+		next_instruction = 0x0;
+	}
+	catch (...)
+	{
+		throw std::logic_error("not implemented yet");
 	}
 
 	register_file.merge();
+	in_delay_slot = false;
 }
 
 void Cpu::execute(unsigned int instruction)
@@ -688,6 +711,8 @@ void Cpu::jump(const instruction_union& instr)
 	unsigned int target = instr.jump_instruction.target << 2;
 
 	next_pc = target | (0xF0000000 & next_pc);
+
+	in_delay_slot = true;
 }
 
 // JAL target
@@ -701,6 +726,7 @@ void Cpu::jump_and_link(const instruction_union& instr)
 void Cpu::jump_register(const instruction_union& instr)
 {
 	next_pc = get_register(instr.register_instruction.rs);
+	in_delay_slot = true;
 }
 
 // JALR rs, rd
@@ -708,6 +734,7 @@ void Cpu::jump_and_link_register(const instruction_union& instr)
 {
 	set_register(instr.register_instruction.rd, next_pc);
 	next_pc = get_register(instr.register_instruction.rs);
+	in_delay_slot = true;
 }
 
 // branch instructions
@@ -721,6 +748,7 @@ void Cpu::branch_on_equal(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 
@@ -734,6 +762,7 @@ void Cpu::branch_on_not_equal(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 
@@ -746,6 +775,7 @@ void Cpu::branch_on_less_than_or_equal_zero(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 
@@ -758,6 +788,7 @@ void Cpu::branch_on_greater_than_zero(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 
@@ -770,6 +801,7 @@ void Cpu::branch_on_less_than_zero(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 
@@ -782,6 +814,7 @@ void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
 		next_pc += offset;
 		next_pc -= 4;
+		in_delay_slot = true;
 	}
 }
 

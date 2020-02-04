@@ -72,6 +72,30 @@ public:
 		};
 	};
 
+	union cause_register
+	{
+		unsigned int raw;
+		struct
+		{
+			// not used
+			unsigned int NA0 : 2;
+			// what kind of exception occured
+			unsigned int Excode : 5;
+			// not used
+			unsigned int NA1 : 1;
+			// interrupt pending
+			unsigned int Ip : 8;
+			// not used
+			unsigned int NA2 : 12;
+			// coprocessor number if exception occurred in it
+			unsigned int CE : 2;
+			// not used
+			unsigned int NA3 : 1;
+			// last exception points to exception
+			unsigned int BD : 1;
+		};
+	};
+
 	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void execute(const instruction_union& instruction) final;
