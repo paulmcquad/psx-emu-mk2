@@ -29,8 +29,9 @@ void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 {
 	std::ifstream bios_file(bios_filepath);
 	bios_file.seekg(0, std::ios::end);
-	unsigned int len = bios_file.tellg();
+	std::streampos len = bios_file.tellg();
 
+	// let's make sure the bios is the right length
 	assert(len == 1024 * 512);
 
 	bios_file.seekg(0, std::ios::beg);
@@ -143,6 +144,11 @@ void Ram::store_word(unsigned int address, unsigned int value)
 
 unsigned char* Ram::get_byte(unsigned int address)
 {
+	if (address == 0x1f8010f0)
+	{
+		printf("DMA access!");
+	}
+
 	// determine memory region
 	unsigned char segment_value = address >> 29;
 	memory_segment segment = memory_segment::KUSEG;

@@ -591,7 +591,11 @@ void Cpu::shift_right_arithmetic(const instruction_union& instr)
 // SLLV rd, rt, rs
 void Cpu::shift_left_logical_variable(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) << (0x1F & get_register(instr.register_instruction.rt));
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	// restrict shift values to lower 5 bits so shifts over 32 bits, result in effectively a NOP instruction
+	unsigned int value = rs_value << (0x1F & rt_value);
+
 	set_register(instr.register_instruction.rd, value);
 }
 

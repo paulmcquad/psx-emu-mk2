@@ -23,6 +23,8 @@ enum class gte_commands : unsigned char
 	NCCT = 0x3f
 };
 
+// note: these values are octals (thats why they start with 0), its how the R3000A opcode encode was defined
+// in http://hitmen.c02.at/files/docs/psx/psx.pdf so I just stuck with that to make it easier to compare
 enum class copz_instructions : unsigned char
 {
 	MF = 000,
