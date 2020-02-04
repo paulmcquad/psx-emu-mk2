@@ -3,6 +3,7 @@
 #include "InstructionEnums.hpp"
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
+#include "Exceptions.hpp"
 #include <stdexcept>
 
 Cop0::Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :

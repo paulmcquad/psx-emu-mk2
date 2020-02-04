@@ -7,8 +7,6 @@
 #include "InstructionEnums.hpp"
 #include "Exceptions.hpp"
 
-constexpr unsigned int BIOS_START = 0xbfc00000;
-
 Cpu::Cpu()
 {
 	main_instructions[cpu_instructions::ADDI] = &Cpu::add_immediate;
@@ -85,7 +83,7 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 {
 	current_instruction = 0;
 	next_instruction = 0;
-	current_pc = BIOS_START;
+	current_pc = static_cast<unsigned int>(Cop0::exception_vector::RESET);
 	next_pc = current_pc + 4;
 	ram = _ram;
 	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
@@ -120,14 +118,13 @@ void Cpu::tick()
 		Cop0::status_register sr;
 		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
 
-		next_pc = sr.BEV != 0 ? 0xbfc00180 : 0x80000080;
+		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::COP0_BREAK_BEV0 : Cop0::exception_vector::COP0_BREAK_BEV1);
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
 		sr.raw |= (mode << 2) & 0x3f;
 
 		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
-
 		
 		cause.Excode = static_cast<unsigned int>(Cop0::excode::Syscall);
 		cop0->set_control_register(Cop0::register_names::CAUSE, cause.raw);

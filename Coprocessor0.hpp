@@ -125,6 +125,18 @@ public:
 		Ov = 0x0C
 	};
 
+	enum class exception_vector : unsigned int
+	{
+		RESET = 0xBFC00000,
+		COP0_BREAK_BEV0 = 0x80000040,
+		COP0_BREAK_BEV1 = 0xBFC00140,
+		GENERAL_BEV0 = 0x80000080,
+		GENERAL_BEV1 = 0xBFC00180,
+		// not used
+		UTLB_MISS_BEV0 = 0x80000000,
+		UTLB_MISS_BEV1 = 0xBFC00100
+	};
+
 	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void execute(const instruction_union& instruction) final;
