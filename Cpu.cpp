@@ -106,10 +106,12 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
+		Cop0::cause_register cause;
+		cause.raw = cop0->get_control_register(Cop0::register_names::CAUSE);
+
 		if (in_delay_slot) {
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
-			throw std::logic_error("not implented");
-			// todo add cause register setting
+			cause.BD = true;
 		}
 		else {
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc);
@@ -126,10 +128,9 @@ void Cpu::tick()
 
 		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
 
-		unsigned int cause = cop0->get_control_register(Cop0::register_names::CAUSE);
-		cause <<= 2;
-		// TODO haven't actually set the cause here
-		cop0->set_control_register(Cop0::register_names::CAUSE, cause);
+		
+		cause.Excode = static_cast<unsigned int>(Cop0::excode::Syscall);
+		cop0->set_control_register(Cop0::register_names::CAUSE, cause.raw);
 
 		// dump the next instruction
 		next_instruction = 0x0;

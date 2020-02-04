@@ -45,7 +45,7 @@ public:
 			unsigned int Isc : 1;
 			// swapped cache mode (not used by psx)
 			unsigned int Swc : 1;
-			// set cahce parity bits 0
+			// set cache parity bits 0
 			unsigned int PZ : 1;
 			// result of last load operation with the D-cache isolated
 			unsigned int CM : 1;
@@ -94,6 +94,35 @@ public:
 			// last exception points to exception
 			unsigned int BD : 1;
 		};
+	};
+
+	enum class excode : unsigned int
+	{
+		// interrupt
+		INT = 0x00,
+		// not used
+		MOD = 0x01,
+		TLBL = 0x02,
+		TLBS = 0x03,
+		// address error, data load or instruction fetch
+		AdEL = 0x04,
+		// address error, data store, outside KUseg in user mode or
+		// misaligned address
+		AdES = 0x05,
+		// Bus error on instruction fetch
+		IBE = 0x06,
+		// Bus error on data load/store
+		DBE = 0x07,
+		// syscall
+		Syscall = 0x08,
+		// breakpoint
+		BP = 0x09,
+		// reserved instruction
+		RI = 0x0A,
+		// coprocessor unusable
+		CpU = 0x0B,
+		// arithmetic overflow
+		Ov = 0x0C
 	};
 
 	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
