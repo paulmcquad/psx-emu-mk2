@@ -15,17 +15,55 @@ class Ram {
 public:
 	void init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports);
 
-	unsigned char load_byte(unsigned int address);
-	unsigned short load_halfword(unsigned int address);
-	unsigned int load_word(unsigned int address);
+	// for the moment i'm not going to bother checking for unaligned loads or stores
+	// I am going to work under the assumption that normal programs don't do them
+	// except through the specific unaligned loading/storing instructions
+	template <class T>
+	T load(unsigned int address)
+	{
+		T result = 0;
 
-	void store_byte(unsigned int address, unsigned char value);
-	void store_halfword(unsigned int address, unsigned short value);
-	void store_word(unsigned int address, unsigned int value);
+		unsigned int num_bytes = sizeof(T);
+		for (int offset = num_bytes - 1; offset >= 0; offset--)
+		{
+			unsigned int current_address = address + offset;
+			result <<= 8;
+			result |= load<unsigned char>(current_address);
+		}
+
+		return result;
+	};
+
+	template <>
+	unsigned char load<unsigned char>(unsigned int address)
+	{
+		unsigned char *memory = get_memory_ptr(address, true);
+		return *memory;
+	};
+
+	template <class T>
+	void store(unsigned int address, T value)
+	{
+		unsigned int num_bytes = sizeof(T);
+		for (int offset = num_bytes - 1; offset >= 0; offset--)
+		{
+			unsigned int current_address = address + offset;
+			unsigned char byte_value = value & 0xFF;
+			value >>= 8;
+			store<unsigned char>(current_address, byte_value);
+		}
+	};
+
+	template<>
+	void store<unsigned char>(unsigned int address, unsigned char value)
+	{
+		unsigned char *memory = get_memory_ptr(address, true);
+		*memory = value;
+	};
 
 private:
 
-	unsigned char* get_byte(unsigned int address);
+	unsigned char* get_memory_ptr(unsigned int address, bool read_access);
 
 	// four SRAM chips of 512KB
 	unsigned char memory[MAIN_MEMORY_SIZE] = { 0 };

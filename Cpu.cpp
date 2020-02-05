@@ -95,7 +95,7 @@ void Cpu::tick()
 	current_pc = next_pc;
 	current_instruction = next_instruction;
 
-	next_instruction = ram->load_word(current_pc);
+	next_instruction = ram->load<unsigned int>(current_pc);
 	next_pc = current_pc + 4;
 
 	try
@@ -142,9 +142,6 @@ void Cpu::tick()
 		sr.raw |= mode >> 2;
 
 		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
-
-		// dump the next instruction (double check this is necessary)
-		next_instruction = 0x0;
 	}
 	catch (...)
 	{
@@ -229,7 +226,7 @@ unsigned int Cpu::get_immediate_base_addr(const instruction_union& instr)
 void Cpu::load_byte(const instruction_union& instr) 
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned char value = ram->load_byte(addr);
+	unsigned char value = ram->load<unsigned char>(addr);
 
 	Cop0::status_register sr;
 	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -244,7 +241,7 @@ void Cpu::load_byte(const instruction_union& instr)
 void Cpu::load_byte_unsigned(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	int value = (char)ram->load_byte(addr);
+	int value = (char)ram->load<unsigned char>(addr);
 
 	Cop0::status_register sr;
 	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -259,7 +256,7 @@ void Cpu::load_byte_unsigned(const instruction_union& instr)
 void Cpu::load_halfword(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	int value = (short)ram->load_halfword(addr);
+	int value = (short)ram->load<unsigned short>(addr);
 
 	Cop0::status_register sr;
 	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -274,7 +271,7 @@ void Cpu::load_halfword(const instruction_union& instr)
 void Cpu::load_halfword_unsigned(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned short value = ram->load_halfword(addr);
+	unsigned short value = ram->load<unsigned short>(addr);
 
 	Cop0::status_register sr;
 	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -289,7 +286,7 @@ void Cpu::load_halfword_unsigned(const instruction_union& instr)
 void Cpu::load_word(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-	unsigned int value = ram->load_word(addr);
+	unsigned int value = ram->load<unsigned int>(addr);
 
 	Cop0::status_register sr;
 	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
@@ -323,7 +320,7 @@ void Cpu::store_byte(const instruction_union& instr)
 
 	if (sr.Isc == false)
 	{
-		ram->store_byte(addr, value);
+		ram->store<unsigned char>(addr, value);
 	}
 }
 
@@ -338,7 +335,7 @@ void Cpu::store_halfword(const instruction_union& instr)
 
 	if (sr.Isc == false)
 	{
-		ram->store_halfword(addr, value);
+		ram->store<unsigned short>(addr, value);
 	}
 }
 
@@ -353,7 +350,7 @@ void Cpu::store_word(const instruction_union& instr)
 
 	if (sr.Isc == false)
 	{
-		ram->store_word(addr, value);
+		ram->store<unsigned int>(addr, value);
 	}
 }
 

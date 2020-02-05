@@ -73,14 +73,14 @@ void Cop2::set_control_register(unsigned int index, unsigned int value)
 void Cop2::load_word_to_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
-	unsigned int word = ram->load_word(addr);
+	unsigned int word = ram->load<unsigned int>(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
 void Cop2::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
-	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
+	ram->store<unsigned int>(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
 void Cop2::move_to_cop(const instruction_union& instr)
