@@ -20,14 +20,17 @@ public:
 		PRID = 15
 	};
 
+	// convenience getter/setters as I was getting sick
+	// of getting unsigned int from the registers, setting the union struct
+	// altering it and then setting the register again with the struct.raw member variable
 	template <class T>
-	T get_control_register()
+	T get()
 	{
 		throw std::logic_error("unsupported");
 	}
 
 	template <class T>
-	void set_control_register(T value)
+	void set(T value)
 	{
 		throw std::logic_error("unsupported");
 	}
@@ -85,7 +88,7 @@ public:
 	};
 
 	template <>
-	status_register get_control_register<status_register>()
+	status_register get<status_register>()
 	{
 		status_register result;
 		result.raw = get_control_register(register_names::SR);
@@ -93,7 +96,7 @@ public:
 	}
 
 	template<>
-	void set_control_register<status_register>(status_register value)
+	void set<status_register>(status_register value)
 	{
 		set_control_register(register_names::SR, value.raw);
 	}
@@ -123,7 +126,7 @@ public:
 	};
 
 	template <>
-	cause_register get_control_register<cause_register>()
+	cause_register get<cause_register>()
 	{
 		cause_register result;
 		result.raw = get_control_register(register_names::CAUSE);
@@ -131,7 +134,7 @@ public:
 	}
 
 	template<>
-	void set_control_register<cause_register>(cause_register value)
+	void set<cause_register>(cause_register value)
 	{
 		set_control_register(register_names::CAUSE, value.raw);
 	}

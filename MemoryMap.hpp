@@ -29,7 +29,7 @@ public:
 	{
 		T result = 0;
 
-		unsigned int num_bytes = sizeof(T);
+		int num_bytes = sizeof(T);
 		for (int offset = num_bytes - 1; offset >= 0; offset--)
 		{
 			unsigned int current_address = address + offset;
@@ -50,7 +50,7 @@ public:
 	template <class T>
 	void store(unsigned int address, T value)
 	{
-		unsigned int num_bytes = sizeof(T);
+		int num_bytes = sizeof(T);
 		for (int offset = 0; offset < num_bytes; offset++)
 		{
 			unsigned int current_address = address + offset;

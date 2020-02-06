@@ -104,7 +104,7 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
-		Cop0::cause_register cause = cop0->get_control_register<Cop0::cause_register>();
+		Cop0::cause_register cause = cop0->get<Cop0::cause_register>();
 
 		if (in_delay_slot) {
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
@@ -114,30 +114,20 @@ void Cpu::tick()
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc);
 		}
 
-		Cop0::status_register sr = cop0->get_control_register<Cop0::status_register>();
+		Cop0::status_register sr = cop0->get<Cop0::status_register>();
 		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::GENERAL_BEV0 : Cop0::exception_vector::GENERAL_BEV1);
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
 		sr.raw |= (mode << 2) & 0x3f;
 
-		cop0->set_control_register<Cop0::status_register>(sr);
+		cop0->set<Cop0::status_register>(sr);
 		
 		cause.Excode = static_cast<unsigned int>(Cop0::excode::Syscall);
-		cop0->set_control_register<Cop0::cause_register>(cause);
+		cop0->set<Cop0::cause_register>(cause);
 
 		// dump the next instruction
 		next_instruction = 0x0;
-	}
-	catch (rfe& /*e*/)
-	{
-		Cop0::status_register sr = cop0->get_control_register<Cop0::status_register>();
-
-		unsigned int mode = sr.raw & 0x3f;
-		sr.raw &= ~0x3f;
-		sr.raw |= mode >> 2;
-
-		cop0->set_control_register<Cop0::status_register>(sr);
 	}
 	catch (...)
 	{
@@ -224,10 +214,7 @@ void Cpu::load_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned char value = ram->load<unsigned char>(addr);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		set_register(instr.immediate_instruction.rt, value, true);
 	}
@@ -239,10 +226,7 @@ void Cpu::load_byte_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	int value = (char)ram->load<unsigned char>(addr);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		set_register(instr.immediate_instruction.rt, value, true);
 	}
@@ -254,10 +238,7 @@ void Cpu::load_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	int value = (short)ram->load<unsigned short>(addr);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		set_register(instr.immediate_instruction.rt, value, true);
 	}
@@ -269,10 +250,7 @@ void Cpu::load_halfword_unsigned(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned short value = ram->load<unsigned short>(addr);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		set_register(instr.immediate_instruction.rt, value, true);
 	}
@@ -284,10 +262,7 @@ void Cpu::load_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = ram->load<unsigned int>(addr);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		set_register(instr.immediate_instruction.rt, value, true);
 	}
@@ -311,10 +286,7 @@ void Cpu::store_byte(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		ram->store<unsigned char>(addr, value);
 	}
@@ -326,10 +298,7 @@ void Cpu::store_halfword(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		ram->store<unsigned short>(addr, value);
 	}
@@ -341,10 +310,7 @@ void Cpu::store_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
-	Cop0::status_register sr;
-	sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
-	if (sr.Isc == false)
+	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		ram->store<unsigned int>(addr, value);
 	}

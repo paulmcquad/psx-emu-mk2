@@ -44,9 +44,3 @@ class coprocessor_unusable : public std::exception
 class interrupt : public std::exception
 {
 };
-
-// not a psx exception, I just want to use the exception
-// infrastructure to recover from an exception
-class rfe : public std::exception
-{
-};

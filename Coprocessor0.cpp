@@ -148,5 +148,11 @@ void Cop0::move_from_cp0(const instruction_union& instr)
 
 void Cop0::restore_from_exception(const instruction_union& instr)
 {
-	throw rfe();
+	Cop0::status_register sr = get<Cop0::status_register>();
+
+	unsigned int mode = sr.raw & 0x3f;
+	sr.raw &= ~0x3f;
+	sr.raw |= mode >> 2;
+
+	set<Cop0::status_register>(sr);
 }
