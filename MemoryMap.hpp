@@ -15,9 +15,15 @@ class Ram {
 public:
 	void init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports);
 
-	// for the moment i'm not going to bother checking for unaligned loads or stores
+	// =============================================================================
+	// These load/store templates replace a series of somewhat nasty reinterpret_casts
+	// of unsigned char pointers, I wasn't happy with relying on potentially unaligned
+	// and heavily aliased accesses so felt these templates were acceptable replacements.
+	//
+	// For the moment i'm not going to bother checking for unaligned loads or stores as
 	// I am going to work under the assumption that normal programs don't do them
 	// except through the specific unaligned loading/storing instructions
+	// =============================================================================
 	template <class T>
 	T load(unsigned int address)
 	{
