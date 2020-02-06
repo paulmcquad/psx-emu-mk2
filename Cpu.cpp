@@ -104,8 +104,7 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
-		Cop0::cause_register cause;
-		cause.raw = cop0->get_control_register(Cop0::register_names::CAUSE);
+		Cop0::cause_register cause = cop0->get_control_register<Cop0::cause_register>();
 
 		if (in_delay_slot) {
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
@@ -115,33 +114,30 @@ void Cpu::tick()
 			cop0->set_control_register(Cop0::register_names::EPC, current_pc);
 		}
 
-		Cop0::status_register sr;
-		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
-
+		Cop0::status_register sr = cop0->get_control_register<Cop0::status_register>();
 		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::GENERAL_BEV0 : Cop0::exception_vector::GENERAL_BEV1);
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
 		sr.raw |= (mode << 2) & 0x3f;
 
-		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
+		cop0->set_control_register<Cop0::status_register>(sr);
 		
 		cause.Excode = static_cast<unsigned int>(Cop0::excode::Syscall);
-		cop0->set_control_register(Cop0::register_names::CAUSE, cause.raw);
+		cop0->set_control_register<Cop0::cause_register>(cause);
 
 		// dump the next instruction
 		next_instruction = 0x0;
 	}
 	catch (rfe& /*e*/)
 	{
-		Cop0::status_register sr;
-		sr.raw = cop0->get_control_register(Cop0::register_names::SR);
+		Cop0::status_register sr = cop0->get_control_register<Cop0::status_register>();
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
 		sr.raw |= mode >> 2;
 
-		cop0->set_control_register(Cop0::register_names::SR, sr.raw);
+		cop0->set_control_register<Cop0::status_register>(sr);
 	}
 	catch (...)
 	{

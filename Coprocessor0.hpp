@@ -20,6 +20,18 @@ public:
 		PRID = 15
 	};
 
+	template <class T>
+	T get_control_register()
+	{
+		throw std::logic_error("unsupported");
+	}
+
+	template <class T>
+	void set_control_register(T value)
+	{
+		throw std::logic_error("unsupported");
+	}
+
 	union status_register
 	{
 		unsigned int raw;
@@ -72,6 +84,20 @@ public:
 		};
 	};
 
+	template <>
+	status_register get_control_register<status_register>()
+	{
+		status_register result;
+		result.raw = get_control_register(register_names::SR);
+		return result;
+	}
+
+	template<>
+	void set_control_register<status_register>(status_register value)
+	{
+		set_control_register(register_names::SR, value.raw);
+	}
+
 	union cause_register
 	{
 		unsigned int raw;
@@ -95,6 +121,20 @@ public:
 			unsigned int BD : 1;
 		};
 	};
+
+	template <>
+	cause_register get_control_register<cause_register>()
+	{
+		cause_register result;
+		result.raw = get_control_register(register_names::CAUSE);
+		return result;
+	}
+
+	template<>
+	void set_control_register<cause_register>(cause_register value)
+	{
+		set_control_register(register_names::CAUSE, value.raw);
+	}
 
 	enum class excode : unsigned int
 	{
