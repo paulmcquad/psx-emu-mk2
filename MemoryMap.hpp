@@ -45,7 +45,7 @@ public:
 	void store(unsigned int address, T value)
 	{
 		unsigned int num_bytes = sizeof(T);
-		for (int offset = num_bytes - 1; offset >= 0; offset--)
+		for (int offset = 0; offset < num_bytes; offset++)
 		{
 			unsigned int current_address = address + offset;
 			unsigned char byte_value = value & 0xFF;

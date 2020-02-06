@@ -84,7 +84,7 @@ void Cpu::init(std::shared_ptr<Ram> _ram)
 	current_instruction = 0;
 	next_instruction = 0;
 	current_pc = static_cast<unsigned int>(Cop0::exception_vector::RESET);
-	next_pc = current_pc + 4;
+	next_pc = current_pc;
 	ram = _ram;
 	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
 	cop2 = std::make_shared<Cop2>(ram, shared_from_this());
