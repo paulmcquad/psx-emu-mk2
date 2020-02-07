@@ -67,7 +67,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU")
 	{
 		/*
-		void set_on_less_than_unsigned_immediate(const instruction_union& instr);
 		void and_immediate(const instruction_union& instr);
 		void or_immediate(const instruction_union& instr);
 		void xor_immediate(const instruction_union& instr);
@@ -265,6 +264,30 @@ TEST_CASE("Cpu")
 				cpu->execute(instr.raw);
 				REQUIRE(cpu->get_register(1) == 0);
 			}
+		}
+
+		// and immediate [rt] = [rs] & immediate
+		{
+			cpu->set_register(1, 0x0); // result register
+			cpu->set_register(2, 0x0);
+
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ANDI);
+			instr.immediate_instruction.rt = 1;
+			instr.immediate_instruction.rs = 2;
+			instr.immediate_instruction.immediate = 0xFFFF;
+			cpu->execute(instr.raw);
+
+			REQUIRE(cpu->get_register(1) == 0x0);
+
+			cpu->set_register(2, 0xFFFFFFFF);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0x0000FFFF);
+
+			cpu->set_register(2, 0xFFFFFFFF);
+			instr.immediate_instruction.immediate = 0x0000;
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0x00000000);
 		}
 	}
 }
