@@ -67,9 +67,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU")
 	{
 		/*
-		void add_immediate(const instruction_union& instr);
-		void add_immediate_unsigned(const instruction_union& instr);
-		void set_on_less_than_immediate(const instruction_union& instr);
 		void set_on_less_than_unsigned_immediate(const instruction_union& instr);
 		void and_immediate(const instruction_union& instr);
 		void or_immediate(const instruction_union& instr);
@@ -89,7 +86,7 @@ TEST_CASE("Cpu")
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = 0x1;
-				cpu->add_immediate(instr);
+				cpu->execute(instr.raw);
 
 				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
 			}
@@ -104,7 +101,7 @@ TEST_CASE("Cpu")
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
-				cpu->add_immediate(instr);
+				cpu->execute(instr.raw);
 
 				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
 			}
@@ -120,7 +117,7 @@ TEST_CASE("Cpu")
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = 1;
 
-				REQUIRE_THROWS_AS(cpu->add_immediate(instr), overflow_exception);
+				REQUIRE_THROWS_AS(cpu->execute(instr.raw), overflow_exception);
 			}
 
 			// overflow exception thrown
@@ -134,7 +131,7 @@ TEST_CASE("Cpu")
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = -1;
 
-				REQUIRE_THROWS_AS(cpu->add_immediate(instr), overflow_exception);
+				REQUIRE_THROWS_AS(cpu->execute(instr.raw), overflow_exception);
 			}
 		}
 
@@ -146,11 +143,11 @@ TEST_CASE("Cpu")
 				cpu->set_register(2, 0xFFFFFFFE);
 
 				instruction_union instr;
-				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDIU);
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = 0x1;
-				cpu->add_immediate_unsigned(instr);
+				cpu->execute(instr.raw);
 
 				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
 			}
@@ -161,11 +158,11 @@ TEST_CASE("Cpu")
 				cpu->set_register(2, 0xFFFFFFFF);
 
 				instruction_union instr;
-				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDIU);
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
-				cpu->add_immediate_unsigned(instr);
+				cpu->execute(instr.raw);
 
 				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
 			}
@@ -176,12 +173,12 @@ TEST_CASE("Cpu")
 				cpu->set_register(2, INT_MAX);
 
 				instruction_union instr;
-				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDIU);
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = 1;
 
-				REQUIRE_NOTHROW(cpu->add_immediate_unsigned(instr));
+				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 			}
 
 			// overflow exception not thrown
@@ -190,12 +187,64 @@ TEST_CASE("Cpu")
 				cpu->set_register(2, INT_MIN);
 
 				instruction_union instr;
-				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDIU);
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = -1;
 
-				REQUIRE_NOTHROW(cpu->add_immediate_unsigned(instr));
+				REQUIRE_NOTHROW(cpu->execute(instr.raw));
+			}
+		}
+
+		// set on less than immediate [rt] = 1 if [rs] < immediate else 0
+		{
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 0x10);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::SLTI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 0x11;
+				cpu->execute(instr.raw);
+
+				REQUIRE(cpu->get_register(1) == 1);
+
+				instr.immediate_instruction.immediate = 0x09;
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0);
+			}
+
+			// extremes
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MAX);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::SLTI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 0;
+				cpu->execute(instr.raw);
+
+				REQUIRE(cpu->get_register(1) == 0);
+
+				cpu->set_register(2, INT_MIN);
+				cpu->execute(instr.raw);
+
+				REQUIRE(cpu->get_register(1) == 1);
+
+				cpu->set_register(2, 0x0);
+				instr.immediate_instruction.immediate = SHRT_MIN;
+				cpu->execute(instr.raw);
+
+				REQUIRE(cpu->get_register(1) == 0);
+
+				instr.immediate_instruction.immediate = SHRT_MAX;
+				cpu->execute(instr.raw);
+
+				REQUIRE(cpu->get_register(1) == 1);
 			}
 		}
 	}
