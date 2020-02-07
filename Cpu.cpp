@@ -404,7 +404,8 @@ void Cpu::or_immediate(const instruction_union& instr)
 // XORI rt, rs, immediate
 void Cpu::xor_immediate(const instruction_union& instr)
 {
-	unsigned int value = instr.immediate_instruction.immediate ^ get_register(instr.immediate_instruction.rs);
+	unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+	unsigned int value = rs_value ^ instr.immediate_instruction.immediate;
 	set_register(instr.immediate_instruction.rt, value);
 }
 
