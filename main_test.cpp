@@ -122,6 +122,20 @@ TEST_CASE("Cpu")
 
 				REQUIRE_THROWS_AS(cpu->add_immediate(instr), overflow_exception);
 			}
+
+			// overflow exception thrown
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MIN);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = -1;
+
+				REQUIRE_THROWS_AS(cpu->add_immediate(instr), overflow_exception);
+			}
 		}
 
 		// add immediate unsigned [rt] = [rs] + immediate
@@ -166,6 +180,20 @@ TEST_CASE("Cpu")
 				instr.immediate_instruction.rt = 1;
 				instr.immediate_instruction.rs = 2;
 				instr.immediate_instruction.immediate = 1;
+
+				REQUIRE_NOTHROW(cpu->add_immediate_unsigned(instr));
+			}
+
+			// overflow exception not thrown
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MIN);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = -1;
 
 				REQUIRE_NOTHROW(cpu->add_immediate_unsigned(instr));
 			}
