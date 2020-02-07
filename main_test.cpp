@@ -247,5 +247,24 @@ TEST_CASE("Cpu")
 				REQUIRE(cpu->get_register(1) == 1);
 			}
 		}
+
+		// set on less than unsigned immediate [rt] = 1 if [rs] < immediate else 0
+		{
+			// unsigned so INT_MIN will actually be a large positive value
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MIN);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::SLTIU);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 0x0;
+				cpu->execute(instr.raw);
+
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0);
+			}
+		}
 	}
 }

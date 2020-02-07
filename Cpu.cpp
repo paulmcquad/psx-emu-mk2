@@ -372,7 +372,7 @@ void Cpu::add_immediate_unsigned(const instruction_union& instr)
 void Cpu::set_on_less_than_immediate(const instruction_union& instr)
 {
 	int rs_value = get_register(instr.immediate_instruction.rs);
-	short immediate_value = instr.immediate_instruction.immediate;
+	int immediate_value = (short)instr.immediate_instruction.immediate;
 
 	set_register(instr.immediate_instruction.rt, rs_value < immediate_value ? 1 : 0);
 }
@@ -380,10 +380,10 @@ void Cpu::set_on_less_than_immediate(const instruction_union& instr)
 // SLTIU rt, rs, immediate
 void Cpu::set_on_less_than_unsigned_immediate(const instruction_union& instr)
 {
-	int rs_value = get_register(instr.immediate_instruction.rs);
-	short immediate_value = instr.immediate_instruction.immediate;
+	unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+	int immediate_value = (short)instr.immediate_instruction.immediate;
 
-	set_register(instr.immediate_instruction.rt, rs_value < immediate_value ? 1 : 0);
+	set_register(instr.immediate_instruction.rt, rs_value < (unsigned int)immediate_value ? 1 : 0);
 }
 
 // ANDI rt, rs, immediate
