@@ -67,7 +67,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU")
 	{
 		/*
-		void xor_immediate(const instruction_union& instr);
 		void load_upper_immediate(const instruction_union& instr);
 		*/
 
@@ -325,6 +324,27 @@ TEST_CASE("Cpu")
 			cpu->set_register(2, 0xFFFFFFFF);
 			cpu->execute(instr.raw);
 
+			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+		}
+
+		// lui [rt] = immediate << 16
+		{
+			cpu->set_register(1, 0x0); // result register
+			cpu->set_register(2, 0x0);
+
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LUI);
+			instr.immediate_instruction.rt = 1;
+			instr.immediate_instruction.rs = 2;
+			instr.immediate_instruction.immediate = 0xFFFF;
+			cpu->execute(instr.raw);
+
+			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+
+			cpu->set_register(2, 0x0000FFFF);
+			cpu->execute(instr.raw);
+
+			// the lower half of the word is not preserved
 			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
 		}
 	}
