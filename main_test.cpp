@@ -23,7 +23,7 @@ TEST_CASE("Cpu")
 	SECTION("r0 is always zero")
 	{
 		REQUIRE(cpu->get_register(0) == 0x0);
-		cpu->set_register(0, 0xABCD);
+		cpu->set_register(0, 0xDEADBEEF);
 		REQUIRE(cpu->get_register(0) == 0x0);
 	}
 
@@ -36,5 +36,29 @@ TEST_CASE("Cpu")
 			cpu->set_register(index, value);
 			REQUIRE(cpu->get_register(index) == value);
 		}
+	}
+
+	SECTION("little endian load/store")
+	{
+		REQUIRE(ram->load<unsigned int>(0) == 0x0);
+		REQUIRE(ram->load<unsigned short>(0) == 0x0);
+		REQUIRE(ram->load<unsigned char>(0) == 0x0);
+
+		ram->store<unsigned int>(0, 0xDEADBEEF);
+		REQUIRE(ram->load<unsigned int>(0) == 0xDEADBEEF);
+
+		REQUIRE(ram->load<unsigned char>(0) == 0xEF);
+		REQUIRE(ram->load<unsigned char>(1) == 0xBE);
+		REQUIRE(ram->load<unsigned char>(2) == 0xAD);
+		REQUIRE(ram->load<unsigned char>(3) == 0xDE);
+
+		REQUIRE(ram->load<unsigned short>(0) == 0xBEEF);
+		REQUIRE(ram->load<unsigned short>(2) == 0xDEAD);
+
+		ram->store<unsigned short>(0, 0xDEAD);
+		REQUIRE(ram->load<unsigned int>(0) == 0xDEADDEAD);
+
+		ram->store<unsigned char>(0, 0xEE);
+		REQUIRE(ram->load<unsigned int>(0) == 0xDEADDEEE);
 	}
 }
