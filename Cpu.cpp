@@ -105,13 +105,11 @@ void Cpu::tick()
 	catch(sys_call& /*e*/)
 	{
 		Cop0::cause_register cause = cop0->get<Cop0::cause_register>();
+		cop0->set_control_register(Cop0::register_names::EPC, current_pc);
 
 		if (in_delay_slot) {
-			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
 			cause.BD = true;
-		}
-		else {
-			cop0->set_control_register(Cop0::register_names::EPC, current_pc);
+			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
 		}
 
 		Cop0::status_register sr = cop0->get<Cop0::status_register>();

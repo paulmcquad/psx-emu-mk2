@@ -27,16 +27,16 @@ constexpr unsigned int BIOS_START     = 0x1fc00000;
 
 void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 {
-	std::ifstream bios_file(bios_filepath);
-	bios_file.seekg(0, std::ios::end);
-	std::streampos len = bios_file.tellg();
+	if (bios_filepath.empty() == false)
+	{
+		std::ifstream bios_file(bios_filepath);
+		bios_file.seekg(0, std::ios::end);
+		std::streampos len = bios_file.tellg();
 
-	// let's make sure the bios is the right length
-	assert(len == 1024 * 512);
-
-	bios_file.seekg(0, std::ios::beg);
-	bios_file.read((char*)&bios, len);
-	bios_file.close();
+		bios_file.seekg(0, std::ios::beg);
+		bios_file.read((char*)&bios, len);
+		bios_file.close();
+	}
 
 	io_ports = _io_ports;
 }
