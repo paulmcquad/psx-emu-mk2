@@ -9,6 +9,8 @@
 #include "Cpu.hpp"
 #include "IOPorts.hpp"
 #include "Coprocessor0.hpp"
+#include "InstructionEnums.hpp"
+#include "Exceptions.hpp"
 
 TEST_CASE("Cpu")
 {
@@ -60,5 +62,113 @@ TEST_CASE("Cpu")
 
 		ram->store<unsigned char>(0, 0xEE);
 		REQUIRE(ram->load<unsigned int>(0) == 0xDEADDEEE);
+	}
+
+	SECTION("ALU")
+	{
+		/*
+		void add_immediate(const instruction_union& instr);
+		void add_immediate_unsigned(const instruction_union& instr);
+		void set_on_less_than_immediate(const instruction_union& instr);
+		void set_on_less_than_unsigned_immediate(const instruction_union& instr);
+		void and_immediate(const instruction_union& instr);
+		void or_immediate(const instruction_union& instr);
+		void xor_immediate(const instruction_union& instr);
+		void load_upper_immediate(const instruction_union& instr);
+		*/
+
+		// add immediate [rt] = [rs] + immediate
+		{
+			// simple addition
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 0xFFFFFFFE);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 0x1;
+				cpu->add_immediate(instr);
+
+				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+			}
+
+			// simple addition of negative immediate
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 0xFFFFFFFF);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
+				cpu->add_immediate(instr);
+
+				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
+			}
+
+			// overflow exception thrown
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MAX);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 1;
+
+				REQUIRE_THROWS_AS(cpu->add_immediate(instr), overflow_exception);
+			}
+		}
+
+		// add immediate unsigned [rt] = [rs] + immediate
+		{
+			// simple addition
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 0xFFFFFFFE);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 0x1;
+				cpu->add_immediate_unsigned(instr);
+
+				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+			}
+
+			// simple addition of negative immediate
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 0xFFFFFFFF);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
+				cpu->add_immediate_unsigned(instr);
+
+				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
+			}
+
+			// overflow exception not thrown
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, INT_MAX);
+
+				instruction_union instr;
+				instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+				instr.immediate_instruction.rt = 1;
+				instr.immediate_instruction.rs = 2;
+				instr.immediate_instruction.immediate = 1;
+
+				REQUIRE_NOTHROW(cpu->add_immediate_unsigned(instr));
+			}
+		}
 	}
 }

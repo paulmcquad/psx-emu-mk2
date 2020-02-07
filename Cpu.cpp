@@ -335,16 +335,22 @@ void Cpu::add_immediate(const instruction_union& instr)
 
 	unsigned int value = rs_value + immediate;
 
-	if (immediate > 0 && rs_value > 0) {
-		if ((int)value < 0)
+	// check for overflow
+	{
+		int signed_value = value;
+		if (immediate >= 0 && rs_value >= 0)
 		{
-			throw overflow_exception();
+			if (signed_value < 0)
+			{
+				throw overflow_exception();
+			}
 		}
-	}
-	else if (immediate < 0 && rs_value < 0) {
-		if ((int)value > 0)
+		else if (immediate < 0 && rs_value < 0)
 		{
-			throw overflow_exception();
+			if (signed_value >= 0)
+			{
+				throw overflow_exception();
+			}
 		}
 	}
 
