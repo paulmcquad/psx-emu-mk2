@@ -62,7 +62,7 @@ Cpu::Cpu()
 	special_instructions[cpu_special_funcs::OR] = &Cpu::or;
 	special_instructions[cpu_special_funcs::SLL] = &Cpu::shift_left_logical;
 	special_instructions[cpu_special_funcs::SLLV] = &Cpu::shift_left_logical_variable;
-	special_instructions[cpu_special_funcs::SLT] = &Cpu::set_on_less_than_immediate;
+	special_instructions[cpu_special_funcs::SLT] = &Cpu::set_on_less_than;
 	special_instructions[cpu_special_funcs::SLTU] = &Cpu::set_on_less_than_unsigned;
 	special_instructions[cpu_special_funcs::SRA] = &Cpu::shift_right_arithmetic;
 	special_instructions[cpu_special_funcs::SRAV] = &Cpu::shift_right_arithmetic_variable;
@@ -471,16 +471,22 @@ void Cpu::sub(const instruction_union& instr)
 	int rt_value = get_register(instr.register_instruction.rt);
 	unsigned int value = rs_value - rt_value;
 	
-	if (rt_value > 0 && rs_value > 0) {
-		if ((int)value < 0)
+	// check for overflow
+	{
+		int signed_value = value;
+		if (rt_value >= 0 && rs_value >= 0)
 		{
-			throw overflow_exception();
+			if (signed_value < 0)
+			{
+				throw overflow_exception();
+			}
 		}
-	}
-	else if (rt_value < 0 && rs_value < 0) {
-		if ((int)value > 0)
+		else if (rt_value < 0 && rs_value < 0)
 		{
-			throw overflow_exception();
+			if (signed_value >= 0)
+			{
+				throw overflow_exception();
+			}
 		}
 	}
 	
