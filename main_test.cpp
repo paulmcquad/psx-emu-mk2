@@ -317,7 +317,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU registers")
 	{
 		/*
-	void xor(const instruction_union& instr);
 	void nor(const instruction_union& instr);
 		*/
 
@@ -646,6 +645,23 @@ TEST_CASE("Cpu")
 				cpu->set_register(3, 0xDEADBEEF);
 				cpu->execute(instr.raw);
 				REQUIRE(cpu->get_register(1) == 0x0);
+			}
+		}
+
+		// nor [rd 1] = !([rs 2] | [rt 3])
+		{
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::NOR);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rs = 2;
+			instr.register_instruction.rt = 3;
+
+			{
+				cpu->set_register(2, 0x0);
+				cpu->set_register(3, 0x0000FFFF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xFFFF0000);
 			}
 		}
 	}
