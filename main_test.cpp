@@ -317,7 +317,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU registers")
 	{
 		/*
-	void set_on_less_than(const instruction_union& instr);
 	void set_on_less_than_unsigned(const instruction_union& instr);
 	void and(const instruction_union& instr);
 	void or (const instruction_union& instr);
@@ -529,6 +528,48 @@ TEST_CASE("Cpu")
 
 				cpu->set_register(1, 0x0); // result register
 				cpu->set_register(2, 200);
+				cpu->set_register(3, 100);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0);
+
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, -200);
+				cpu->set_register(3, 100);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 1);
+
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, -100);
+				cpu->set_register(3, 0);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 1);
+			}
+		}
+
+		// sltu [rd 1] = 1 if [rs 2] < [rt 3] else 0
+		{
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SLTU);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rs = 2;
+			instr.register_instruction.rt = 3;
+
+			{
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 100);
+				cpu->set_register(3, 200);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 1);
+
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, 200);
+				cpu->set_register(3, 100);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0);
+
+				cpu->set_register(1, 0x0); // result register
+				cpu->set_register(2, -200);
 				cpu->set_register(3, 100);
 				cpu->execute(instr.raw);
 				REQUIRE(cpu->get_register(1) == 0);
