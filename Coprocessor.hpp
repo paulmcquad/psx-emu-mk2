@@ -23,6 +23,8 @@ public:
 	virtual void move_control_from_cop(const instruction_union& instr) = 0;
 	virtual void move_control_to_cop_fun(const instruction_union& instr) = 0;
 
+	virtual void reset() {};
+
 	std::shared_ptr<Ram> ram = nullptr;
 	std::shared_ptr<Cpu> cpu = nullptr;
 };

@@ -43,12 +43,19 @@ private:
 			memcpy(&gp_registers, &shadow_gp_registers_last, sizeof(unsigned int) * 32);
 			memcpy(&shadow_gp_registers_last, &shadow_gp_registers_first, sizeof(unsigned int) * 32);
 		}
+		void reset()
+		{
+			for (int index = 0; index < 32; index++)
+			{
+				gp_registers[index] = shadow_gp_registers_first[index] = shadow_gp_registers_last[index] = 0;
+			}
+		}
 	} register_file;
 
 public:
 	Cpu();
-
 	void init(std::shared_ptr<Ram> _ram);
+	void reset();
 	void tick();
 	void execute(unsigned int instruction);
 	void execute_special(const instruction_union& instr);

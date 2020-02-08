@@ -81,13 +81,21 @@ Cpu::Cpu()
 
 void Cpu::init(std::shared_ptr<Ram> _ram)
 {
+	ram = _ram;
+	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
+	cop2 = std::make_shared<Cop2>(ram, shared_from_this());
+	reset();
+}
+
+void Cpu::reset()
+{
 	current_instruction = 0;
 	next_instruction = 0;
 	current_pc = static_cast<unsigned int>(Cop0::exception_vector::RESET);
 	next_pc = current_pc;
-	ram = _ram;
-	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
-	cop2 = std::make_shared<Cop2>(ram, shared_from_this());
+	cop0->reset();
+	cop2->reset();
+	register_file.reset();
 }
 
 void Cpu::tick()
@@ -424,16 +432,22 @@ void Cpu::add(const instruction_union& instr)
 	int rt_value = get_register(instr.register_instruction.rt);
 	unsigned int value = rs_value + rt_value;
 
-	if (rt_value > 0 && rs_value > 0) {
-		if ((int)value < 0)
+	// check for overflow
+	{
+		int signed_value = value;
+		if (rt_value >= 0 && rs_value >= 0)
 		{
-			throw overflow_exception();
+			if (signed_value < 0)
+			{
+				throw overflow_exception();
+			}
 		}
-	}
-	else if (rt_value < 0 && rs_value < 0) {
-		if ((int)value > 0)
+		else if (rt_value < 0 && rs_value < 0)
 		{
-			throw overflow_exception();
+			if (signed_value >= 0)
+			{
+				throw overflow_exception();
+			}
 		}
 	}
 

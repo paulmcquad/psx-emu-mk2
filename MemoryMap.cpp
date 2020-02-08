@@ -41,6 +41,11 @@ void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 	io_ports = _io_ports;
 }
 
+void Ram::reset()
+{
+	// todo
+}
+
 unsigned char* Ram::get_memory_ptr(unsigned int address, bool read_access)
 {
 	if (address == 0x1f8010f0)
