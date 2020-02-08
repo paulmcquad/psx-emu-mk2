@@ -665,4 +665,67 @@ TEST_CASE("Cpu")
 			}
 		}
 	}
+
+	SECTION("ALU shifting")
+	{
+		/*
+		void shift_right_arithmetic_variable(const instruction_union& instr);
+		*/
+		instruction_union instr;
+		instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+		instr.register_instruction.rd = 1;
+		instr.register_instruction.rt = 2;
+		instr.register_instruction.rs = 3;
+		//sll [rd 1] = [rt 2] << shamt
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SLL);
+			instr.register_instruction.shamt = 16;
+			cpu->set_register(2, 0xDEADBEEF);
+			cpu->execute(instr.raw);
+
+			REQUIRE(cpu->get_register(1) == 0xBEEF0000);
+		}
+
+		//srl [rd 1] = [rt 2] >> shamt
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRL);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0x0000DEAD);
+		}
+
+		//sra [rd 1] = [rt 2] >> shamt
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRA);
+			cpu->set_register(2, 0xFFFF0000);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+		}
+
+		//sllv [rd 1] = [rt 2] << [rs 3]
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SLLV);
+			cpu->set_register(2, 0xDEADBEEF);
+			cpu->set_register(3, 8);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0xADBEEF00);
+		}
+
+		//srlv [rd 1] = [rt 2] >> [rs 3]
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRLV);
+			cpu->set_register(2, 0xDEADBEEF);
+			cpu->set_register(3, 8);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0x00DEADBE);
+		}
+
+		//srav [rd 1] = [rt 2] >> [rs 3]
+		{
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRAV);
+			cpu->set_register(2, 0xF0000000);
+			cpu->set_register(3, 8);
+			cpu->execute(instr.raw);
+			REQUIRE(cpu->get_register(1) == 0xFFF00000);
+		}
+	}
 };

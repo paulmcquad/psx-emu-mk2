@@ -532,21 +532,27 @@ void Cpu::and(const instruction_union& instr)
 // OR rd, rs, rt
 void Cpu::or(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) | get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value | rt_value;
 	set_register(instr.register_instruction.rd, value);
 }
 
 // XOR rd, rs, rt
 void Cpu::xor (const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) ^ get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rs_value ^ rt_value;
 	set_register(instr.register_instruction.rd, value);
 }
 
 // NOR rd, rs, rt
 void Cpu::nor(const instruction_union& instr)
 {
-	unsigned int value = ~(get_register(instr.register_instruction.rs) | get_register(instr.register_instruction.rt));
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = ~(rs_value | rt_value);
 	set_register(instr.register_instruction.rd, value);
 }
 
@@ -554,21 +560,24 @@ void Cpu::nor(const instruction_union& instr)
 // SLL rd, rt, shamt
 void Cpu::shift_left_logical(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rt) << instr.register_instruction.shamt;
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rt_value << instr.register_instruction.shamt;
 	set_register(instr.register_instruction.rd, value);
 }
 
 // SRL rd, rt, shamt
 void Cpu::shift_right_logical(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rt) >> instr.register_instruction.shamt;
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int value = rt_value >> instr.register_instruction.shamt;
 	set_register(instr.register_instruction.rd, value);
 }
 
 // SRA rd, rt, shamt
 void Cpu::shift_right_arithmetic(const instruction_union& instr)
 {
-	unsigned int value = (int)(get_register(instr.register_instruction.rt)) >> instr.register_instruction.shamt;
+	int rt_value = (int)(get_register(instr.register_instruction.rt));
+	unsigned int value =  rt_value >> instr.register_instruction.shamt;
 	set_register(instr.register_instruction.rd, value);
 }
 
@@ -578,7 +587,7 @@ void Cpu::shift_left_logical_variable(const instruction_union& instr)
 	unsigned int rs_value = get_register(instr.register_instruction.rs);
 	unsigned int rt_value = get_register(instr.register_instruction.rt);
 	// restrict shift values to lower 5 bits so shifts over 32 bits, result in effectively a NOP instruction
-	unsigned int value = rs_value << (0x1F & rt_value);
+	unsigned int value = rt_value << (0x1F & rs_value);
 
 	set_register(instr.register_instruction.rd, value);
 }
@@ -586,14 +595,18 @@ void Cpu::shift_left_logical_variable(const instruction_union& instr)
 // SRLV rd, rt, rs
 void Cpu::shift_right_logical_variable(const instruction_union& instr)
 {
-	unsigned int value = get_register(instr.register_instruction.rs) >> (0x1F & get_register(instr.register_instruction.rt));
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int value = rt_value >> (0x1F & rs_value);
 	set_register(instr.register_instruction.rd, value);
 }
 
 // SRAV rd, rt, rs
 void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 {
-	unsigned int value = (int)get_register(instr.register_instruction.rs) >> (0x1F & get_register(instr.register_instruction.rt));
+	int rt_value = get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int value = rt_value >> (0x1F & rs_value);
 	set_register(instr.register_instruction.rd, value);
 }
 
@@ -601,7 +614,9 @@ void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 // MULT rs, rt
 void Cpu::mult(const instruction_union& instr)
 {
-	long long result = (int)(get_register(instr.register_instruction.rs)) * (int)(get_register(instr.register_instruction.rt));
+	int rs_value = get_register(instr.register_instruction.rs);
+	int rt_value = get_register(instr.register_instruction.rt);
+	long long result = rs_value * rt_value;
 	hi = result >> 32;
 	lo = result & 0xFFFF;
 }
@@ -609,7 +624,9 @@ void Cpu::mult(const instruction_union& instr)
 // MULTU rs, rt
 void Cpu::mult_unsigned(const instruction_union& instr)
 {
-	unsigned long long result = get_register(instr.register_instruction.rs) * get_register(instr.register_instruction.rt);
+	unsigned int rs_value = get_register(instr.register_instruction.rs);
+	unsigned int rt_value = get_register(instr.register_instruction.rt);
+	unsigned long long result = rs_value * rt_value;
 	hi = result >> 32;
 	lo = result & 0xFFFF;
 }
