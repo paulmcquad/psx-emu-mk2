@@ -317,9 +317,6 @@ TEST_CASE("Cpu")
 	SECTION("ALU registers")
 	{
 		/*
-	void set_on_less_than_unsigned(const instruction_union& instr);
-	void and(const instruction_union& instr);
-	void or (const instruction_union& instr);
 	void xor(const instruction_union& instr);
 	void nor(const instruction_union& instr);
 		*/
@@ -573,6 +570,82 @@ TEST_CASE("Cpu")
 				cpu->set_register(3, 100);
 				cpu->execute(instr.raw);
 				REQUIRE(cpu->get_register(1) == 0);
+			}
+		}
+
+		// and [rd 1] = [rs 2] & [rt 3]
+		{
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::AND);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rs = 2;
+			instr.register_instruction.rt = 3;
+
+			{
+				cpu->set_register(2, 0xDEAD0000);
+				cpu->set_register(3, 0x0000BEEF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0x0);
+
+				cpu->set_register(2, 0xDEADBEEF);
+				cpu->set_register(3, 0x0000FFFF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xBEEF);
+
+				cpu->set_register(2, 0xDEADBEEF);
+				cpu->set_register(3, 0xDEAD0000);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xDEAD0000);
+			}
+		}
+
+		// or [rd 1] = [rs 2] | [rt 3]
+		{
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::OR);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rs = 2;
+			instr.register_instruction.rt = 3;
+
+			{
+				cpu->set_register(2, 0xDEAD0000);
+				cpu->set_register(3, 0x0000BEEF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xDEADBEEF);
+
+				cpu->set_register(2, 0xDEADBEEF);
+				cpu->set_register(3, 0x0000FFFF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xDEADFFFF);
+
+				cpu->set_register(2, 0xDEADBEEF);
+				cpu->set_register(3, 0xFFFF0000);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xFFFFBEEF);
+			}
+		}
+
+		// xor [rd 1] = [rs 2] ^ [rt 3]
+		{
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::XOR);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rs = 2;
+			instr.register_instruction.rt = 3;
+
+			{
+				cpu->set_register(2, 0xDEAD0000);
+				cpu->set_register(3, 0x0000BEEF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0xDEADBEEF);
+
+				cpu->set_register(2, 0xDEADBEEF);
+				cpu->set_register(3, 0xDEADBEEF);
+				cpu->execute(instr.raw);
+				REQUIRE(cpu->get_register(1) == 0x0);
 			}
 		}
 	}
