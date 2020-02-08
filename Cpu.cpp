@@ -601,8 +601,6 @@ void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 // MULT rs, rt
 void Cpu::mult(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
-
 	long long result = (int)(get_register(instr.register_instruction.rs)) * (int)(get_register(instr.register_instruction.rt));
 	hi = result >> 32;
 	lo = result & 0xFFFF;
@@ -611,8 +609,6 @@ void Cpu::mult(const instruction_union& instr)
 // MULTU rs, rt
 void Cpu::mult_unsigned(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
-
 	unsigned long long result = get_register(instr.register_instruction.rs) * get_register(instr.register_instruction.rt);
 	hi = result >> 32;
 	lo = result & 0xFFFF;
