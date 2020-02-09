@@ -6,6 +6,8 @@
 #include <iostream>
 #include <GLFW/glfw3.h>
 
+constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
+
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -62,11 +64,24 @@ int main(int num_args, char ** args )
 	cpu->init(ram);
 
 	std::cout << "Running!\n";
+
+	double current_frame_time = 0.0;
 	while (!glfwWindowShouldClose(window))
 	{
+		auto start_time = glfwGetTime();
+
 		cpu->tick();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		gpu->tick();
+
+		auto end_time = glfwGetTime();
+		current_frame_time += end_time - start_time;
+
+		if (current_frame_time >= FRAME_TIME_SECS)
+		{
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+			current_frame_time = 0;
+		}
 	}
 
 	// cleanup

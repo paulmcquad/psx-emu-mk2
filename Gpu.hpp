@@ -6,6 +6,7 @@ class Gpu
 public:
 
 	void init();
+	void tick();
 
 	union
 	{
