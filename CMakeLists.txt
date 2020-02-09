@@ -11,6 +11,9 @@ add_subdirectory(glfw/)
 include_directories(includes/)
 
 set(source_files
+		glad.h
+		glad.c
+		khrplatform.h
 		Cpu.hpp
 		Cpu.cpp
 		MemoryMap.hpp
@@ -30,6 +33,6 @@ set(source_files
 )
 
 add_executable(psx-mk2 main.cpp ${source_files})
-target_link_libraries(psx-mk2 glew32s glfw)
+target_link_libraries(psx-mk2 glfw)
 
 add_executable(psx-mk2-test main_test.cpp ${source_files})

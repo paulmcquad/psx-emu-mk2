@@ -4,6 +4,7 @@
 #include "IOPorts.hpp"
 #include <memory>
 #include <iostream>
+#include "glad.h"
 #include <GLFW/glfw3.h>
 
 constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
@@ -40,8 +41,17 @@ int main(int num_args, char ** args )
 		return -1;
 	}
 
+	std::cout << "Creating context\n";
 	glfwSetKeyCallback(window, key_callback);
 	glfwMakeContextCurrent(window);
+
+	std::cout << "Initializing GLAD\n";
+	if (!gladLoadGL()) {
+		std::cerr << "Failed to initialize GLAD\n";
+		glfwDestroyWindow(window);
+		glfwTerminate();
+		return -1;
+	}
 
 	// Device I/O
 	std::cout << "Creating GPU\n";
