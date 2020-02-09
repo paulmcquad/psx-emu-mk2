@@ -4,9 +4,6 @@
 #include "IOPorts.hpp"
 #include <memory>
 
-#define GLFW_DLL
-#include <GLFW/glfw3.h>
-
 int main(int num_args, char ** args )
 {
 	if (num_args != 2)
