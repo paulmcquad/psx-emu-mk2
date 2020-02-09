@@ -42,20 +42,26 @@ int main(int num_args, char ** args )
 	glfwMakeContextCurrent(window);
 
 	// Device I/O
+	std::cout << "Creating GPU\n";
 	std::shared_ptr<Gpu> gpu = std::make_shared<Gpu>();
+	gpu->init();
 
+	std::cout << "Creating IO ports\n";
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
 	io_ports->init(gpu);
 
 	// RAM
+	std::cout << "Creating Ram\n";
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
 	std::string bios_file(args[1]);
 	ram->init(bios_file, io_ports);
 
 	// CPU
+	std::cout << "Creating CPU\n";
 	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
 	cpu->init(ram);
 
+	std::cout << "Running!\n";
 	while (!glfwWindowShouldClose(window))
 	{
 		cpu->tick();

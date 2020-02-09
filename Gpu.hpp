@@ -1,3 +1,4 @@
+#include <vector>
 constexpr unsigned int VRAM_SIZE = 1024 * 1024;
 
 class Gpu
@@ -70,6 +71,5 @@ public:
 		};
 	} GPUSTAT;
 
-	// causing out of heap failure
-	//unsigned char video_ram[VRAM_SIZE] = { 0 };
+	std::vector<unsigned char> video_ram;
 };
