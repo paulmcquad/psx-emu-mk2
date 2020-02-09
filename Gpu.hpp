@@ -70,5 +70,6 @@ public:
 		};
 	} GPUSTAT;
 
-	unsigned char video_ram[VRAM_SIZE] = { 0 };
+	// causing out of heap failure
+	//unsigned char video_ram[VRAM_SIZE] = { 0 };
 };
