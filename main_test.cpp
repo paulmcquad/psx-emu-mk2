@@ -668,9 +668,6 @@ TEST_CASE("Cpu")
 
 	SECTION("ALU shifting")
 	{
-		/*
-		void shift_right_arithmetic_variable(const instruction_union& instr);
-		*/
 		instruction_union instr;
 		instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
 		instr.register_instruction.rd = 1;
@@ -726,6 +723,54 @@ TEST_CASE("Cpu")
 			cpu->set_register(3, 8);
 			cpu->execute(instr.raw);
 			REQUIRE(cpu->get_register(1) == 0xFFF00000);
+		}
+	}
+
+	SECTION("Multiply/Divide")
+	{
+		/*
+		void mult(const instruction_union& instr);
+	void mult_unsigned(const instruction_union& instr);
+	void div(const instruction_union& instr);
+	void div_unsigned(const instruction_union& instr);
+	void move_from_hi(const instruction_union& instr);
+	void move_from_lo(const instruction_union& instr);
+	void move_to_hi(const instruction_union& instr);
+	void move_to_lo(const instruction_union& instr);
+		*/
+
+		instruction_union instr;
+		instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+		instr.register_instruction.rd = 1;
+		instr.register_instruction.rt = 2;
+		instr.register_instruction.rs = 3;
+		// mult hi,lo = [rs 3] * [rt 2]
+		{
+			/*instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::MULT);
+			cpu->set_register(3, INT_MAX);
+			cpu->set_register(2, 4);
+			cpu->execute(instr.raw);
+			unsigned long long result = cpu->lo;
+			result <<= 32;
+			result |= cpu->hi;
+			unsigned long long compare_result = INT_MAX;
+			compare_result *= 4;
+			REQUIRE(result == compare_result);*/
+		}
+
+		// multu hi,lo = rs * rt
+		{
+
+		}
+
+		// div hi = remainder, lo = quotient
+		{
+
+		}
+
+		// divu hi = remainer, lo = quotient
+		{
+
 		}
 	}
 };

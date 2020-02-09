@@ -612,7 +612,7 @@ void Cpu::shift_right_arithmetic_variable(const instruction_union& instr)
 
 // multiply/divide
 // MULT rs, rt
-void Cpu::mult(const instruction_union& instr)
+void Cpu::mult(const instruction_union& instr) 
 {
 	int rs_value = get_register(instr.register_instruction.rs);
 	int rt_value = get_register(instr.register_instruction.rt);
@@ -820,13 +820,29 @@ void Cpu::branch_on_greater_than_or_equal_zero(const instruction_union& instr)
 // BLTZAL rs, offset
 void Cpu::branch_on_less_than_zero_and_link(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value < 0)
+	{
+		set_register(instr.register_instruction.rd, next_pc);
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		next_pc += offset;
+		next_pc -= 4;
+		in_delay_slot = true;
+	}
 }
 
 // BGEZAL rs, offset
 void Cpu::branch_on_greater_than_or_equal_zero_and_link(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	int rs_value = get_register(instr.immediate_instruction.rs);
+	if (rs_value >= 0)
+	{
+		set_register(instr.register_instruction.rd, next_pc);
+		unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+		next_pc += offset;
+		next_pc -= 4;
+		in_delay_slot = true;
+	}
 }
 
 // special instructions

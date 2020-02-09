@@ -48,11 +48,6 @@ void Ram::reset()
 
 unsigned char* Ram::get_memory_ptr(unsigned int address, bool read_access)
 {
-	if (address == 0x1f8010f0)
-	{
-		printf("DMA access!");
-	}
-
 	// determine memory region
 	unsigned char segment_value = address >> 29;
 	memory_segment segment = memory_segment::KUSEG;
@@ -73,7 +68,7 @@ unsigned char* Ram::get_memory_ptr(unsigned int address, bool read_access)
 		{
 			if (address > KSEG2_START + 512)
 			{
-				return nullptr;
+				throw bus_error();
 			}
 			return &cache_control[address - KSEG2_START];
 		} break;
@@ -93,11 +88,11 @@ unsigned char* Ram::get_memory_ptr(unsigned int address, bool read_access)
 		return &scratch_pad[address - SCRATCH_START];
 	}
 	else if (address >= IO_START && address < IO_START + IO_PORTS_SIZE) {
-		return (*io_ports)[address - IO_START];
+		return io_ports->get(address - IO_START, read_access);
 	}
 	else if (address >= BIOS_START && address < BIOS_START + BIOS_SIZE) {
 		return &bios[address - BIOS_START];
 	}
 
-	return nullptr;
+	throw bus_error();
 }

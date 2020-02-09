@@ -17,6 +17,8 @@ set(source_files
 		InstructionEnums.hpp
 		IOPorts.hpp
 		IOPorts.cpp
+		Gpu.hpp
+		Gpu.cpp
 		Exceptions.hpp
 )
 
