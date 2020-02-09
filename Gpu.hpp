@@ -1,5 +1,8 @@
 #include <vector>
-constexpr unsigned int VRAM_SIZE = 1024 * 1024;
+constexpr unsigned int FRAME_WIDTH = 1024;
+constexpr unsigned int FRAME_HEIGHT = 512;
+constexpr unsigned int BYTES_PER_PIXEL = 3; // actually 2 bytes on the psx
+constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
 
 class Gpu
 {
@@ -73,4 +76,9 @@ public:
 	} GPUSTAT;
 
 	std::vector<unsigned char> video_ram;
+	unsigned int width = FRAME_WIDTH;
+	unsigned int height = FRAME_HEIGHT;
+
+private:
+	void draw_static();
 };

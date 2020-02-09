@@ -12,14 +12,19 @@ constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
 static const char* vertex_shader_src =
 "#version 150 core\n"
 "in vec2 position;\n"
+"in vec2 texcoord_in;\n"
+"out vec2 texcoord_out;\n"
 "void main(){\n"
+"texcoord_out = texcoord_in;\n"
 "gl_Position = vec4(position, 0.0, 1.0);}\n";
 
 static const char* frag_shader_src =
 "#version 150 core\n"
-"out vec4 outColor;\n"
+"in vec2 texcoord_out;\n"
+"out vec4 color_out;\n"
+"uniform sampler2D tex;\n"
 "void main(){\n"
-"outColor = vec4(1.0, 0.0, 0.0, 1.0);}\n";
+"color_out = texture(tex, texcoord_out);}\n";
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
@@ -66,7 +71,7 @@ int main(int num_args, char ** args )
 	}
 
 	std::cout << "Setting up OpenGL\n";
-	GLuint vao, vbo, vert_shader, frag_shader, shader_program;
+	GLuint vao, vbo, vert_shader, frag_shader, shader_program, tex;
 	{
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
@@ -74,12 +79,13 @@ int main(int num_args, char ** args )
 		glGenBuffers(1, &vbo);
 
 		float vertices[] = {
-		   -1.0f,  1.0f,
-			1.0f,  1.0f,
-		   -1.0f, -1.0f,
-		    1.0f,  1.0f,
-		    1.0f, -1.0f,
-		   -1.0f, -1.0f
+		//   X   |  Y  |   U  |   V
+		   -1.0f,  1.0f,  0.0f,  0.0f,
+			1.0f,  1.0f,  1.0f,  0.0f,
+		   -1.0f, -1.0f,  0.0f,  1.0f,
+		    1.0f,  1.0f,  1.0f,  0.0f,
+		    1.0f, -1.0f,  1.0f,  1.0f,
+		   -1.0f, -1.0f,  0.0f,  1.0f
 		};
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -101,9 +107,22 @@ int main(int num_args, char ** args )
 		glUseProgram(shader_program);
 
 		GLint pos_attrib = glGetAttribLocation(shader_program, "position");
-		glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
 		glEnableVertexAttribArray(pos_attrib);
+		glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+		GLint tex_attrib = glGetAttribLocation(shader_program, "texcoord_in");
+		glEnableVertexAttribArray(tex_attrib);
+		glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glUniform1i(glGetUniformLocation(shader_program, "text"), 0);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
 	// Device I/O
@@ -141,6 +160,8 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
+
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
@@ -153,6 +174,7 @@ int main(int num_args, char ** args )
 	}
 
 	// cleanup
+	glDeleteTextures(1, &tex);
 	glDeleteProgram(shader_program);
 	glDeleteShader(frag_shader);
 	glDeleteShader(vert_shader);
