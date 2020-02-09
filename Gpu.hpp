@@ -1,3 +1,5 @@
+constexpr unsigned int VRAM_SIZE = 1024 * 1024;
+
 class Gpu
 {
 public:
@@ -67,4 +69,6 @@ public:
 			unsigned int even_odd : 1;
 		};
 	} GPUSTAT;
+
+	unsigned char video_ram[VRAM_SIZE] = { 0 };
 };
