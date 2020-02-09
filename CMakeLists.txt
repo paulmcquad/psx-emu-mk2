@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 project (psx-emu-mk2)
 
-add_subdirectory(glfw)
-include_directories(includes/ glfw/include/)
-
 set(source_files
 		Cpu.hpp
 		Cpu.cpp
@@ -26,8 +23,6 @@ set(source_files
 add_executable(psx-mk2
 			main.cpp
             ${source_files})
-			
-target_link_libraries(psx-mk2 glfw ${GLFW_LIBRARIES})
 
 add_executable(psx-mk2-test 
             main_test.cpp
