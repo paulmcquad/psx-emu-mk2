@@ -4,8 +4,10 @@
 #include <typeinfo.h>
 
 constexpr unsigned int IO_START = 0x1F801000;
-constexpr unsigned int GP0_Send_GPUREAD = 0x1f801810 - IO_START;
-constexpr unsigned int GP1_Send_GPUSTAT = 0x1f801814 - IO_START;
+constexpr unsigned int GP0_Send_GPUREAD_START = 0x1f801810 - IO_START;
+constexpr unsigned int GP0_Send_GPUREAD_END = GP0_Send_GPUREAD_START + 4;
+constexpr unsigned int GP1_Send_GPUSTAT_START = 0x1f801814 - IO_START;
+constexpr unsigned int GP1_Send_GPUSTAT_END = GP1_Send_GPUSTAT_START + 4;
 
 constexpr unsigned int MEMORY_CONTROL_1_START = 0x1F801000 - IO_START;
 constexpr unsigned int MEMORY_CONTROL_1_END = MEMORY_CONTROL_1_START + MEMORY_CONTROL_1_SIZE;
@@ -40,26 +42,28 @@ void IOPorts::init(std::shared_ptr<Gpu> _gpu)
 
 unsigned char* IOPorts::get(unsigned int address, bool read)
 {
-	if (address == GP0_Send_GPUREAD)
+	if (address >= GP0_Send_GPUREAD_START &&
+		address < GP0_Send_GPUREAD_END)
 	{
 		if (read)
 		{
-			return gpu->GPUREAD.byte_value;
+			return &gpu->GPUREAD.byte_value[address - GP0_Send_GPUREAD_START];
 		}
 		else
 		{
-			return gpu->GP0_send.byte_value;
+			return &gpu->GP0_send.byte_value[address - GP0_Send_GPUREAD_START];
 		}
 	}
-	else if (address == GP1_Send_GPUSTAT)
+	else if (address >= GP1_Send_GPUSTAT_START &&
+		address < GP1_Send_GPUSTAT_END)
 	{
 		if (read)
 		{
-			return gpu->GPUSTAT.byte_value;
+			return &gpu->GPUSTAT.byte_value[address - GP1_Send_GPUSTAT_START];
 		}
 		else
 		{
-			return gpu->GP1_send.byte_value;
+			return &gpu->GP1_send.byte_value[address - GP1_Send_GPUSTAT_START];
 		}
 	}
 	else if (address >= MEMORY_CONTROL_1_START &&

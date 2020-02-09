@@ -12,9 +12,10 @@ int main(int num_args, char ** args )
 	}
 
 	// Device I/O
-
+	std::shared_ptr<Gpu> gpu = std::make_shared<Gpu>();
 
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
+	io_ports->init(gpu);
 
 	// RAM
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
