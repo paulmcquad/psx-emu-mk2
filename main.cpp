@@ -19,7 +19,7 @@ static const char* frag_shader_src =
 "#version 150 core\n"
 "out vec4 outColor;\n"
 "void main(){\n"
-"outColor = vec4(1.0, 1.0, 1.0, 1.0);}\n";
+"outColor = vec4(1.0, 0.0, 0.0, 1.0);}\n";
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
@@ -74,9 +74,12 @@ int main(int num_args, char ** args )
 		glGenBuffers(1, &vbo);
 
 		float vertices[] = {
-			0.0f,  0.5f,
-			0.5f, -0.5f,
-		   -0.5f, -0.5f
+		   -1.0f,  1.0f,
+			1.0f,  1.0f,
+		   -1.0f, -1.0f,
+		    1.0f,  1.0f,
+		    1.0f, -1.0f,
+		   -1.0f, -1.0f
 		};
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -141,7 +144,7 @@ int main(int num_args, char ** args )
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			glDrawArrays(GL_TRIANGLES, 0, 3);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
