@@ -1,4 +1,5 @@
 #include <memory>
+#include <vector>
 
 constexpr unsigned int DMA_SIZE = 128;
 
@@ -10,7 +11,7 @@ class Dma
 public:
 	union DMA_base_address
 	{
-		unsigned int raw;
+		unsigned char byte_value[4];
 		struct
 		{
 			unsigned int memory_address : 24;
@@ -20,7 +21,7 @@ public:
 
 	union DMA_block_control
 	{
-		unsigned int raw;
+		unsigned char byte_value[4];
 		struct
 		{
 			unsigned int BC : 16;
@@ -35,7 +36,7 @@ public:
 
 	union DMA_channel_control
 	{
-		unsigned int raw;
+		unsigned char byte_value[4];
 		struct
 		{
 			unsigned int transfer_direction : 1;
@@ -59,7 +60,31 @@ public:
 
 	union DMA_control_register
 	{
-		unsigned int raw;
+		unsigned char byte_value[4];
+		struct
+		{
+			unsigned int MDECin_priority : 3;
+			unsigned int MDECin_master_enable : 1;
+			unsigned int MDECout_priority : 3;
+			unsigned int MDECout_master_enable : 1;
+			unsigned int GPU_priority : 3;
+			unsigned int GPU_master_enable : 1;
+			unsigned int CDROM_priority : 3;
+			unsigned int CDROM_master_enable : 1;
+			unsigned int SPU_priority : 3;
+			unsigned int SPU_master_enable : 1;
+			unsigned int PIO_priority : 3;
+			unsigned int PIO_master_enable : 1;
+			unsigned int OTC_priority : 3;
+			unsigned int OTC_master_enable : 1;
+			unsigned int unknown_priority : 3;
+			unsigned int unknown_master_enable : 1;
+		};
+	};
+
+	union DMA_interrupt_register
+	{
+		unsigned char byte_value[4];
 		struct
 		{
 			unsigned int unknown : 6;
@@ -79,5 +104,9 @@ private:
 	std::shared_ptr<Ram> ram = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;
 
-	unsigned char dma_registers[DMA_SIZE] = { 0 };
+	std::vector<DMA_base_address> base_addresses;
+	std::vector<DMA_block_control> block_controls;
+	std::vector<DMA_channel_control> channel_controls;
+	DMA_control_register control_register;
+	DMA_interrupt_register interrupt_register;
 };
