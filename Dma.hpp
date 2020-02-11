@@ -1,5 +1,6 @@
 #include <memory>
 #include <vector>
+#include <map>
 
 constexpr unsigned int DMA_SIZE = 128;
 
@@ -109,4 +110,7 @@ private:
 	std::vector<DMA_channel_control> channel_controls;
 	DMA_control_register control_register;
 	DMA_interrupt_register interrupt_register;
+	unsigned char garbage[8] = { 0 };
+
+	std::map<unsigned int, unsigned char*> raw_ref_buffer;
 };
