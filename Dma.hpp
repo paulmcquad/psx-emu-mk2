@@ -1,6 +1,6 @@
 #include <memory>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 constexpr unsigned int DMA_SIZE = 128;
 
@@ -99,6 +99,7 @@ public:
 	};
 
 	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu);
+	void tick();
 	unsigned char * operator[](unsigned int address);
 private:
 
@@ -112,5 +113,5 @@ private:
 	DMA_interrupt_register interrupt_register;
 	unsigned char garbage[8] = { 0 };
 
-	std::map<unsigned int, unsigned char*> raw_ref_buffer;
+	std::unordered_map<unsigned int, unsigned char*> raw_ref_buffer;
 };

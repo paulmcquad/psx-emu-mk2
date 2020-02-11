@@ -1,4 +1,5 @@
 #include "Dma.hpp"
+#include <iostream>
 
 constexpr unsigned int NUM_CHANNELS = 7;
 
@@ -73,7 +74,13 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 	}
 }
 
+void Dma::tick()
+{
+
+}
+
 unsigned char * Dma::operator[](unsigned int address)
 {
+	std::cout << "DMA " << std::hex << address + DMA_START << std::endl;
 	return raw_ref_buffer[address];
 }

@@ -159,6 +159,7 @@ int main(int num_args, char ** args )
 		auto start_time = glfwGetTime();
 
 		cpu->tick();
+		dma->tick();
 		gpu->tick();
 
 		auto end_time = glfwGetTime();

@@ -5,7 +5,9 @@ void Gpu::init()
 	// I have to allocate all the vram memory at runtime or
     // else I get a compiler out of heap space issue at compile time
 	video_ram.resize(VRAM_SIZE, 128);
+	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	GPUSTAT.ready_dma = true;
+	GPUSTAT.ready_cmd_word = true;
 }
 
 void Gpu::tick()
