@@ -16,18 +16,19 @@ constexpr unsigned int I_MASK_SIZE = 4;
 
 constexpr unsigned int TIMER_SIZE = 45;
 
-constexpr unsigned int DMA_SIZE = 128;
-
 class Gpu;
+class Dma;
+
 class IOPorts
 {
 public:
-	void init(std::shared_ptr<Gpu> _gpu);
+	void init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma);
 
 	unsigned char* get(unsigned int address, bool read);
 
 private:
 	std::shared_ptr<Gpu> gpu = nullptr;
+	std::shared_ptr<Dma> dma = nullptr;
 
 	unsigned char memory_control_1[MEMORY_CONTROL_1_SIZE] = {0};
 	unsigned char memory_control_2[MEMORY_CONTROL_2_SIZE] = {0};
@@ -42,6 +43,4 @@ private:
 	unsigned char i_mask[I_MASK_SIZE] = { 0 };
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
-
-	unsigned char dma_registers[DMA_SIZE] = { 0 };
 };

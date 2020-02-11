@@ -1,11 +1,12 @@
 #include "MemoryMap.hpp"
+#include "Dma.hpp"
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "IOPorts.hpp"
-#include <memory>
-#include <iostream>
 #include "glad.h"
 #include <GLFW/glfw3.h>
+#include <memory>
+#include <iostream>
 
 constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
 
@@ -126,13 +127,15 @@ int main(int num_args, char ** args )
 	}
 
 	// Device I/O
+	std::shared_ptr<Dma> dma = std::make_shared<Dma>();
+
 	std::cout << "Creating GPU\n";
 	std::shared_ptr<Gpu> gpu = std::make_shared<Gpu>();
 	gpu->init();
 
 	std::cout << "Creating IO ports\n";
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-	io_ports->init(gpu);
+	io_ports->init(gpu, dma);
 
 	// RAM
 	std::cout << "Creating Ram\n";
@@ -144,6 +147,9 @@ int main(int num_args, char ** args )
 	std::cout << "Creating CPU\n";
 	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
 	cpu->init(ram);
+
+	std::cout << "Hooking up all peripherals to the DMA\n";
+	dma->init(ram, gpu);
 
 	std::cout << "Running!\n";
 

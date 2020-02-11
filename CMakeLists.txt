@@ -14,6 +14,8 @@ set(source_files
 		glad.h
 		glad.c
 		khrplatform.h
+		Dma.hpp
+		Dma.cpp
 		Cpu.hpp
 		Cpu.cpp
 		MemoryMap.hpp

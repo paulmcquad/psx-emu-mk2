@@ -1,5 +1,6 @@
 #include "IOPorts.hpp"
 #include "Gpu.hpp"
+#include "Dma.hpp"
 #include "Exceptions.hpp"
 #include <typeinfo.h>
 
@@ -35,9 +36,10 @@ constexpr unsigned int TIMER_END = TIMER_START + TIMER_SIZE;
 constexpr unsigned int DMA_START = 0x1F801080 - IO_START;
 constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 
-void IOPorts::init(std::shared_ptr<Gpu> _gpu)
+void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma)
 {
 	gpu = _gpu;
+	dma = _dma;
 }
 
 unsigned char* IOPorts::get(unsigned int address, bool read)
@@ -104,7 +106,7 @@ unsigned char* IOPorts::get(unsigned int address, bool read)
 	else if (address >= DMA_START &&
 		address < DMA_END)
 	{
-		return &dma_registers[address - DMA_START];
+		return (*dma)[address - DMA_START];
 	}
 	else if (address == POST)
 	{
