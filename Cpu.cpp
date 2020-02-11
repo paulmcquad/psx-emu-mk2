@@ -277,13 +277,33 @@ void Cpu::load_word(const instruction_union& instr)
 // LWL rt, offset(base)
 void Cpu::load_word_left(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr_aligned = addr & ~3;
+	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+
+	// can load on top of value currently in the pipeline
+	unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
+
+	unsigned int alignment = addr & 3;
+	unsigned int mask = 0x00ffffff >> (alignment * 8);
+	unsigned int new_value = (current_value & mask) | (aligned_value << ((3 - alignment) * 8));
+	set_register(instr.immediate_instruction.rt, new_value);
 }
 
 // LWR rt, offset(base)
 void Cpu::load_word_right(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr_aligned = addr & ~3;
+	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+
+	// can load on top of value currently in the pipeline
+	unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
+
+	unsigned int alignment = addr & 3;
+	unsigned int mask = 0xffffff00 << ((3 - alignment) * 8);
+	unsigned int new_value = (current_value & mask) | (aligned_value >> alignment * 8);
+	set_register(instr.immediate_instruction.rt, new_value);
 }
 
 // SB rt, offset(base)
@@ -325,13 +345,31 @@ void Cpu::store_word(const instruction_union& instr)
 // SWL rt, offset(base)
 void Cpu::store_word_left(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr_aligned = addr & ~3;
+	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+	unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
+
+	unsigned int alignment = addr & 3;
+	unsigned int mask = 0xffffff00 << (alignment * 8);
+
+	unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
+	ram->store<unsigned int>(addr_aligned, new_value);
 }
 
 // SWR rt, offset(base)
 void Cpu::store_word_right(const instruction_union& instr)
 {
-	throw std::logic_error("not implemented");
+	unsigned int addr = get_immediate_base_addr(instr);
+	unsigned int addr_aligned = addr & ~3;
+	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+	unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
+
+	unsigned int alignment = addr & 3;
+	unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
+
+	unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
+	ram->store<unsigned int>(addr_aligned, new_value);
 }
 
 // ALU immediate operations
