@@ -1,6 +1,4 @@
 #include <memory>
-#include <vector>
-#include <unordered_map>
 
 constexpr unsigned int DMA_SIZE = 128;
 
@@ -12,6 +10,7 @@ class Dma
 public:
 	union DMA_base_address
 	{
+		unsigned int int_value;
 		unsigned char byte_value[4];
 		struct
 		{
@@ -22,6 +21,7 @@ public:
 
 	union DMA_block_control
 	{
+		unsigned int int_value;
 		unsigned char byte_value[4];
 		struct
 		{
@@ -37,6 +37,7 @@ public:
 
 	union DMA_channel_control
 	{
+		unsigned int int_value;
 		unsigned char byte_value[4];
 		struct
 		{
@@ -61,6 +62,7 @@ public:
 
 	union DMA_control_register
 	{
+		unsigned int int_value;
 		unsigned char byte_value[4];
 		struct
 		{
@@ -99,6 +101,7 @@ public:
 	};
 
 	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu);
+	void reset();
 	void tick();
 	unsigned char * operator[](unsigned int address);
 private:
@@ -106,12 +109,10 @@ private:
 	std::shared_ptr<Ram> ram = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;
 
-	std::vector<DMA_base_address> base_addresses;
-	std::vector<DMA_block_control> block_controls;
-	std::vector<DMA_channel_control> channel_controls;
-	DMA_control_register control_register;
-	DMA_interrupt_register interrupt_register;
-	unsigned char garbage[8] = { 0 };
-
-	std::unordered_map<unsigned int, unsigned char*> raw_ref_buffer;
+	unsigned char dma_registers[DMA_SIZE] = { 0 };
+	unsigned int * base_address_registers[7] = { nullptr };
+	unsigned int * block_control_registers[7] = { nullptr };
+	unsigned int * channel_control_registers[7] = { nullptr };
+	unsigned int * control_register = nullptr;
+	unsigned int * interrupt_register = nullptr;
 };

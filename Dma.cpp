@@ -16,61 +16,31 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 	ram = _ram;
 	gpu = _gpu;
 
-	base_addresses.resize(NUM_CHANNELS);
-	block_controls.resize(NUM_CHANNELS);
-	channel_controls.resize(NUM_CHANNELS); 
-
-	for (int channel_idx = 0; channel_idx < NUM_CHANNELS; channel_idx++)
+	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
-		unsigned int register_offset = channel_idx * 0x10;
-
-		for (int byte_offset = 0; byte_offset < 4; byte_offset++)
-		{
-			{
-				unsigned char * byte_ref = &base_addresses[channel_idx].byte_value[byte_offset];
-				unsigned int addr = (DMA_BASE_ADDRESS_START + register_offset) + byte_offset;
-				raw_ref_buffer[addr] = byte_ref;
-			}
-
-			{
-				unsigned char * byte_ref = &block_controls[channel_idx].byte_value[byte_offset];
-				unsigned int addr = (DMA_BLOCK_CONTROL_START + register_offset) + byte_offset;
-				raw_ref_buffer[addr] = byte_ref;
-			}
-
-			{
-				unsigned char * byte_ref = &channel_controls[channel_idx].byte_value[byte_offset];
-				unsigned int addr = (DMA_CHANNEL_CONTROL_START + register_offset) + byte_offset;
-				raw_ref_buffer[addr] = byte_ref;
-			}
-		}
+		base_address_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BASE_ADDRESS_START + (chan_idx*16)]);
+		block_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BLOCK_CONTROL_START + (chan_idx * 16)]);
+		channel_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CHANNEL_CONTROL_START + (chan_idx * 16)]);
 	}
 
-	for (int byte_offset = 0; byte_offset < 4; byte_offset++)
+	control_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CONTROL_REGISTER_START]);
+	interrupt_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_INTERRUPT_REGISTER_START]);
+	
+	reset();
+}
+
+void Dma::reset()
+{
+	// reset control register
+	
+	*control_register = 0x07654321;
+	*interrupt_register = 0x0;
+
+	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
-		{
-			unsigned char * byte_ref = &control_register.byte_value[byte_offset];
-			unsigned int addr = DMA_CONTROL_REGISTER_START + byte_offset;
-			raw_ref_buffer[addr] = byte_ref;
-		}
-
-		{
-			unsigned char * byte_ref = &interrupt_register.byte_value[byte_offset];
-			unsigned int addr = DMA_INTERRUPT_REGISTER_START + byte_offset;
-			raw_ref_buffer[addr] = byte_ref;
-		}
-
-		{
-			unsigned char * byte_ref = &garbage[byte_offset];
-			unsigned int addr = DMA_GARBAGE_START + byte_offset;
-			raw_ref_buffer[addr] = byte_ref;
-		}
-
-		{
-			unsigned char * byte_ref = &garbage[byte_offset + 4];
-			unsigned int addr = DMA_GARBAGE_START + byte_offset + 4;
-			raw_ref_buffer[addr] = byte_ref;
-		}
+		*base_address_registers[chan_idx] = 0x0;
+		*block_control_registers[chan_idx] = 0x0;
+		*channel_control_registers[chan_idx] = 0x0;
 	}
 }
 
@@ -81,6 +51,5 @@ void Dma::tick()
 
 unsigned char * Dma::operator[](unsigned int address)
 {
-	std::cout << "DMA " << std::hex << address + DMA_START << std::endl;
-	return raw_ref_buffer[address];
+	return &dma_registers[address];
 }
