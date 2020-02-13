@@ -19,6 +19,7 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
+		// TODO make sure these are being set right - base register is wrong in tests
 		base_address_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BASE_ADDRESS_START + (chan_idx*16)]);
 		block_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BLOCK_CONTROL_START + (chan_idx * 16)]);
 		channel_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CHANNEL_CONTROL_START + (chan_idx * 16)]);
@@ -117,7 +118,7 @@ void Dma::sync_mode_manual(unsigned int channel, DMA_base_address& base_address,
 				throw std::logic_error("not implemented");
 			}
 			
-			addr += step == address_step::increment ? 4 : -4;
+			addr += (step == address_step::increment ? 4 : -4);
 		}
 
 		channel_control.start_busy = 0;
@@ -129,6 +130,7 @@ void Dma::sync_mode_request(unsigned int channel, DMA_base_address& base_address
 	channel_control.start_trigger = 0;
 
 	channel_type type = static_cast<channel_type>(channel);
+	throw std::logic_error("not implemented");
 	
 	channel_control.start_busy = 0;
 }
@@ -138,11 +140,17 @@ void Dma::sync_mode_linked_list(unsigned int channel, DMA_block_control& block_c
 	channel_control.start_trigger = 0;
 
 	channel_type type = static_cast<channel_type>(channel);
+	throw std::logic_error("not implemented");
 
 	channel_control.start_busy = 0;
 }
 
-unsigned char * Dma::operator[](unsigned int address)
+unsigned char Dma::get(unsigned int address)
 {
-	return &dma_registers[address];
+	return dma_registers[address];
+}
+
+void Dma::set(unsigned int address, unsigned char value)
+{
+	dma_registers[address] = value;
 }

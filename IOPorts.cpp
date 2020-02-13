@@ -43,75 +43,123 @@ void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma)
 	dma = _dma;
 }
 
-unsigned char* IOPorts::get(unsigned int address, bool read)
+unsigned char IOPorts::get(unsigned int address)
 {
 	if (address >= GP0_Send_GPUREAD_START &&
 		address < GP0_Send_GPUREAD_END)
 	{
-		if (read)
-		{
-			return &gpu->GPUREAD.byte_value[address - GP0_Send_GPUREAD_START];
-		}
-		else
-		{
-			return &gpu->GP0_send.byte_value[address - GP0_Send_GPUREAD_START];
-		}
+		return gpu->GPUREAD.byte_value[address - GP0_Send_GPUREAD_START];
 	}
 	else if (address >= GP1_Send_GPUSTAT_START &&
 		address < GP1_Send_GPUSTAT_END)
 	{
-		if (read)
-		{
-			return &gpu->GPUSTAT.byte_value[address - GP1_Send_GPUSTAT_START];
-		}
-		else
-		{
-			return &gpu->GP1_send.byte_value[address - GP1_Send_GPUSTAT_START];
-		}
+		return gpu->GPUSTAT.byte_value[address - GP1_Send_GPUSTAT_START];
 	}
 	else if (address >= MEMORY_CONTROL_1_START &&
 		address < MEMORY_CONTROL_1_END)
 	{
-		return &memory_control_1[address - MEMORY_CONTROL_1_START];
+		return memory_control_1[address - MEMORY_CONTROL_1_START];
 	}
 	else if (address >= MEMORY_CONTROL_2_START &&
 		address < MEMORY_CONTROL_2_END)
 	{
-		return &memory_control_2[address - MEMORY_CONTROL_2_START];
+		return memory_control_2[address - MEMORY_CONTROL_2_START];
 	}
 	else if (address >= SPU_CONTROL_START &&
 		address < SPU_CONTROL_END)
 	{
-		return &spu_control[address - SPU_CONTROL_START];
+		return spu_control[address - SPU_CONTROL_START];
 	}
 	else if (address >= SPU_VOICE_START &&
 		address < SPU_VOICE_END)
 	{
-		return &spu_voice_registers[address - SPU_VOICE_START];
+		return spu_voice_registers[address - SPU_VOICE_START];
 	}
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
 	{
-		return &i_stat[address - I_STAT_START];
+		return i_stat[address - I_STAT_START];
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)
 	{
-		return &i_mask[address - I_MASK_START];
+		return i_mask[address - I_MASK_START];
 	}
 	else if (address >= TIMER_START &&
 		address < TIMER_END)
 	{
-		return &timers[address - TIMER_START];
+		return timers[address - TIMER_START];
 	}
 	else if (address >= DMA_START &&
 		address < DMA_END)
 	{
-		return (*dma)[address - DMA_START];
+		return dma->get(address - DMA_START);
 	}
 	else if (address == POST)
 	{
-		return &post;
+		return post;
+	}
+	else
+	{
+		throw bus_error();
+	}
+}
+
+void IOPorts::set(unsigned int address, unsigned char value)
+{
+	if (address >= GP0_Send_GPUREAD_START &&
+		address < GP0_Send_GPUREAD_END)
+	{
+		gpu->GP0_send.byte_value[address - GP0_Send_GPUREAD_START] = value;
+	}
+	else if (address >= GP1_Send_GPUSTAT_START &&
+		address < GP1_Send_GPUSTAT_END)
+	{
+		gpu->GP1_send.byte_value[address - GP1_Send_GPUSTAT_START] = value;
+	}
+	else if (address >= MEMORY_CONTROL_1_START &&
+		address < MEMORY_CONTROL_1_END)
+	{
+		memory_control_1[address - MEMORY_CONTROL_1_START] = value;
+	}
+	else if (address >= MEMORY_CONTROL_2_START &&
+		address < MEMORY_CONTROL_2_END)
+	{
+		memory_control_2[address - MEMORY_CONTROL_2_START] = value;
+	}
+	else if (address >= SPU_CONTROL_START &&
+		address < SPU_CONTROL_END)
+	{
+		spu_control[address - SPU_CONTROL_START] = value;
+	}
+	else if (address >= SPU_VOICE_START &&
+		address < SPU_VOICE_END)
+	{
+		spu_voice_registers[address - SPU_VOICE_START] = value;
+	}
+	else if (address >= I_STAT_START &&
+		address < I_STAT_END)
+	{
+		i_stat[address - I_STAT_START] = value;
+	}
+	else if (address >= I_MASK_START &&
+		address < I_MASK_END)
+	{
+		i_mask[address - I_MASK_START] = value;
+	}
+	else if (address >= TIMER_START &&
+		address < TIMER_END)
+	{
+		timers[address - TIMER_START] = value;
+	}
+	else if (address >= DMA_START &&
+		address < DMA_END)
+	{
+		return dma->set(address - DMA_START, value);
+	}
+	else if (address == POST)
+	{
+		post = value;
 	}
 	else
 	{

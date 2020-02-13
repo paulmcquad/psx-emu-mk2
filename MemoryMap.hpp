@@ -44,8 +44,7 @@ public:
 	template <>
 	unsigned char load<unsigned char>(unsigned int address)
 	{
-		unsigned char *memory = get_memory_ptr(address, true);
-		return *memory;
+		return get_byte(address);
 	};
 
 	template <class T>
@@ -64,13 +63,13 @@ public:
 	template<>
 	void store<unsigned char>(unsigned int address, unsigned char value)
 	{
-		unsigned char *memory = get_memory_ptr(address, true);
-		*memory = value;
+		set_byte(address, value);
 	};
 
 private:
 
-	unsigned char* get_memory_ptr(unsigned int address, bool read_access);
+	void set_byte(unsigned int address, unsigned char value);
+	unsigned char get_byte(unsigned int address);
 
 	// four SRAM chips of 512KB
 	unsigned char memory[MAIN_MEMORY_SIZE] = { 0 };
