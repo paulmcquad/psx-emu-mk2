@@ -336,12 +336,6 @@ void Cpu::store_halfword(const instruction_union& instr)
 void Cpu::store_word(const instruction_union& instr)
 {
 	unsigned int addr = get_immediate_base_addr(instr);
-
-	if (addr == 0x1f8010e0)
-	{
-		printf("WTF");
-	}
-
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
 	if (cop0->get<Cop0::status_register>().Isc == false)

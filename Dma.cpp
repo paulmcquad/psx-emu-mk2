@@ -49,7 +49,7 @@ void Dma::tick()
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
 		DMA_base_address base_address;
-		base_address.int_value = *channel_control_registers[chan_idx];
+		base_address.int_value = *base_address_registers[chan_idx];
 
 		DMA_block_control block_control;
 		block_control.int_value = *block_control_registers[chan_idx];
