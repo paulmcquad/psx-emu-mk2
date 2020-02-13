@@ -1,6 +1,5 @@
 #include <memory>
-
-constexpr unsigned int DMA_SIZE = 128;
+#include <unordered_map>
 
 class Gpu;
 class Ram;
@@ -8,6 +7,7 @@ class Ram;
 class Dma
 {
 public:
+
 	union DMA_base_address
 	{
 		unsigned int int_value;
@@ -100,6 +100,36 @@ public:
 		};
 	};
 
+	enum class sync_mode
+	{
+		manual = 0,
+		request = 1,
+		linked_list = 2
+	};
+
+	enum class direction
+	{
+		to_ram = 0,
+		from_ram = 1
+	};
+
+	enum class address_step
+	{
+		increment = 0,
+		decrement = 1
+	};
+
+	enum class channel_type
+	{
+		MDECin = 0,
+		MDECout = 1,
+		GPU = 2,
+		CDROM = 3,
+		SPU = 4,
+		PIO = 5,
+		OTC = 6
+	};
+
 	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu);
 	void reset();
 	void tick();
@@ -109,7 +139,11 @@ private:
 	std::shared_ptr<Ram> ram = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;
 
-	unsigned char dma_registers[DMA_SIZE] = { 0 };
+	void sync_mode_manual(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control);
+	void sync_mode_request(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control);
+	void sync_mode_linked_list(unsigned int channel, DMA_block_control& block_control, DMA_channel_control& channel_control);
+
+	unsigned char dma_registers[128] = { 0 };
 	unsigned int * base_address_registers[7] = { nullptr };
 	unsigned int * block_control_registers[7] = { nullptr };
 	unsigned int * channel_control_registers[7] = { nullptr };

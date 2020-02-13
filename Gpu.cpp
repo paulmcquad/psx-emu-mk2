@@ -21,6 +21,16 @@ void Gpu::tick()
 	}
 }
 
+unsigned char Gpu::to_ram(unsigned int address)
+{
+	throw std::logic_error("not implemented");
+}
+
+void Gpu::from_ram(unsigned int address, unsigned char value)
+{
+	throw std::logic_error("not implemented");
+}
+
 void Gpu::draw_static()
 {
 	for (int height = 0; height < FRAME_HEIGHT; height++)

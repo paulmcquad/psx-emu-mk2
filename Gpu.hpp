@@ -1,4 +1,5 @@
 #include <vector>
+
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
 constexpr unsigned int BYTES_PER_PIXEL = 3; // actually 2 bytes on the psx
@@ -10,6 +11,9 @@ public:
 
 	void init();
 	void tick();
+
+	unsigned char to_ram(unsigned int address);
+	void from_ram(unsigned int address, unsigned char value);
 
 	union
 	{

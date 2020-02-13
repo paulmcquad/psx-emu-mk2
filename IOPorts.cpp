@@ -33,6 +33,7 @@ constexpr unsigned int I_MASK_END = I_MASK_START + I_MASK_SIZE;
 constexpr unsigned int TIMER_START = 0x1F801100 - IO_START;
 constexpr unsigned int TIMER_END = TIMER_START + TIMER_SIZE;
 
+constexpr unsigned int DMA_SIZE = 128;
 constexpr unsigned int DMA_START = 0x1F801080 - IO_START;
 constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 
