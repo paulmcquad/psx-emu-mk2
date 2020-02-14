@@ -277,7 +277,6 @@ void Cpu::load_word(const instruction_union& instr)
 // LWL rt, offset(base)
 void Cpu::load_word_left(const instruction_union& instr)
 {
-	throw std::logic_error("untested");
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int addr_aligned = addr & ~3;
 	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
@@ -294,7 +293,6 @@ void Cpu::load_word_left(const instruction_union& instr)
 // LWR rt, offset(base)
 void Cpu::load_word_right(const instruction_union& instr)
 {
-	throw std::logic_error("untested");
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int addr_aligned = addr & ~3;
 	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
@@ -347,7 +345,6 @@ void Cpu::store_word(const instruction_union& instr)
 // SWL rt, offset(base)
 void Cpu::store_word_left(const instruction_union& instr)
 {
-	throw std::logic_error("untested");
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int addr_aligned = addr & ~3;
 	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
@@ -363,7 +360,6 @@ void Cpu::store_word_left(const instruction_union& instr)
 // SWR rt, offset(base)
 void Cpu::store_word_right(const instruction_union& instr)
 {
-	throw std::logic_error("untested");
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int addr_aligned = addr & ~3;
 	unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);

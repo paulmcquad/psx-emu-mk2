@@ -7,15 +7,15 @@ constexpr unsigned int FRAME_HEIGHT = 512;
 constexpr unsigned int BYTES_PER_PIXEL = 3; // actually 2 bytes on the psx
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
 
-class Gpu : public Dma_interface
+class Gpu : public DMA_interface
 {
 public:
 
 	void init();
 	void tick();
 
-	unsigned int from_device(unsigned int address) override;
-	void to_device(unsigned int address, unsigned int word_value) override;
+	virtual void sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
+	virtual void sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
 	union
 	{

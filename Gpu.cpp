@@ -1,4 +1,5 @@
 #include "Gpu.hpp"
+#include "MemoryMap.hpp"
 #include <iostream>
 
 void Gpu::init()
@@ -22,14 +23,57 @@ void Gpu::tick()
 	}
 }
 
-unsigned int Gpu::from_device(unsigned int address)
+void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	throw std::logic_error("not implemented");
+
+	std::cout << "Starting GPU request DMA\n";
+	unsigned int num_words = block_control.BS * block_control.BC;
+	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
+	unsigned int addr = base_address.memory_address & 0x1ffffc;
+
+	while (num_words > 0)
+	{
+		num_words--;
+
+		unsigned int word = ram->load<unsigned int>(addr);
+
+		// TODO do something with this word
+
+		addr += (step == DMA_address_step::increment ? 4 : -4);
+	}
+	std::cout << "Finished GPU request DMA\n";
 }
 
-void Gpu::to_device(unsigned int address, unsigned int word_value)
+void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	std::cout << "GPU command: " << std::hex << word_value << std::endl;
+	std::cout << "Starting GPU linked list DMA\n";
+	unsigned int addr = base_address.memory_address & 0x1ffffc;
+	while (true)
+	{
+		unsigned int header = ram->load<unsigned int>(addr);
+		unsigned int num_words = header >> 24;
+
+		while (num_words > 0)
+		{
+			addr = (addr + 4) & 0x1ffffc;
+
+			unsigned int command = ram->load<unsigned int>(addr);
+
+			// TODO do something with this command
+
+			num_words--;
+		}
+
+		if ((header & 0x800000) != 0)
+		{
+			break;
+		}
+		else
+		{
+			addr = header & 0x1ffffc;
+		}
+	}
+	std::cout << "Finished GPU linked list DMA\n";
 }
 
 void Gpu::draw_static()
