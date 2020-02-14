@@ -1,8 +1,16 @@
+#pragma once
 #include <memory>
 #include <unordered_map>
 
 class Gpu;
 class Ram;
+
+class Dma_interface
+{
+public:
+	virtual unsigned int from_device(unsigned int address) = 0;
+	virtual void to_device(unsigned int address, unsigned int word_value) = 0;
+};
 
 class Dma
 {
@@ -136,6 +144,8 @@ public:
 
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);
+
+	std::unordered_map<channel_type, Dma_interface*> devices;
 private:
 
 	std::shared_ptr<Ram> ram = nullptr;
@@ -143,7 +153,7 @@ private:
 
 	void sync_mode_manual(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control);
 	void sync_mode_request(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control);
-	void sync_mode_linked_list(unsigned int channel, DMA_block_control& block_control, DMA_channel_control& channel_control);
+	void sync_mode_linked_list(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control);
 
 	unsigned char dma_registers[128] = { 0 };
 	unsigned int * base_address_registers[7] = { nullptr };

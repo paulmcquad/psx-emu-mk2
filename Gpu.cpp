@@ -1,4 +1,5 @@
 #include "Gpu.hpp"
+#include <iostream>
 
 void Gpu::init()
 {
@@ -21,14 +22,14 @@ void Gpu::tick()
 	}
 }
 
-unsigned char Gpu::to_ram(unsigned int address)
+unsigned int Gpu::from_device(unsigned int address)
 {
 	throw std::logic_error("not implemented");
 }
 
-void Gpu::from_ram(unsigned int address, unsigned char value)
+void Gpu::to_device(unsigned int address, unsigned int word_value)
 {
-	throw std::logic_error("not implemented");
+	std::cout << "GPU command: " << std::hex << word_value << std::endl;
 }
 
 void Gpu::draw_static()

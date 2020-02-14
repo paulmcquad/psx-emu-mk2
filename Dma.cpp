@@ -1,5 +1,6 @@
 #include "Dma.hpp"
 #include "MemoryMap.hpp"
+#include "Gpu.hpp"
 #include <iostream>
 
 constexpr unsigned int NUM_CHANNELS = 7;
@@ -19,7 +20,6 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
-		// TODO make sure these are being set right - base register is wrong in tests
 		base_address_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BASE_ADDRESS_START + (chan_idx*16)]);
 		block_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_BLOCK_CONTROL_START + (chan_idx * 16)]);
 		channel_control_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CHANNEL_CONTROL_START + (chan_idx * 16)]);
@@ -27,6 +27,8 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 
 	control_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CONTROL_REGISTER_START]);
 	interrupt_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_INTERRUPT_REGISTER_START]);
+
+	devices[channel_type::GPU] = gpu.get();
 	
 	reset();
 }
@@ -74,7 +76,7 @@ void Dma::tick()
 			case sync_mode::linked_list:
 			{
 				// doesn't use base address
-				sync_mode_linked_list(chan_idx, block_control, channel_control);
+				sync_mode_linked_list(chan_idx, base_address, block_control, channel_control);
 			} break;
 			}
 		}
@@ -95,14 +97,15 @@ void Dma::sync_mode_manual(unsigned int channel, DMA_base_address& base_address,
 
 		direction dir = static_cast<direction>(channel_control.transfer_direction);
 		address_step step = static_cast<address_step>(channel_control.memory_address_step);
-		channel_type type = static_cast<channel_type>(channel);
+		channel_type device_type = static_cast<channel_type>(channel);
 		unsigned int addr = base_address.memory_address & 0x1ffffc;
 
 		while (num_words > 0)
 		{
 			num_words--;
+
 			// can only go to_ram if OTC
-			if (type == channel_type::OTC)
+			if (device_type == channel_type::OTC)
 			{
 				if (num_words == 0)
 				{
@@ -135,12 +138,43 @@ void Dma::sync_mode_request(unsigned int channel, DMA_base_address& base_address
 	channel_control.start_busy = 0;
 }
 
-void Dma::sync_mode_linked_list(unsigned int channel, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Dma::sync_mode_linked_list(unsigned int channel, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	channel_control.start_trigger = 0;
 
-	channel_type type = static_cast<channel_type>(channel);
-	throw std::logic_error("not implemented");
+	channel_type device_type = static_cast<channel_type>(channel);
+	if (device_type == channel_type::GPU)
+	{
+		unsigned int addr = base_address.memory_address & 0x1ffffc;
+		while (true)
+		{
+			unsigned int header = ram->load<unsigned int>(addr);
+			unsigned int num_words = header >> 24;
+
+			while (num_words > 0)
+			{
+				addr = (addr + 4) & 0x1ffffc;
+
+				unsigned int command = ram->load<unsigned int>(addr);
+				devices[device_type]->to_device(0x0, command);
+
+				num_words--;
+			}
+
+			if (header & 0x800000 != 0)
+			{
+				break;
+			}
+			else
+			{
+				addr = header & 0x1ffffc;
+			}
+		}
+	}
+	else
+	{
+		throw std::logic_error("only used for GPU");
+	}
 
 	channel_control.start_busy = 0;
 }

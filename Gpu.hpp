@@ -1,19 +1,21 @@
+#pragma once
 #include <vector>
+#include "Dma.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
 constexpr unsigned int BYTES_PER_PIXEL = 3; // actually 2 bytes on the psx
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
 
-class Gpu
+class Gpu : public Dma_interface
 {
 public:
 
 	void init();
 	void tick();
 
-	unsigned char to_ram(unsigned int address);
-	void from_ram(unsigned int address, unsigned char value);
+	unsigned int from_device(unsigned int address) override;
+	void to_device(unsigned int address, unsigned int word_value) override;
 
 	union
 	{
