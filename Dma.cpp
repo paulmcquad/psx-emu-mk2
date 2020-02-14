@@ -161,7 +161,7 @@ void Dma::sync_mode_linked_list(unsigned int channel, DMA_base_address& base_add
 				num_words--;
 			}
 
-			if (header & 0x800000 != 0)
+			if ((header & 0x800000) != 0)
 			{
 				break;
 			}
