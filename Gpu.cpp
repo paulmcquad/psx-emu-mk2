@@ -17,7 +17,7 @@ void Gpu::tick()
 	if (GPUSTAT.display_enable == false)
 	{
 #ifndef _DEBUG
-		draw_static();
+		//draw_static();
 #endif
 	}
 }
