@@ -4,8 +4,11 @@
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
-constexpr unsigned int BYTES_PER_PIXEL = 3; // actually 2 bytes on the psx
+constexpr unsigned int BYTES_PER_PIXEL = 2;
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
+
+// don't know why this isn't defined
+constexpr unsigned int GL_RGB565 = 0x8D62;
 
 class Gpu : public DMA_interface
 {

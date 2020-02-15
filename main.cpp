@@ -51,7 +51,7 @@ int main(int num_args, char ** args )
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	GLFWwindow* window = glfwCreateWindow(640, 480, "PSX-EMU-MK2", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(FRAME_WIDTH, FRAME_HEIGHT, "PSX-EMU-MK2", nullptr, nullptr);
 	if (!window)
 	{
 		std::cerr << "Failed to create window\n";
@@ -167,7 +167,8 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
+			// playstation was a 16 bit colour machine
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
