@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <deque>
 #include "Dma.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
@@ -15,6 +16,7 @@ class Gpu : public DMA_interface
 public:
 
 	void init();
+	void reset();
 	void tick();
 
 	virtual void sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
@@ -85,6 +87,7 @@ public:
 	} GPUSTAT;
 
 	std::vector<unsigned char> video_ram;
+	std::deque<unsigned int> commands;
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 

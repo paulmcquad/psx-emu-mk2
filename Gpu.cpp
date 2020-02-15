@@ -6,21 +6,20 @@ void Gpu::init()
 {
 	// I have to allocate all the vram memory at runtime or
     // else I get a compiler out of heap space issue at compile time
-	video_ram.resize(VRAM_SIZE, 128);
+	video_ram.resize(VRAM_SIZE, 0x0);
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	GPUSTAT.ready_dma = true;
 	GPUSTAT.ready_cmd_word = true;
 }
 
+void Gpu::reset()
+{
+	
+}
+
 void Gpu::tick()
 {
-
-	if (GPUSTAT.display_enable == false)
-	{
-#ifndef _DEBUG
-		//draw_static();
-#endif
-	}
+	
 }
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
@@ -31,13 +30,18 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 
+	static unsigned int x = 0;
+	static unsigned int y = 0;
+	unsigned int width = 32;
 	while (num_words > 0)
 	{
 		num_words--;
 
 		unsigned int word = ram->load<unsigned int>(addr);
 
-		// TODO do something with this word
+		//std::cout << std::hex << word << std::endl;
+		
+		// TODO do something with this
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
@@ -58,8 +62,7 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 			addr = (addr + 4) & 0x1ffffc;
 
 			unsigned int command = ram->load<unsigned int>(addr);
-
-			// TODO do something with this command
+			commands.push_back(command);
 
 			num_words--;
 		}
