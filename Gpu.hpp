@@ -1,15 +1,19 @@
 #pragma once
 #include <vector>
 #include <deque>
+#include <unordered_map>
 #include "Dma.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
-constexpr unsigned int BYTES_PER_PIXEL = 2;
+constexpr unsigned int BYTES_PER_PIXEL = 3; // psx is rgb565 but its simpler if I make it rgb888
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
 
 // don't know why this isn't defined
 constexpr unsigned int GL_RGB565 = 0x8D62;
+
+enum class gp0_commands : unsigned char;
+enum class gp1_commands : unsigned char;
 
 class Gpu : public DMA_interface
 {
@@ -87,10 +91,32 @@ public:
 	} GPUSTAT;
 
 	std::vector<unsigned char> video_ram;
-	std::deque<unsigned int> commands;
+	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
+	// that I can ignore that
+	std::deque<unsigned int> command_queue;
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 
 private:
+	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
+
+	int get_cross_product(int x0, int y0, int x1, int y1);
+
+	void draw_triangle(int x0, int y0,
+					   int x1, int y1,
+		               int x2, int y2,
+					   unsigned char r, unsigned char g, unsigned char b);
+	void draw_pixel(int x, int y, unsigned char r, unsigned char g, unsigned b);
+
 	void draw_static();
+
+	unsigned int nop();
+	unsigned int set_draw_top_left();
+	unsigned int set_draw_bottom_right();
+	unsigned int set_drawing_offset();
+	unsigned int set_draw_mode();
+	unsigned int set_texture_window();
+	unsigned int set_mask_bit();
+
+	unsigned int mono_4_pt_opaque();
 };

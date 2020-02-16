@@ -127,7 +127,7 @@ enum class cpu_bconds : unsigned char
 	BGEZAL = 021
 };
 
-enum class gp0_commands
+enum class gp0_commands : unsigned char
 {
 	NOP = 0x00,
 	
@@ -218,7 +218,7 @@ enum class gp0_commands
 	 // TODO add mirrors
 };
 
-enum class gp1_commands
+enum class gp1_commands : unsigned char
 {
 	RESET_GPU = 0x00,
 	RESET_COMMAND_BUFFER = 0x01,

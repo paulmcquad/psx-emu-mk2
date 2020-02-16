@@ -167,8 +167,8 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			// playstation was a 16 bit colour machine
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
+			// playstation was a 16 bit colour machine but i'm treating it as a 24bit machine
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
