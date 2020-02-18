@@ -151,8 +151,6 @@ void Gpu::draw_triangle(int x0, int y0,
 	int x2, int y2,
 	unsigned char r, unsigned char g, unsigned char b)
 {
-
-
 	int min_x = std::min(x0, std::min(x1, x2));
 	int max_x = std::max(x0, std::max(x1, x2));
 	int min_y = std::min(y0, std::min(y1, y2));
