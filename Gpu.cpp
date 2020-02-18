@@ -28,14 +28,36 @@ union color_command
 	};
 };
 
+unsigned char Gpu::get(gpu_registers reg_name, unsigned int byte_offset)
+{
+	switch (reg_name)
+	{
+		case GPUSTAT:
+		{
+			return gpu_status.byte_value[byte_offset];
+		} break;
+		case GPUREAD:
+		{
+			return gpu_read.byte_value[byte_offset];
+		} break;
+		default:
+			throw std::logic_error("can't read this gpu");
+	}
+}
+
+void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char value)
+{
+	// to do
+}
+
 void Gpu::init()
 {
 	// I have to allocate all the vram memory at runtime or
     // else I get a compiler out of heap space issue at compile time
 	video_ram.resize(VRAM_SIZE, 0x0);
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
-	GPUSTAT.ready_dma = true;
-	GPUSTAT.ready_cmd_word = true;
+	gpu_status.ready_dma = true;
+	gpu_status.ready_cmd_word = true;
 
 	gp0_command_map[gp0_commands::NOP] = &Gpu::nop;
 	gp0_command_map[gp0_commands::SET_DRAW_TOP_LEFT] = &Gpu::set_draw_top_left;
@@ -54,10 +76,10 @@ void Gpu::reset()
 
 void Gpu::tick()
 {
-	while (command_queue.empty() == false)
+	while (gp0_command_queue.empty() == false)
 	{
 		color_command command;
-		command.value = command_queue.front();
+		command.value = gp0_command_queue.front();
 
 		gp0_commands current_command = static_cast<gp0_commands>(command.op);
 
@@ -73,7 +95,7 @@ void Gpu::tick()
 			}
 			while (commands_to_remove > 0)
 			{
-				command_queue.pop_front();
+				gp0_command_queue.pop_front();
 				commands_to_remove--;
 			}
 		}
@@ -123,7 +145,7 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 			addr = (addr + 4) & 0x1ffffc;
 
 			unsigned int command = ram->load<unsigned int>(addr);
-			command_queue.push_back(command);
+			gp0_command_queue.push_back(command);
 
 			num_words--;
 		}
@@ -203,7 +225,7 @@ unsigned int Gpu::nop()
 
 unsigned int Gpu::mono_4_pt_opaque()
 {
-	if (command_queue.size() < 5)
+	if (gp0_command_queue.size() < 5)
 	{
 		return 0;
 	}
@@ -211,11 +233,11 @@ unsigned int Gpu::mono_4_pt_opaque()
 	color_command color;
 	vert_command vert0, vert1, vert2, vert3;
 
-	color.value = command_queue[0];
-	vert0.value = command_queue[1];
-	vert1.value = command_queue[2];
-	vert2.value = command_queue[3];
-	vert3.value = command_queue[4];
+	color.value = gp0_command_queue[0];
+	vert0.value = gp0_command_queue[1];
+	vert1.value = gp0_command_queue[2];
+	vert2.value = gp0_command_queue[3];
+	vert3.value = gp0_command_queue[4];
 
 	glm::ivec2 v0(vert0.x, vert0.y);
 	glm::ivec2 v1(vert1.x, vert1.y);

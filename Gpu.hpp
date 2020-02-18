@@ -27,40 +27,27 @@ public:
 	virtual void sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 	virtual void sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
-	union
+	enum gpu_registers
 	{
-		unsigned int int_value = 0;
-		struct
-		{
-			unsigned char byte_value[4];
-		};
-	} GP0_send;
+		GP0_SEND,
+		GP1_SEND,
+		GPUREAD,
+		GPUSTAT
+	};
+
+	unsigned char get(gpu_registers reg_name, unsigned int byte_offset);
+	void set(gpu_registers reg_name, unsigned int byte_offset, unsigned char value);
 
 	union
 	{
-		unsigned int int_value = 0;
-		struct
-		{
-			unsigned char byte_value[4];
-		};
-	} GP1_send;
+		unsigned int int_value;
+		unsigned char byte_value[4];
+	} gpu_read;
 
 	union
 	{
-		unsigned int int_value = 0;
-		struct
-		{
-			unsigned char byte_value[4];
-		};
-	} GPUREAD;
-
-	union
-	{
-		unsigned int int_value = 0;
-		struct
-		{
-			unsigned char byte_value[4];
-		};
+		unsigned int int_Value;
+		unsigned char byte_value[4];
 		struct
 		{
 			unsigned int tex_page_x_base : 4;
@@ -89,17 +76,20 @@ public:
 			unsigned int dma_direction : 2;
 			unsigned int even_odd : 1;
 		};
-	} GPUSTAT;
+	} gpu_status;
+	
 
 	std::vector<unsigned char> video_ram;
 	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
 	// that I can ignore that
-	std::deque<unsigned int> command_queue;
+	std::deque<unsigned int> gp0_command_queue;
+	std::deque<unsigned int> gp1_command_queue;
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
+	std::unordered_map<gp1_commands, unsigned int (Gpu::*)()> gp1_command_map;
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);

@@ -48,12 +48,12 @@ unsigned char IOPorts::get(unsigned int address)
 	if (address >= GP0_Send_GPUREAD_START &&
 		address < GP0_Send_GPUREAD_END)
 	{
-		return gpu->GPUREAD.byte_value[address - GP0_Send_GPUREAD_START];
+		return gpu->get(Gpu::GPUREAD, address - GP0_Send_GPUREAD_START);
 	}
 	else if (address >= GP1_Send_GPUSTAT_START &&
 		address < GP1_Send_GPUSTAT_END)
 	{
-		return gpu->GPUSTAT.byte_value[address - GP1_Send_GPUSTAT_START];
+		return gpu->get(Gpu::GPUSTAT, address - GP1_Send_GPUSTAT_START);
 	}
 	else if (address >= MEMORY_CONTROL_1_START &&
 		address < MEMORY_CONTROL_1_END)
@@ -110,12 +110,12 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	if (address >= GP0_Send_GPUREAD_START &&
 		address < GP0_Send_GPUREAD_END)
 	{
-		gpu->GP0_send.byte_value[address - GP0_Send_GPUREAD_START] = value;
+		gpu->set(Gpu::GP0_SEND, address - GP0_Send_GPUREAD_START, value);
 	}
 	else if (address >= GP1_Send_GPUSTAT_START &&
 		address < GP1_Send_GPUSTAT_END)
 	{
-		gpu->GP1_send.byte_value[address - GP1_Send_GPUSTAT_START] = value;
+		gpu->set(Gpu::GP1_SEND, address - GP1_Send_GPUSTAT_START, value);
 	}
 	else if (address >= MEMORY_CONTROL_1_START &&
 		address < MEMORY_CONTROL_1_END)
