@@ -2,6 +2,7 @@
 #include <vector>
 #include <deque>
 #include <unordered_map>
+#include <glm/fwd.hpp>
 #include "Dma.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
@@ -100,13 +101,8 @@ public:
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
 
-	int get_cross_product(int x0, int y0, int x1, int y1);
-
-	void draw_triangle(int x0, int y0,
-					   int x1, int y1,
-		               int x2, int y2,
-					   unsigned char r, unsigned char g, unsigned char b);
-	void draw_pixel(int x, int y, unsigned char r, unsigned char g, unsigned b);
+	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb);
+	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
 
 	void draw_static();
 

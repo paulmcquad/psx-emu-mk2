@@ -7,7 +7,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(glfw/)
-
+add_subdirectory(glm/)
 include_directories(includes/)
 
 set(source_files
@@ -36,5 +36,6 @@ set(source_files
 
 add_executable(psx-mk2 main.cpp ${source_files})
 target_link_libraries(psx-mk2 glfw)
+target_link_libraries(psx-mk2 glm)
 
 add_executable(psx-mk2-test main_test.cpp ${source_files})

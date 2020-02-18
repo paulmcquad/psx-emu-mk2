@@ -3,6 +3,8 @@
 #include "InstructionEnums.hpp"
 #include <iostream>
 #include <algorithm>
+#include <glm/glm.hpp>
+#include <glm/common.hpp>
 
 union vert_command
 {
@@ -21,9 +23,7 @@ union color_command
 	unsigned int value;
 	struct
 	{
-		unsigned char b;
-		unsigned char g;
-		unsigned char r;
+		glm::u8vec3 rgb;
 		unsigned char op;
 	};
 };
@@ -140,52 +140,42 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 	std::cout << "Finished GPU linked list DMA\n";
 }
 
-int Gpu::get_cross_product(int x0, int y0, int x1, int y1)
-{
-	return (x0 * y1) - (y0 * x1);
-}
-
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-void Gpu::draw_triangle(int x0, int y0,
-	int x1, int y1,
-	int x2, int y2,
-	unsigned char r, unsigned char g, unsigned char b)
+void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb)
 {
-	int min_x = std::min(x0, std::min(x1, x2));
-	int max_x = std::max(x0, std::max(x1, x2));
-	int min_y = std::min(y0, std::min(y1, y2));
-	int max_y = std::max(y0, std::max(y1, y2));
+	glm::vec2 e0 = v1 - v0;
+	glm::vec2 e1 = v2 - v0;
 
-	int ex0 = x1 - x0;
-	int ey0 = y1 - y0;
-	int ex1 = x2 - x0;
-	int ey1 = y2 - y0;
+	// does component wise min/max operations
+	glm::ivec2 min_val = glm::min(v0, glm::min(v1, v2));
+	glm::ivec2 max_val = glm::max(v0, glm::max(v1, v2));
 
-	for (int x = min_x; x <= max_x; x++)
+	for (int y = min_val.y; y <= max_val.y; y++)
 	{
-		for (int y = min_y; y <= max_y; y++)
+		for (int x = min_val.x; x <= max_val.x; x++)
 		{
-			int qx0 = x - x0;
-			int qy0 = y - y0;
+			glm::ivec2 cur_pos = glm::ivec2(x, y);
+			glm::vec2 q = cur_pos - v0;
 
-			int s = get_cross_product(qx0, qy0, ex1, ey1) / get_cross_product(ex0, ey0, ex1, ey1);
-			int t = get_cross_product(ex0, ey0, qx0, qy0) / get_cross_product(ex0, ey0, ex1, ey1);
+			// glm::determinant(glm::dmat2(a, b)) is equivalent of a,b cross product in 2d
+			float s = glm::determinant(glm::dmat2(q, e1)) / glm::determinant(glm::dmat2(e0, e1));
+			float t = glm::determinant(glm::dmat2(e0, q)) / glm::determinant(glm::dmat2(e0, e1));
 
 			if (s >= 0 && t >= 0 && (s + t <= 1))
 			{
-				draw_pixel(x, y, r, g, b);
+				draw_pixel(cur_pos, rgb);
 			}
 		}
 	}
 }
 
-void Gpu::draw_pixel(int x, int y, unsigned char r, unsigned char g, unsigned b)
+void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 {
-	unsigned int index = ((y*FRAME_WIDTH) + x)*BYTES_PER_PIXEL;
+	unsigned int index = ((v.y*FRAME_WIDTH) + v.x)*BYTES_PER_PIXEL;
 
-	video_ram[index] = r;
-	video_ram[index + 1] = g;
-	video_ram[index + 2] = b;
+	video_ram[index] = rgb.r;
+	video_ram[index + 1] = rgb.b;
+	video_ram[index + 2] = rgb.g;
 }
 
 void Gpu::draw_static()
@@ -219,19 +209,24 @@ unsigned int Gpu::mono_4_pt_opaque()
 	}
 
 	color_command color;
-	vert_command vert1, vert2, vert3, vert4;
+	vert_command vert0, vert1, vert2, vert3;
 
 	color.value = command_queue[0];
-	vert1.value = command_queue[1];
-	vert2.value = command_queue[2];
-	vert3.value = command_queue[3];
-	vert4.value = command_queue[4];
+	vert0.value = command_queue[1];
+	vert1.value = command_queue[2];
+	vert2.value = command_queue[3];
+	vert3.value = command_queue[4];
+
+	glm::ivec2 v0(vert0.x, vert0.y);
+	glm::ivec2 v1(vert1.x, vert1.y);
+	glm::ivec2 v2(vert2.x, vert2.y);
+	glm::ivec2 v3(vert3.x, vert3.y);
 
 	// triangle 1
-	draw_triangle(vert1.x, vert1.y, vert2.x, vert2.y, vert3.x, vert3.y, color.r, color.g, color.b);
+	draw_triangle(v0, v1, v2, color.rgb);
 
 	// triangle 2
-	draw_triangle(vert2.x, vert2.y, vert3.x, vert3.y, vert4.x, vert4.y, color.r, color.g, color.b);
+	draw_triangle(v1, v2, v3, color.rgb);
 
 	return 5;
 }
