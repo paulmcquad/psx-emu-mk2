@@ -47,7 +47,30 @@ unsigned char Gpu::get(gpu_registers reg_name, unsigned int byte_offset)
 
 void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char value)
 {
-	// to do
+	// command is set byte by byte but expected to be added to the command
+	// queue as a word value, so we store it in a static variable and put it
+	// in the list when its finished 
+	static unsigned char command_bytes[4] = { 0 };
+	command_bytes[byte_offset] = value;
+
+	if (byte_offset == 3)
+	{
+		unsigned int command = 0;
+		memcpy(&command, &command_bytes, sizeof(unsigned int));
+		switch (reg_name)
+		{
+			case GP0_SEND:
+			{
+				gp0_command_queue.push_back(command);
+			} break;
+			case GP1_SEND:
+			{
+				gp1_command_queue.push_back(command);
+			} break;
+			default:
+				throw std::logic_error("can't write to this gpu register");
+		}
+	}
 }
 
 void Gpu::init()
@@ -63,9 +86,14 @@ void Gpu::init()
 	gp0_command_map[gp0_commands::SET_DRAW_TOP_LEFT] = &Gpu::set_draw_top_left;
 	gp0_command_map[gp0_commands::SET_DRAW_BOTTOM_RIGHT] = &Gpu::set_draw_bottom_right;
 	gp0_command_map[gp0_commands::SET_DRAWING_OFFSET] = &Gpu::set_drawing_offset;
+
 	gp0_command_map[gp0_commands::DRAW_MODE] = &Gpu::set_draw_mode;
 	gp0_command_map[gp0_commands::TEX_WINDOW] = &Gpu::set_texture_window;
 	gp0_command_map[gp0_commands::MASK_BIT] = &Gpu::set_mask_bit;
+	gp0_command_map[gp0_commands::CLEAR_CACHE] = &Gpu::clear_cache;
+
+	gp0_command_map[gp0_commands::COPY_RECT_CPU_VRAM] = &Gpu::copy_rectangle_from_cpu_to_vram;
+
 	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
 }
 
@@ -287,4 +315,20 @@ unsigned int Gpu::set_mask_bit()
 {
 	// todo
 	return 1;
+}
+
+unsigned int Gpu::clear_cache()
+{
+	// todo
+	return 1;
+}
+
+unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
+{
+	if (gp0_command_queue.size() < 3)
+	{
+		return 0;
+	}
+
+
 }

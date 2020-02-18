@@ -103,6 +103,8 @@ private:
 	unsigned int set_draw_mode();
 	unsigned int set_texture_window();
 	unsigned int set_mask_bit();
+	unsigned int clear_cache();
+	unsigned int copy_rectangle_from_cpu_to_vram();
 
 	unsigned int mono_4_pt_opaque();
 };
