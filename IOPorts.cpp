@@ -43,6 +43,16 @@ void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma)
 	dma = _dma;
 }
 
+void IOPorts::save_state(std::ofstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
+void IOPorts::load_state(std::ifstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
 unsigned char IOPorts::get(unsigned int address)
 {
 	if (address >= GP0_Send_GPUREAD_START &&

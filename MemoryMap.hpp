@@ -15,6 +15,8 @@ class Ram {
 public:
 	void init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports);
 	void reset();
+	void save_state(std::ofstream& file);
+	void load_state(std::ifstream& file);
 
 	// =============================================================================
 	// These load/store templates replace a series of somewhat nasty reinterpret_casts

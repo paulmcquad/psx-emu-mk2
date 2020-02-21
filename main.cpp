@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <iostream>
+#include <fstream>
 
 constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
 
@@ -27,11 +28,22 @@ static const char* frag_shader_src =
 "void main(){\n"
 "color_out = texture(tex, texcoord_out);}\n";
 
+bool save_state = false;
+bool load_state = false;
+
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
+	}
+	else if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+	{
+		save_state = true;
+	}
+	else if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
+	{
+		load_state = true;
 	}
 }
 
@@ -161,6 +173,54 @@ int main(int num_args, char ** args )
 		cpu->tick();
 		dma->tick();
 		gpu->tick();
+
+		if (save_state)
+		{
+			save_state = false;
+
+			std::cout << "Saving state!\n";
+
+			std::ofstream state_file;
+			state_file.open("save_state.bin", std::ios::out | std::ios::binary);
+
+			if (state_file.is_open())
+			{
+				cpu->save_state(state_file);
+				gpu->save_state(state_file);
+				dma->save_state(state_file);
+				ram->save_state(state_file);
+				io_ports->save_state(state_file);
+
+				state_file.close();
+				std::cout << "State saved!\n";
+			}
+			else
+			{
+				std::cout << "Failed to save state!\n";
+			}
+		}
+		if (load_state)
+		{
+			load_state = false;
+			std::ifstream state_file;
+			state_file.open("save_state.bin", std::ios::in | std::ios::binary);
+
+			if (state_file.is_open())
+			{
+				cpu->load_state(state_file);
+				gpu->load_state(state_file);
+				dma->load_state(state_file);
+				ram->load_state(state_file);
+				io_ports->load_state(state_file);
+
+				state_file.close();
+				std::cout << "State restored!\n";
+			}
+			else
+			{
+				std::cout << "Failed to load state!\n";
+			}
+		}
 
 		auto end_time = glfwGetTime();
 		current_frame_time += end_time - start_time;

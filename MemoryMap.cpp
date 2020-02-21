@@ -46,6 +46,16 @@ void Ram::reset()
 	// todo
 }
 
+void Ram::save_state(std::ofstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
+void Ram::load_state(std::ifstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
 void Ram::set_byte(unsigned int address, unsigned char value)
 {
 	// determine memory region

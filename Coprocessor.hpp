@@ -13,6 +13,9 @@ public:
 		cpu = _cpu;
 	};
 
+	virtual void save_state(std::ofstream& file) = 0;
+	virtual void load_state(std::ifstream& file) = 0;
+
 	virtual void execute(const instruction_union& instruction) = 0;
 
 	virtual void load_word_to_cop(const instruction_union& instr) = 0;

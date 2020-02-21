@@ -141,6 +141,8 @@ public:
 	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu);
 	void reset();
 	void tick();
+	void save_state(std::ofstream& file);
+	void load_state(std::ifstream& file);
 
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);

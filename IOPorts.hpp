@@ -23,6 +23,8 @@ class IOPorts
 {
 public:
 	void init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma);
+	void save_state(std::ofstream& file);
+	void load_state(std::ifstream& file);
 
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);

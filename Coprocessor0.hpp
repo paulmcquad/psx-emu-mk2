@@ -35,6 +35,7 @@ public:
 		throw std::logic_error("unsupported");
 	}
 
+	// status register - get and set
 	union status_register
 	{
 		unsigned int raw;
@@ -101,6 +102,7 @@ public:
 		set_control_register(register_names::SR, value.raw);
 	}
 
+	// cause register - get and set
 	union cause_register
 	{
 		unsigned int raw;
@@ -181,6 +183,9 @@ public:
 	};
 
 	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+
+	void save_state(std::ofstream& file) override;
+	void load_state(std::ifstream& file) override;
 
 	void execute(const instruction_union& instruction) final;
 

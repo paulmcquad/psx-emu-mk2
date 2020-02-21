@@ -100,6 +100,16 @@ void Dma::tick()
 	}
 }
 
+void Dma::save_state(std::ofstream& file)
+{
+
+}
+
+void Dma::load_state(std::ifstream& file)
+{
+
+}
+
 void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	std::cout << "Starting OTC manual DMA\n";

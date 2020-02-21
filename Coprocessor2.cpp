@@ -1,14 +1,28 @@
+#include <stdexcept>
+#include <fstream>
+
 #include "Coprocessor2.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Cpu.hpp"
 #include "MemoryMap.hpp"
-#include <stdexcept>
 
 Cop2::Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Cop(_ram, _cpu)
 {
 
+}
+
+void Cop2::save_state(std::ofstream& file)
+{
+	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
+	file.write(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);
+}
+
+void Cop2::load_state(std::ifstream& file)
+{
+	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
+	file.read(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);
 }
 
 void Cop2::execute(const instruction_union& instruction)

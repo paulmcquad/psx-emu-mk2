@@ -1,14 +1,25 @@
+#include <stdexcept>
+#include <fstream>
 #include "Coprocessor0.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include "Exceptions.hpp"
-#include <stdexcept>
 
 Cop0::Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Cop(_ram, _cpu)
 {
+}
+
+void Cop0::save_state(std::ofstream& file)
+{
+	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
+}
+
+void Cop0::load_state(std::ifstream& file)
+{
+	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 }
 
 void Cop0::execute(const instruction_union& instruction)

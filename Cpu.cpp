@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <iostream>
+#include <fstream>
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
 #include "Coprocessor0.hpp"
@@ -142,6 +143,43 @@ void Cpu::tick()
 
 	register_file.merge();
 	in_delay_slot = false;
+}
+
+
+void Cpu::save_state(std::ofstream& file)
+{
+	cop0->save_state(file);
+	cop2->save_state(file);
+
+	file.write(reinterpret_cast<char*>(&register_file.gp_registers[0]), sizeof(unsigned int)*32);
+	file.write(reinterpret_cast<char*>(&register_file.shadow_gp_registers_first[0]), sizeof(unsigned int) * 32);
+	file.write(reinterpret_cast<char*>(&register_file.shadow_gp_registers_last[0]), sizeof(unsigned int) * 32);
+
+	file.write(reinterpret_cast<char*>(&hi), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&lo), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&current_pc), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&next_pc), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&current_instruction), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&next_instruction), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&in_delay_slot), sizeof(bool));
+}
+
+void Cpu::load_state(std::ifstream& file)
+{
+	cop0->load_state(file);
+	cop2->load_state(file);
+
+	file.read(reinterpret_cast<char*>(&register_file.gp_registers[0]), sizeof(unsigned int) * 32);
+	file.read(reinterpret_cast<char*>(&register_file.shadow_gp_registers_first[0]), sizeof(unsigned int) * 32);
+	file.read(reinterpret_cast<char*>(&register_file.shadow_gp_registers_last[0]), sizeof(unsigned int) * 32);
+
+	file.read(reinterpret_cast<char*>(&hi), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&lo), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&current_pc), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&next_pc), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&current_instruction), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&next_instruction), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&in_delay_slot), sizeof(bool));
 }
 
 void Cpu::execute(unsigned int instruction)

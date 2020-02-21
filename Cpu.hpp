@@ -57,6 +57,10 @@ public:
 	void init(std::shared_ptr<Ram> _ram);
 	void reset();
 	void tick();
+
+	void save_state(std::ofstream& file);
+	void load_state(std::ifstream& file);
+
 	void execute(unsigned int instruction);
 	void execute_special(const instruction_union& instr);
 	void execute_bcond(const instruction_union& instr);

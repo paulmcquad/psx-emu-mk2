@@ -135,9 +135,18 @@ void Gpu::tick()
 	}
 }
 
+void Gpu::save_state(std::ofstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
+void Gpu::load_state(std::ifstream& file)
+{
+	throw std::logic_error("not implemented");
+}
+
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-
 	std::cout << "Starting GPU request DMA\n";
 	unsigned int num_words = block_control.BS * block_control.BC;
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
