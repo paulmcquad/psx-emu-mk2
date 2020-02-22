@@ -1,10 +1,10 @@
-#include "MemoryMap.hpp"
-#include "IOPorts.hpp"
-#include "Exceptions.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <assert.h>
+#include "MemoryMap.hpp"
+#include "IOPorts.hpp"
+#include "Exceptions.hpp"
 
 enum class memory_segment : unsigned char
 {
@@ -48,12 +48,18 @@ void Ram::reset()
 
 void Ram::save_state(std::ofstream& file)
 {
-	throw std::logic_error("not implemented");
+	file.write(reinterpret_cast<char*>(&memory[0]), sizeof(unsigned char) * MAIN_MEMORY_SIZE);
+	file.write(reinterpret_cast<char*>(&parallel_port[0]), sizeof(unsigned char) * PARALLEL_PORT_SIZE);
+	file.write(reinterpret_cast<char*>(&scratch_pad[0]), sizeof(unsigned char) * SCRATCH_PAD_SIZE);
+	file.write(reinterpret_cast<char*>(&cache_control[0]), sizeof(unsigned char) * CACHE_CONTROL_SIZE);
 }
 
 void Ram::load_state(std::ifstream& file)
 {
-	throw std::logic_error("not implemented");
+	file.read(reinterpret_cast<char*>(&memory[0]), sizeof(unsigned char) * MAIN_MEMORY_SIZE);
+	file.read(reinterpret_cast<char*>(&parallel_port[0]), sizeof(unsigned char) * PARALLEL_PORT_SIZE);
+	file.read(reinterpret_cast<char*>(&scratch_pad[0]), sizeof(unsigned char) * SCRATCH_PAD_SIZE);
+	file.read(reinterpret_cast<char*>(&cache_control[0]), sizeof(unsigned char) * CACHE_CONTROL_SIZE);
 }
 
 void Ram::set_byte(unsigned int address, unsigned char value)

@@ -2,6 +2,7 @@
 #include "MemoryMap.hpp"
 #include "Gpu.hpp"
 #include <iostream>
+#include <fstream>
 
 constexpr unsigned int NUM_CHANNELS = 7;
 
@@ -102,12 +103,12 @@ void Dma::tick()
 
 void Dma::save_state(std::ofstream& file)
 {
-
+	file.write(reinterpret_cast<char*>(&dma_registers[0]), sizeof(unsigned char) * 128);
 }
 
 void Dma::load_state(std::ifstream& file)
 {
-
+	file.read(reinterpret_cast<char*>(&dma_registers[0]), sizeof(unsigned char) * 128);
 }
 
 void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)

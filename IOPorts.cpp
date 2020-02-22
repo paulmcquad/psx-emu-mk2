@@ -1,8 +1,9 @@
+#include <typeinfo.h>
+#include <fstream>
 #include "IOPorts.hpp"
 #include "Gpu.hpp"
 #include "Dma.hpp"
 #include "Exceptions.hpp"
-#include <typeinfo.h>
 
 constexpr unsigned int IO_START = 0x1F801000;
 constexpr unsigned int GP0_Send_GPUREAD_START = 0x1f801810 - IO_START;
@@ -45,12 +46,28 @@ void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma)
 
 void IOPorts::save_state(std::ofstream& file)
 {
-	throw std::logic_error("not implemented");
+	file.write(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
+	file.write(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
+	file.write(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
+	file.write(reinterpret_cast<char*>(&spu_control), sizeof(unsigned char) * SPU_CONTROL_SIZE);
+	file.write(reinterpret_cast<char*>(&spu_voice_registers), sizeof(unsigned char) * SPU_VOICE_SIZE);
+	file.write(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
+	file.write(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
+	file.write(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
+	file.write(reinterpret_cast<char*>(&post), sizeof(unsigned char));
 }
 
 void IOPorts::load_state(std::ifstream& file)
 {
-	throw std::logic_error("not implemented");
+	file.read(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
+	file.read(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
+	file.read(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
+	file.read(reinterpret_cast<char*>(&spu_control), sizeof(unsigned char) * SPU_CONTROL_SIZE);
+	file.read(reinterpret_cast<char*>(&spu_voice_registers), sizeof(unsigned char) * SPU_VOICE_SIZE);
+	file.read(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
+	file.read(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
+	file.read(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
+	file.read(reinterpret_cast<char*>(&post), sizeof(unsigned char));
 }
 
 unsigned char IOPorts::get(unsigned int address)

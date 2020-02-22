@@ -123,6 +123,10 @@ void Gpu::tick()
 			}
 			while (commands_to_remove > 0)
 			{
+				if (gp0_command_queue.empty())
+				{
+					throw std::out_of_range("removed too many commands from queue");
+				}
 				gp0_command_queue.pop_front();
 				commands_to_remove--;
 			}
@@ -137,12 +141,12 @@ void Gpu::tick()
 
 void Gpu::save_state(std::ofstream& file)
 {
-	throw std::logic_error("not implemented");
+	// todo
 }
 
 void Gpu::load_state(std::ifstream& file)
 {
-	throw std::logic_error("not implemented");
+	// todo
 }
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
@@ -334,10 +338,5 @@ unsigned int Gpu::clear_cache()
 
 unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 {
-	if (gp0_command_queue.size() < 3)
-	{
-		return 0;
-	}
-
-
+	return 0;
 }
