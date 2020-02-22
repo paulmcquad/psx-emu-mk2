@@ -335,9 +335,35 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 		unsigned int expected_size = num_words_to_copy + 3;
 		if (gp0_command_queue.size() >=  expected_size)
 		{
-			// todo
+			// we are just going to pop the data of the deque in this function to
+			// simply things
+			gp0_command_queue.pop_front();
+			gp0_command_queue.pop_front();
+			gp0_command_queue.pop_front();
+			
+			unsigned int x = 0;
+			unsigned int y = 0;
+			while (num_words_to_copy)
+			{
+				unsigned int data = gp0_command_queue.front();
+				gp0_command_queue.pop_front();
 
-			return expected_size;
+				for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
+				{
+					unsigned short colour_16 = data >> (16 * halfword_offset);
+					unsigned int index = ((y*FRAME_WIDTH) + x);
+					video_ram[index] = colour_16;
+
+					x++;
+					if (x >= width_height.x_siz)
+					{
+						x = 0;
+						y++;
+					}
+				}
+
+				num_words_to_copy--;
+			}
 		}
 	}
 
@@ -366,12 +392,13 @@ void Gpu::ack_gpu_interrupt(unsigned int command)
 
 void Gpu::display_enable(unsigned int command)
 {
-
+	// 0 = on, 1 = off bizarrely
+	gpu_status.display_enable = 0x00000001 & command;
 }
 
 void Gpu::dma_direction(unsigned int command)
 {
-
+	gpu_status.dma_direction = 0x00000003 & command;
 }
 
 void Gpu::start_display_area(unsigned int command)
