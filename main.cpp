@@ -128,8 +128,6 @@ int main(int num_args, char ** args )
 		glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
 		glGenTextures(1, &tex);
-		glBindTexture(GL_TEXTURE_2D, tex);
-
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex);
 		glUniform1i(glGetUniformLocation(shader_program, "text"), 0);
@@ -227,8 +225,7 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			// playstation was a 16 bit colour machine but i'm treating it as a 24bit machine
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, gpu->video_ram.data());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, gpu->video_ram.data());
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);

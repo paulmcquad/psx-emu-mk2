@@ -7,10 +7,9 @@
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
-constexpr unsigned int BYTES_PER_PIXEL = 3; // psx is rgb565 but its simpler if I make it rgb888
-constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT * BYTES_PER_PIXEL;
+constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 
-// don't know why this isn't defined
+// 16 bit colour - not sure why this isn't defined by GLAD
 constexpr unsigned int GL_RGB565 = 0x8D62;
 
 enum class gp0_commands : unsigned char;
@@ -81,26 +80,23 @@ public:
 	} gpu_status;
 	
 
-	std::vector<unsigned char> video_ram;
+	std::vector<unsigned short> video_ram;
 	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
 	// that I can ignore that
 	std::deque<unsigned int> gp0_command_queue;
-	std::deque<unsigned int> gp1_command_queue;
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
-	std::unordered_map<gp1_commands, unsigned int (Gpu::*)()> gp1_command_map;
+	std::unordered_map<gp1_commands, void (Gpu::*)(unsigned int)> gp1_command_map;
 
 	void execute_gp0_commands();
-	void execute_gp1_commands();
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
 
-	void draw_static();
-
+	// GP0 commands
 	unsigned int nop();
 	unsigned int set_draw_top_left();
 	unsigned int set_draw_bottom_right();
@@ -109,7 +105,23 @@ private:
 	unsigned int set_texture_window();
 	unsigned int set_mask_bit();
 	unsigned int clear_cache();
+
 	unsigned int copy_rectangle_from_cpu_to_vram();
+	unsigned int copy_rectangle_from_vram_to_cpu();
 
 	unsigned int mono_4_pt_opaque();
+
+	// GP1 commands]
+	void reset_gpu(unsigned int command);
+	void reset_command_buffer(unsigned int command);
+	void ack_gpu_interrupt(unsigned int command);
+	void display_enable(unsigned int command);
+	void dma_direction(unsigned int command);
+	void start_display_area(unsigned int command);
+	void horizontal_display_range(unsigned int command);
+	void vertical_display_range(unsigned int command);
+	void display_mode(unsigned int command);
+	void get_gpu_info(unsigned int command);
+	void new_texture_disable(unsigned int command);
+	void special_texture_disable(unsigned int command);
 };

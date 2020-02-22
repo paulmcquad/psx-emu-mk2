@@ -44,7 +44,18 @@ void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char va
 			} break;
 			case GP1_SEND:
 			{
-				gp1_command_queue.push_back(command);
+				color_command gp1_command(command);
+				gp1_commands current_command = static_cast<gp1_commands>(gp1_command.op);
+				auto iter = gp1_command_map.find(current_command);
+				if (iter != gp1_command_map.end())
+				{
+					(this->*iter->second)(command);
+				}
+				else
+				{
+					std::cout << "GP1: " << std::hex << gp1_command.value << std::endl;
+					throw std::logic_error("not implemented");
+				}
 			} break;
 			default:
 				throw std::logic_error("can't write to this gpu register");
@@ -61,6 +72,7 @@ void Gpu::init()
 	gpu_status.ready_dma = true;
 	gpu_status.ready_cmd_word = true;
 
+	// GP0 commands
 	gp0_command_map[gp0_commands::NOP] = &Gpu::nop;
 	gp0_command_map[gp0_commands::SET_DRAW_TOP_LEFT] = &Gpu::set_draw_top_left;
 	gp0_command_map[gp0_commands::SET_DRAW_BOTTOM_RIGHT] = &Gpu::set_draw_bottom_right;
@@ -72,8 +84,21 @@ void Gpu::init()
 	gp0_command_map[gp0_commands::CLEAR_CACHE] = &Gpu::clear_cache;
 
 	gp0_command_map[gp0_commands::COPY_RECT_CPU_VRAM] = &Gpu::copy_rectangle_from_cpu_to_vram;
+	gp0_command_map[gp0_commands::COPY_RECT_VRAM_CPU] = &Gpu::copy_rectangle_from_vram_to_cpu;
 
 	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
+
+	// GP1 commands
+	gp1_command_map[gp1_commands::RESET_GPU] = &Gpu::reset_gpu;
+	gp1_command_map[gp1_commands::RESET_COMMAND_BUFFER] = &Gpu::reset_command_buffer;
+	gp1_command_map[gp1_commands::ACK_IRQ1] = &Gpu::ack_gpu_interrupt;
+	gp1_command_map[gp1_commands::DISPLAY_ENABLE] = &Gpu::display_enable;
+	gp1_command_map[gp1_commands::DMA_DIR] = &Gpu::dma_direction;
+	gp1_command_map[gp1_commands::START_OF_DISPLAY] = &Gpu::start_display_area;
+	gp1_command_map[gp1_commands::HOR_DISPLAY_RANGE] = &Gpu::horizontal_display_range;
+	gp1_command_map[gp1_commands::VERT_DISPLAY_RANGE] = &Gpu::vertical_display_range;
+	gp1_command_map[gp1_commands::DISPLAY_MODE] = &Gpu::display_mode;
+	gp1_command_map[gp1_commands::GET_GPU_INFO] = &Gpu::get_gpu_info;
 }
 
 void Gpu::reset()
@@ -83,7 +108,6 @@ void Gpu::reset()
 
 void Gpu::tick()
 {
-	execute_gp1_commands();
 	execute_gp0_commands();
 }
 
@@ -162,7 +186,9 @@ void Gpu::execute_gp0_commands()
 		auto iter = gp0_command_map.find(current_command);
 		if (iter != gp0_command_map.end())
 		{
+			// execute the command
 			unsigned int commands_to_remove = (this->*iter->second)();
+			// cleanup
 			if (commands_to_remove == 0)
 			{
 				// waiting for more words
@@ -180,15 +206,10 @@ void Gpu::execute_gp0_commands()
 		}
 		else
 		{
-			std::cout << std::hex << command.value << std::endl;
+			std::cout << "GP0: " << std::hex << command.value << std::endl;
 			throw std::logic_error("not implemented");
 		}
 	}
-}
-
-void Gpu::execute_gp1_commands()
-{
-
 }
 
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
@@ -222,29 +243,9 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 bgr)
 {
-	unsigned int index = ((v.y*FRAME_WIDTH) + v.x)*BYTES_PER_PIXEL;
-
-	video_ram[index] = bgr[0];
-	video_ram[index + 1] = bgr[1];
-	video_ram[index + 2] = bgr[2];
-}
-
-void Gpu::draw_static()
-{
-	for (int height = 0; height < FRAME_HEIGHT; height++)
-	{
-		for (int width = 0; width < FRAME_WIDTH; width++)
-		{
-			unsigned int index = height * FRAME_WIDTH + width;
-			index *= BYTES_PER_PIXEL;
-
-			unsigned char value = rand() % 255;
-
-			video_ram[index] = value;
-			video_ram[index + 1] = value;
-			video_ram[index + 2] = value;
-		}
-	}
+	unsigned int index = ((v.y*FRAME_WIDTH) + v.x);
+	unsigned short colour_16 = (bgr[0] >> 3) | ((bgr[1] >> 2) << 5) | ((bgr[2] >> 3) << 11);
+	video_ram[index] = colour_16;
 }
 
 unsigned int Gpu::nop()
@@ -341,4 +342,69 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 	}
 
 	return 0;
+}
+
+unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
+{
+	return 0;
+}
+
+void Gpu::reset_gpu(unsigned int command)
+{
+
+}
+
+void Gpu::reset_command_buffer(unsigned int command)
+{
+
+}
+
+void Gpu::ack_gpu_interrupt(unsigned int command)
+{
+
+}
+
+void Gpu::display_enable(unsigned int command)
+{
+
+}
+
+void Gpu::dma_direction(unsigned int command)
+{
+
+}
+
+void Gpu::start_display_area(unsigned int command)
+{
+
+}
+
+void Gpu::horizontal_display_range(unsigned int command)
+{
+
+}
+
+void Gpu::vertical_display_range(unsigned int command)
+{
+
+}
+
+void Gpu::display_mode(unsigned int command)
+{
+
+}
+
+void Gpu::get_gpu_info(unsigned int command)
+{
+
+}
+
+void Gpu::new_texture_disable(unsigned int command)
+{
+
+}
+
+void Gpu::special_texture_disable(unsigned int command)
+{
+
 }
