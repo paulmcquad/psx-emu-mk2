@@ -1,32 +1,11 @@
 #include "Gpu.hpp"
 #include "MemoryMap.hpp"
 #include "InstructionEnums.hpp"
+#include "InstructionTypes.hpp"
 #include <iostream>
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
-
-union vert_command
-{
-	unsigned int value;
-	struct
-	{
-		int x : 11;
-		unsigned int na0 : 5;
-		int y : 11;
-		unsigned int na1 : 5;
-	};
-};
-
-union color_command
-{
-	unsigned int value;
-	struct
-	{
-		glm::u8vec3 rgb;
-		unsigned char op;
-	};
-};
 
 unsigned char Gpu::get(gpu_registers reg_name, unsigned int byte_offset)
 {
@@ -104,39 +83,8 @@ void Gpu::reset()
 
 void Gpu::tick()
 {
-	while (gp0_command_queue.empty() == false)
-	{
-		color_command command;
-		command.value = gp0_command_queue.front();
-
-		gp0_commands current_command = static_cast<gp0_commands>(command.op);
-
-		// let's assume it always finds the function ptr :)
-		auto iter = gp0_command_map.find(current_command);
-		if (iter != gp0_command_map.end())
-		{
-			unsigned int commands_to_remove = (this->*iter->second)();
-			if (commands_to_remove == 0)
-			{
-				// waiting for more words
-				break;
-			}
-			while (commands_to_remove > 0)
-			{
-				if (gp0_command_queue.empty())
-				{
-					throw std::out_of_range("removed too many commands from queue");
-				}
-				gp0_command_queue.pop_front();
-				commands_to_remove--;
-			}
-		}
-		else
-		{
-			std::cout << std::hex << command.value << std::endl;
-			throw std::logic_error("not implemented");
-		}
-	}
+	execute_gp1_commands();
+	execute_gp0_commands();
 }
 
 void Gpu::save_state(std::ofstream& file)
@@ -203,8 +151,48 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 	std::cout << "Finished GPU linked list DMA\n";
 }
 
+void Gpu::execute_gp0_commands()
+{
+	while (gp0_command_queue.empty() == false)
+	{
+		color_command command(gp0_command_queue.front());
+		gp0_commands current_command = static_cast<gp0_commands>(command.op);
+
+		// let's assume it always finds the function ptr :)
+		auto iter = gp0_command_map.find(current_command);
+		if (iter != gp0_command_map.end())
+		{
+			unsigned int commands_to_remove = (this->*iter->second)();
+			if (commands_to_remove == 0)
+			{
+				// waiting for more words
+				break;
+			}
+			while (commands_to_remove > 0)
+			{
+				if (gp0_command_queue.empty())
+				{
+					throw std::out_of_range("removed too many commands from queue");
+				}
+				gp0_command_queue.pop_front();
+				commands_to_remove--;
+			}
+		}
+		else
+		{
+			std::cout << std::hex << command.value << std::endl;
+			throw std::logic_error("not implemented");
+		}
+	}
+}
+
+void Gpu::execute_gp1_commands()
+{
+
+}
+
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb)
+void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 bgr)
 {
 	glm::vec2 e0 = v1 - v0;
 	glm::vec2 e1 = v2 - v0;
@@ -226,19 +214,19 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 			if (s >= 0 && t >= 0 && (s + t <= 1))
 			{
-				draw_pixel(cur_pos, rgb);
+				draw_pixel(cur_pos, bgr);
 			}
 		}
 	}
 }
 
-void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
+void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 bgr)
 {
 	unsigned int index = ((v.y*FRAME_WIDTH) + v.x)*BYTES_PER_PIXEL;
 
-	video_ram[index] = rgb.r;
-	video_ram[index + 1] = rgb.b;
-	video_ram[index + 2] = rgb.g;
+	video_ram[index] = bgr[0];
+	video_ram[index + 1] = bgr[1];
+	video_ram[index + 2] = bgr[2];
 }
 
 void Gpu::draw_static()
@@ -271,14 +259,11 @@ unsigned int Gpu::mono_4_pt_opaque()
 		return 0;
 	}
 
-	color_command color;
-	vert_command vert0, vert1, vert2, vert3;
-
-	color.value = gp0_command_queue[0];
-	vert0.value = gp0_command_queue[1];
-	vert1.value = gp0_command_queue[2];
-	vert2.value = gp0_command_queue[3];
-	vert3.value = gp0_command_queue[4];
+	color_command color(gp0_command_queue[0]);
+	vert_command vert0(gp0_command_queue[1]);
+	vert_command vert1(gp0_command_queue[2]);
+	vert_command vert2(gp0_command_queue[3]);
+	vert_command vert3(gp0_command_queue[4]);
 
 	glm::ivec2 v0(vert0.x, vert0.y);
 	glm::ivec2 v1(vert1.x, vert1.y);
@@ -286,10 +271,10 @@ unsigned int Gpu::mono_4_pt_opaque()
 	glm::ivec2 v3(vert3.x, vert3.y);
 
 	// triangle 1
-	draw_triangle(v0, v1, v2, color.rgb);
+	draw_triangle(v0, v1, v2, color.bgr);
 
 	// triangle 2
-	draw_triangle(v1, v2, v3, color.rgb);
+	draw_triangle(v1, v2, v3, color.bgr);
 
 	return 5;
 }
@@ -338,5 +323,22 @@ unsigned int Gpu::clear_cache()
 
 unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 {
+	if (gp0_command_queue.size() >= 3)
+	{
+		dest_coord_command dest_coord(gp0_command_queue[1]);
+		width_height_command width_height(gp0_command_queue[2]);
+		unsigned int num_halfwords_to_copy = width_height.x_siz*width_height.y_siz;
+		// round up as there should be padding if the number of halfwords is odd
+		unsigned int num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
+
+		unsigned int expected_size = num_words_to_copy + 3;
+		if (gp0_command_queue.size() >=  expected_size)
+		{
+			// todo
+
+			return expected_size;
+		}
+	}
+
 	return 0;
 }

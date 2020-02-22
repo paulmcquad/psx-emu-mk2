@@ -93,6 +93,9 @@ private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
 	std::unordered_map<gp1_commands, unsigned int (Gpu::*)()> gp1_command_map;
 
+	void execute_gp0_commands();
+	void execute_gp1_commands();
+
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
 
