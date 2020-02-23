@@ -9,9 +9,6 @@ constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 
-// 16 bit colour - not sure why this isn't defined by GLAD
-constexpr unsigned int GL_RGB565 = 0x8D62;
-
 enum class gp0_commands : unsigned char;
 enum class gp1_commands : unsigned char;
 
@@ -91,6 +88,9 @@ public:
 	std::deque<unsigned int> gp0_command_queue;
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
+
+	unsigned int x_offset = 0;
+	unsigned int y_offset = 0;
 
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;

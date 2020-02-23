@@ -95,3 +95,19 @@ union color_command
 		value = val;
 	}
 };
+
+union draw_offset_command
+{
+	unsigned int value;
+	struct
+	{
+		int x_offset : 11;
+		int y_offset : 11;
+		unsigned int na : 10;
+	};
+
+	draw_offset_command(unsigned int val)
+	{
+		value = val;
+	}
+};

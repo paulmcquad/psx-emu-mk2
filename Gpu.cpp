@@ -118,12 +118,37 @@ void Gpu::save_state(std::ofstream& file)
 {
 	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
 	file.write(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
+
+	std::vector<unsigned int> commands;
+	for (auto iter : gp0_command_queue)
+	{
+		commands.push_back(iter);
+	}
+
+	unsigned int num_commands = commands.size();
+
+	file.write(reinterpret_cast<char*>(&num_commands), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
 }
 
 void Gpu::load_state(std::ifstream& file)
 {
 	file.read(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
 	file.read(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
+
+	unsigned int num_commands = 0;
+	file.read(reinterpret_cast<char*>(&num_commands), sizeof(unsigned int));
+
+	std::vector<unsigned int> commands;
+	commands.resize(num_commands);
+	file.read(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
+
+	gp0_command_queue.clear();
+
+	for (auto iter : commands)
+	{
+		gp0_command_queue.push_back(iter);
+	}
 }
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
@@ -248,9 +273,18 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 {
-	unsigned int index = ((v.y*FRAME_WIDTH) + v.x);
-	unsigned short colour_16 = (rgb.r >> 3) | ((rgb.g >> 2) << 5) | ((rgb.b >> 3) << 11);
-	video_ram[index] = colour_16;
+	int x = v.x + x_offset;
+	int y = v.y + y_offset;
+
+	if (x >= 0 && x < width)
+	{
+		if (y >= 0 && y < height)
+		{
+			unsigned int index = ((y*FRAME_WIDTH) + x);
+			unsigned short colour_16 = (rgb.r >> 3) | ((rgb.g >> 2) << 5) | ((rgb.b >> 3) << 11);
+			video_ram[index] = colour_16;
+		}
+	}
 }
 
 unsigned int Gpu::nop()
@@ -361,7 +395,11 @@ unsigned int Gpu::set_draw_bottom_right()
 
 unsigned int Gpu::set_drawing_offset()
 {
-	// todo
+	draw_offset_command offset(gp0_command_queue.front());
+
+	x_offset = offset.x_offset;
+	y_offset = offset.y_offset;
+
 	return 1;
 }
 
