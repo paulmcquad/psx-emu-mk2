@@ -114,7 +114,9 @@ private:
 	unsigned int copy_rectangle_from_cpu_to_vram();
 	unsigned int copy_rectangle_from_vram_to_cpu();
 
+	unsigned int shader_3_pt_opaque();
 	unsigned int mono_4_pt_opaque();
+	unsigned int shaded_4_pt_opaque();
 
 	// GP1 commands]
 	void reset_gpu(unsigned int command);

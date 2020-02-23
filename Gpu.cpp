@@ -87,7 +87,10 @@ void Gpu::init()
 	gp0_command_map[gp0_commands::COPY_RECT_CPU_VRAM] = &Gpu::copy_rectangle_from_cpu_to_vram;
 	gp0_command_map[gp0_commands::COPY_RECT_VRAM_CPU] = &Gpu::copy_rectangle_from_vram_to_cpu;
 
+	gp0_command_map[gp0_commands::SHADED_3_PT_OPAQUE] = &Gpu::shader_3_pt_opaque;
+
 	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
+	gp0_command_map[gp0_commands::SHADED_4_PT_OPAQUE] = &Gpu::shaded_4_pt_opaque;
 
 	// GP1 commands
 	gp1_command_map[gp1_commands::RESET_GPU] = &Gpu::reset_gpu;
@@ -215,7 +218,7 @@ void Gpu::execute_gp0_commands()
 }
 
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 bgr)
+void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb)
 {
 	glm::vec2 e0 = v1 - v0;
 	glm::vec2 e1 = v2 - v0;
@@ -237,16 +240,16 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 			if (s >= 0 && t >= 0 && (s + t <= 1))
 			{
-				draw_pixel(cur_pos, bgr);
+				draw_pixel(cur_pos, rgb);
 			}
 		}
 	}
 }
 
-void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 bgr)
+void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 {
 	unsigned int index = ((v.y*FRAME_WIDTH) + v.x);
-	unsigned short colour_16 = (bgr[0] >> 3) | ((bgr[1] >> 2) << 5) | ((bgr[2] >> 3) << 11);
+	unsigned short colour_16 = (rgb.r >> 3) | ((rgb.g >> 2) << 5) | ((rgb.b >> 3) << 11);
 	video_ram[index] = colour_16;
 }
 
@@ -273,15 +276,75 @@ unsigned int Gpu::mono_4_pt_opaque()
 	glm::ivec2 v2(vert2.x, vert2.y);
 	glm::ivec2 v3(vert3.x, vert3.y);
 
-	glm::u8vec3 bgr(color.b, color.g, color.r);
+	glm::u8vec3 rgb(color.r, color.g, color.b);
 
 	// triangle 1
-	draw_triangle(v0, v1, v2, bgr);
+	draw_triangle(v0, v1, v2, rgb);
 
 	// triangle 2
-	draw_triangle(v1, v2, v3, bgr);
+	draw_triangle(v1, v2, v3, rgb);
 
 	return 5;
+}
+
+unsigned int Gpu::shader_3_pt_opaque()
+{
+	if (gp0_command_queue.size() < 6)
+	{
+		return 0;
+	}
+
+	color_command color1(gp0_command_queue[0]);
+	color_command color2(gp0_command_queue[2]);
+	color_command color3(gp0_command_queue[4]);
+
+	vert_command vert0(gp0_command_queue[1]);
+	vert_command vert1(gp0_command_queue[3]);
+	vert_command vert2(gp0_command_queue[5]);
+
+	glm::ivec2 v0(vert0.x, vert0.y);
+	glm::ivec2 v1(vert1.x, vert1.y);
+	glm::ivec2 v2(vert2.x, vert2.y);
+
+	glm::u8vec3 rgb(color1.r, color1.g, color1.b);
+
+	// triangle 1
+	draw_triangle(v0, v1, v2, rgb);
+
+	return 6;
+}
+
+unsigned int Gpu::shaded_4_pt_opaque()
+{
+	if (gp0_command_queue.size() < 8)
+	{
+		return 0;
+	}
+
+	color_command color1(gp0_command_queue[0]);
+	color_command color2(gp0_command_queue[2]);
+	color_command color3(gp0_command_queue[4]);
+	color_command color4(gp0_command_queue[6]);
+
+	vert_command vert0(gp0_command_queue[1]);
+	vert_command vert1(gp0_command_queue[3]);
+	vert_command vert2(gp0_command_queue[5]);
+	vert_command vert3(gp0_command_queue[7]);
+
+	glm::ivec2 v0(vert0.x, vert0.y);
+	glm::ivec2 v1(vert1.x, vert1.y);
+	glm::ivec2 v2(vert2.x, vert2.y);
+	glm::ivec2 v3(vert3.x, vert3.y);
+
+	glm::u8vec3 rgb(color1.r, color1.g, color1.b);
+
+	// triangle 1
+	draw_triangle(v0, v1, v2, rgb);
+
+	// triangle 2
+	draw_triangle(v1, v2, v3, rgb);
+
+	return 8;
 }
 
 unsigned int Gpu::set_draw_top_left()
