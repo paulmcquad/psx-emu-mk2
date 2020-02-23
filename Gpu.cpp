@@ -103,7 +103,6 @@ void Gpu::init()
 
 void Gpu::reset()
 {
-	
 }
 
 void Gpu::tick()
@@ -300,7 +299,20 @@ unsigned int Gpu::set_drawing_offset()
 
 unsigned int Gpu::set_draw_mode()
 {
-	// todo
+	// the command only sets about half the gpu status values
+	// it conveniently follows the same bit pattern up until texture disable
+	// which I believe we can ignore according to the problemkaputt.de documentation
+	gpu_status_union new_status(gp0_command_queue.front());
+
+	gpu_status.tex_page_x_base = new_status.tex_page_x_base;
+	gpu_status.tex_page_y_base = new_status.tex_page_y_base;
+	gpu_status.semi_transparency = new_status.semi_transparency;
+	gpu_status.tex_page_colors = new_status.tex_page_colors;
+	gpu_status.dither = new_status.dither;
+	gpu_status.drawing_to_display_area = new_status.drawing_to_display_area;
+
+	// ignoring all other values for the moment
+
 	return 1;
 }
 
@@ -348,7 +360,8 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 				unsigned int data = gp0_command_queue.front();
 				gp0_command_queue.pop_front();
 
-				for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
+				// todo verify
+				/*for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
 				{
 					unsigned short colour_16 = data >> (16 * halfword_offset);
 					unsigned int index = ((y*FRAME_WIDTH) + x);
@@ -360,7 +373,7 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 						x = 0;
 						y++;
 					}
-				}
+				}*/
 
 				num_words_to_copy--;
 			}
@@ -372,6 +385,12 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 
 unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
 {
+	if (gp0_command_queue.size() >= 3)
+	{
+		// todo implement
+		return 3;
+	}
+
 	return 0;
 }
 

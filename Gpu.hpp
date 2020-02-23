@@ -45,9 +45,9 @@ public:
 		unsigned char byte_value[4];
 	} gpu_read;
 
-	union
+	union gpu_status_union
 	{
-		unsigned int int_Value;
+		unsigned int int_value;
 		unsigned char byte_value[4];
 		struct
 		{
@@ -77,8 +77,13 @@ public:
 			unsigned int dma_direction : 2;
 			unsigned int even_odd : 1;
 		};
+
+		gpu_status_union() = default;
+		gpu_status_union(unsigned int val)
+		{
+			int_value = val;
+		}
 	} gpu_status;
-	
 
 	std::vector<unsigned short> video_ram;
 	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
