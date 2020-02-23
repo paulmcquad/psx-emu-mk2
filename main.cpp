@@ -1,6 +1,8 @@
 #include <memory>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
+#include <sstream>
 
 #include "MemoryMap.hpp"
 #include "Dma.hpp"
@@ -36,6 +38,8 @@ static const char* frag_shader_src =
 
 bool save_state = false;
 bool load_state = false;
+bool pause_execution = false;
+bool step_execution = false;
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
@@ -183,9 +187,13 @@ int main(int num_args, char ** args )
 	{
 		auto start_time = glfwGetTime();
 
-		cpu->tick();
-		dma->tick();
-		gpu->tick();
+		if (pause_execution == false || step_execution == true)
+		{
+			cpu->tick();
+			dma->tick();
+			gpu->tick();
+			step_execution = false;
+		}
 
 		if (save_state)
 		{
@@ -247,9 +255,49 @@ int main(int num_args, char ** args )
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
+			// draw imgui debug menu
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
+
+			ImGui::Begin("Registers");
+
+			{
+				std::stringstream current_pc_text;
+				current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
+				ImGui::Text(current_pc_text.str().c_str());
+			}
+
+			{
+				for (int idx = 0; idx < 32; idx++)
+				{
+					std::stringstream reg_text;
+					reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.gp_registers[idx];
+					ImGui::Text(reg_text.str().c_str());
+				}
+			}
+
+			ImGui::End();
+
+			ImGui::Begin("Controls");
+
+			{
+				if (ImGui::Button(pause_execution ? "Start" : "Stop"))
+				{
+					pause_execution = !pause_execution;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Step"))
+				{
+					step_execution = !step_execution;
+				}
+
+				save_state = ImGui::Button("Save state");
+				ImGui::SameLine();
+				load_state = ImGui::Button("Load state");
+			}
+
+			ImGui::End();
 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

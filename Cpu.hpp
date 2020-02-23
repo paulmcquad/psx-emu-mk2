@@ -17,11 +17,7 @@ enum class cpu_bconds : unsigned char;
 // http://hitmen.c02.at/files/docs/psx/psx.pdf
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
-#ifdef TESTING
 public:
-#else
-private:
-#endif
 	std::shared_ptr<Cop0> cop0 = nullptr;
 	std::shared_ptr<Cop2> cop2 = nullptr;
 
@@ -52,7 +48,6 @@ private:
 		}
 	} register_file;
 
-public:
 	Cpu();
 	void init(std::shared_ptr<Ram> _ram);
 	void reset();
