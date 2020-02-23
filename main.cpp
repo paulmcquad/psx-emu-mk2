@@ -8,7 +8,6 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
-#include <imgui.h>
 
 constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
 
@@ -161,9 +160,6 @@ int main(int num_args, char ** args )
 
 	std::cout << "Hooking up all peripherals to the DMA\n";
 	dma->init(ram, gpu);
-
-	std::cout << "Setting up imgui\n";
-	IMGUI_CHECKVERSION();
 
 	std::cout << "Running!\n";
 
