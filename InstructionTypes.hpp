@@ -1,6 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/common.hpp>
 
 // using technically undefined behaviour but it's generally supported
 union instruction_union
@@ -86,7 +84,9 @@ union color_command
 	unsigned int value;
 	struct
 	{
-		glm::u8vec3 bgr;
+		unsigned char b;
+		unsigned char g;
+		unsigned char r;
 		unsigned char op;
 	};
 

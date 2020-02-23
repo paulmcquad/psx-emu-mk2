@@ -1,13 +1,19 @@
+#include <memory>
+#include <iostream>
+#include <fstream>
+
 #include "MemoryMap.hpp"
 #include "Dma.hpp"
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "IOPorts.hpp"
 #include "glad.h"
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <GLFW/glfw3.h>
-#include <memory>
-#include <iostream>
-#include <fstream>
 
 constexpr double FRAME_TIME_SECS = 1.0 / 60.0;
 
@@ -82,6 +88,15 @@ int main(int num_args, char ** args )
 		glfwTerminate();
 		return -1;
 	}
+
+	std::cout << "Setting up imgui\n";
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init(nullptr);
 
 	std::cout << "Setting up OpenGL\n";
 	GLuint vao, vbo, vert_shader, frag_shader, shader_program, tex;
@@ -232,6 +247,13 @@ int main(int num_args, char ** args )
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 			current_frame_time = 0;
@@ -245,6 +267,10 @@ int main(int num_args, char ** args )
 	glDeleteShader(vert_shader);
 	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();

@@ -14,6 +14,20 @@ set(source_files
 		glad.h
 		glad.c
 		khrplatform.h
+		imconfig.h
+		imgui_demo.cpp
+		imgui_draw.cpp
+		imgui_impl_opengl3.cpp
+		imgui_impl_opengl3.h
+		imgui_impl_glfw.cpp
+		imgui_impl_glfw.h
+		imgui_internal.h
+		imgui_widgets.cpp
+		imgui.cpp
+		imgui.h
+		imstb_rectpack.h
+		imstb_textedit.h
+		imstb_truetype.h
 		Dma.hpp
 		Dma.cpp
 		Cpu.hpp
@@ -39,3 +53,5 @@ target_link_libraries(psx-mk2 glfw)
 target_link_libraries(psx-mk2 glm)
 
 add_executable(psx-mk2-test main_test.cpp ${source_files})
+target_link_libraries(psx-mk2-test glfw)
+target_link_libraries(psx-mk2-test glm)

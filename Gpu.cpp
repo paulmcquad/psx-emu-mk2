@@ -270,11 +270,13 @@ unsigned int Gpu::mono_4_pt_opaque()
 	glm::ivec2 v2(vert2.x, vert2.y);
 	glm::ivec2 v3(vert3.x, vert3.y);
 
+	glm::u8vec3 bgr(color.b, color.g, color.r);
+
 	// triangle 1
-	draw_triangle(v0, v1, v2, color.bgr);
+	draw_triangle(v0, v1, v2, bgr);
 
 	// triangle 2
-	draw_triangle(v1, v2, v3, color.bgr);
+	draw_triangle(v1, v2, v3, bgr);
 
 	return 5;
 }
