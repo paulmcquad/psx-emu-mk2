@@ -4,6 +4,7 @@
 #include "InstructionTypes.hpp"
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
@@ -91,6 +92,7 @@ void Gpu::init()
 
 	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
 	gp0_command_map[gp0_commands::SHADED_4_PT_OPAQUE] = &Gpu::shaded_4_pt_opaque;
+	gp0_command_map[gp0_commands::TEX_4_OPAQUE_TEX_BLEND] = &Gpu::tex_4_pt_opaque_blend;
 
 	// GP1 commands
 	gp1_command_map[gp1_commands::RESET_GPU] = &Gpu::reset_gpu;
@@ -153,7 +155,7 @@ void Gpu::load_state(std::ifstream& file)
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	std::cout << "Starting GPU request DMA\n";
+	//std::cout << "Starting GPU request DMA\n";
 	unsigned int num_words = block_control.BS * block_control.BC;
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
@@ -171,12 +173,12 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-	std::cout << "Finished GPU request DMA\n";
+	//std::cout << "Finished GPU request DMA\n";
 }
 
 void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	std::cout << "Starting GPU linked list DMA\n";
+	//std::cout << "Starting GPU linked list DMA\n";
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
@@ -202,7 +204,7 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 			addr = header & 0x1ffffc;
 		}
 	}
-	std::cout << "Finished GPU linked list DMA\n";
+	//std::cout << "Finished GPU linked list DMA\n";
 }
 
 void Gpu::execute_gp0_commands()
@@ -273,8 +275,8 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 {
-	int x = v.x + x_offset;
-	int y = v.y + y_offset;
+	int x = v.x;
+	int y = v.y;
 
 	if (x >= 0 && x < width)
 	{
@@ -379,6 +381,18 @@ unsigned int Gpu::shaded_4_pt_opaque()
 	draw_triangle(v1, v2, v3, rgb);
 
 	return 8;
+}
+
+unsigned int Gpu::tex_4_pt_opaque_blend()
+{
+	if (gp0_command_queue.size() < 9)
+	{
+		return 0;
+	}
+
+	// todo implement
+
+	return 9;
 }
 
 unsigned int Gpu::set_draw_top_left()

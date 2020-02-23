@@ -89,8 +89,8 @@ public:
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 
-	unsigned int x_offset = 0;
-	unsigned int y_offset = 0;
+	int x_offset = 0;
+	int y_offset = 0;
 
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
@@ -117,6 +117,7 @@ private:
 	unsigned int shader_3_pt_opaque();
 	unsigned int mono_4_pt_opaque();
 	unsigned int shaded_4_pt_opaque();
+	unsigned int tex_4_pt_opaque_blend();
 
 	// GP1 commands]
 	void reset_gpu(unsigned int command);

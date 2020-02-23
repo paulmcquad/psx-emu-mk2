@@ -34,6 +34,9 @@ constexpr unsigned int I_MASK_END = I_MASK_START + I_MASK_SIZE;
 constexpr unsigned int TIMER_START = 0x1F801100 - IO_START;
 constexpr unsigned int TIMER_END = TIMER_START + TIMER_SIZE;
 
+constexpr unsigned int CDROM_START = 0x1F801800 - IO_START;
+constexpr unsigned int CDROM_END = CDROM_START + CDROM_SIZE;
+
 constexpr unsigned int DMA_SIZE = 128;
 constexpr unsigned int DMA_START = 0x1F801080 - IO_START;
 constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
@@ -126,6 +129,10 @@ unsigned char IOPorts::get(unsigned int address)
 	{
 		return post;
 	}
+	else if (address >= CDROM_START && address < CDROM_END)
+	{
+		return cdrom[address - CDROM_START];
+	}
 	else
 	{
 		throw bus_error();
@@ -187,6 +194,10 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address == POST)
 	{
 		post = value;
+	}
+	else if (address >= CDROM_START && address < CDROM_END)
+	{
+		cdrom[address - CDROM_START] = value;
 	}
 	else
 	{

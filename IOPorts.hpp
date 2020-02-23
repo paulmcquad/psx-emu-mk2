@@ -16,6 +16,8 @@ constexpr unsigned int I_MASK_SIZE = 4;
 
 constexpr unsigned int TIMER_SIZE = 45;
 
+constexpr unsigned int CDROM_SIZE = 4;
+
 class Gpu;
 class Dma;
 
@@ -46,4 +48,6 @@ private:
 	unsigned char i_mask[I_MASK_SIZE] = { 0 };
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
+
+	unsigned char cdrom[CDROM_SIZE] = { 0 };
 };

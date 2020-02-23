@@ -33,10 +33,8 @@ union vert_command
 	unsigned int value;
 	struct
 	{
-		int x : 11;
-		unsigned int na0 : 5;
-		int y : 11;
-		unsigned int na1 : 5;
+		int x : 16;
+		int y : 16;
 	};
 
 	vert_command(unsigned int val)

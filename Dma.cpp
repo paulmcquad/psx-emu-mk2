@@ -113,7 +113,7 @@ void Dma::load_state(std::ifstream& file)
 
 void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	std::cout << "Starting OTC manual DMA\n";
+	//std::cout << "Starting OTC manual DMA\n";
 	unsigned int num_words = block_control.BC;
 
 	DMA_direction dir = static_cast<DMA_direction>(channel_control.transfer_direction);
@@ -134,7 +134,7 @@ void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_addr
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-	std::cout << "Finished OTC manual DMA\n";
+	//std::cout << "Finished OTC manual DMA\n";
 }
 
 unsigned char Dma::get(unsigned int address)

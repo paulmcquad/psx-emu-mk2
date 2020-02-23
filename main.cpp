@@ -293,10 +293,11 @@ int main(int num_args, char ** args )
 				status_text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(8) << gpu->gpu_status.int_value;
 				ImGui::Text(status_text.str().c_str());
 
-				ImGui::Text(gpu->gpu_status.v_interlace ? "v_interlace: on" : "v_interlace: off");
-				ImGui::Text(gpu->gpu_status.display_enable ? "display: disabled" : "display: enabled");
-				ImGui::Text(gpu->gpu_status.video_mode ? "video_mode: pal" : "video_mode: ntsc");
-				ImGui::Text(gpu->gpu_status.even_odd ? "interlace: odd" : "Interlace: even/vblank");
+				{
+					std::stringstream offset_text;
+					offset_text << "Drawing offsets: " << gpu->x_offset << " " << gpu->y_offset;
+					ImGui::Text(offset_text.str().c_str());
+				}
 
 				// todo add more
 			}
