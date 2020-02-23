@@ -2,6 +2,7 @@
 #include "MemoryMap.hpp"
 #include "InstructionEnums.hpp"
 #include "InstructionTypes.hpp"
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <glm/glm.hpp>
@@ -112,12 +113,14 @@ void Gpu::tick()
 
 void Gpu::save_state(std::ofstream& file)
 {
-	// todo
+	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
 }
 
 void Gpu::load_state(std::ifstream& file)
 {
-	// todo
+	file.read(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
 }
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
@@ -389,6 +392,7 @@ unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
 {
 	if (gp0_command_queue.size() >= 3)
 	{
+		gpu_status.ready_vram_to_cpu = true;
 		// todo implement
 		return 3;
 	}
