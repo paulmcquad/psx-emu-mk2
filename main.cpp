@@ -260,12 +260,19 @@ int main(int num_args, char ** args )
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
-			ImGui::Begin("Registers");
+			ImGui::Begin("CPU Registers");
 
 			{
 				std::stringstream current_pc_text;
 				current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
 				ImGui::Text(current_pc_text.str().c_str());
+			}
+
+			{
+				std::stringstream current_instr_text;
+				current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_instruction;
+				ImGui::Text(current_instr_text.str().c_str());
+				ImGui::Separator();
 			}
 
 			{
@@ -275,6 +282,23 @@ int main(int num_args, char ** args )
 					reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.gp_registers[idx];
 					ImGui::Text(reg_text.str().c_str());
 				}
+			}
+
+			ImGui::End();
+
+			ImGui::Begin("GPU");
+
+			{
+				std::stringstream status_text;
+				status_text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(8) << gpu->gpu_status.int_value;
+				ImGui::Text(status_text.str().c_str());
+
+				ImGui::Text(gpu->gpu_status.v_interlace ? "v_interlace: on" : "v_interlace: off");
+				ImGui::Text(gpu->gpu_status.display_enable ? "display: disabled" : "display: enabled");
+				ImGui::Text(gpu->gpu_status.video_mode ? "video_mode: pal" : "video_mode: ntsc");
+				ImGui::Text(gpu->gpu_status.even_odd ? "interlace: odd" : "Interlace: even/vblank");
+
+				// todo add more
 			}
 
 			ImGui::End();
