@@ -38,6 +38,20 @@ void DebugMenu::draw()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	draw_cpu_menu();
+
+	draw_gpu_menu();
+
+	draw_controls_menu();
+
+	draw_overview_menu();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void DebugMenu::draw_cpu_menu()
+{
 	ImGui::Begin("CPU Registers");
 
 	{
@@ -63,7 +77,10 @@ void DebugMenu::draw()
 	}
 
 	ImGui::End();
+}
 
+void DebugMenu::draw_gpu_menu()
+{
 	ImGui::Begin("GPU");
 
 	{
@@ -81,7 +98,10 @@ void DebugMenu::draw()
 	}
 
 	ImGui::End();
+}
 
+void DebugMenu::draw_controls_menu()
+{
 	ImGui::Begin("Controls");
 
 	{
@@ -101,7 +121,9 @@ void DebugMenu::draw()
 	}
 
 	ImGui::End();
+}
 
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+void DebugMenu::draw_overview_menu()
+{
+
 }
