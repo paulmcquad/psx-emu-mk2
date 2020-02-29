@@ -283,7 +283,7 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 		if (y >= 0 && y < height)
 		{
 			unsigned int index = ((y*FRAME_WIDTH) + x);
-			unsigned short colour_16 = (rgb.r >> 3) | ((rgb.g >> 2) << 5) | ((rgb.b >> 3) << 11);
+			unsigned short colour_16 = (rgb.b >> 3) | ((rgb.g >> 2) << 5) | ((rgb.r >> 3) << 11);
 			video_ram[index] = colour_16;
 		}
 	}
@@ -342,7 +342,7 @@ unsigned int Gpu::shader_3_pt_opaque()
 	glm::ivec2 v1(vert1.x, vert1.y);
 	glm::ivec2 v2(vert2.x, vert2.y);
 
-	glm::u8vec3 rgb(color1.r, color1.g, color1.b);
+	glm::u8vec3 rgb(255, 0, 0);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb);

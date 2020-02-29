@@ -28,6 +28,8 @@ set(source_files
 		imstb_rectpack.h
 		imstb_textedit.h
 		imstb_truetype.h
+		DebugMenu.hpp
+		DebugMenu.cpp
 		Dma.hpp
 		Dma.cpp
 		Cpu.hpp

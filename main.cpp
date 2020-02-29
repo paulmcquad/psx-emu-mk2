@@ -11,9 +11,7 @@
 #include "IOPorts.hpp"
 #include "glad.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "DebugMenu.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -36,10 +34,7 @@ static const char* frag_shader_src =
 "void main(){\n"
 "color_out = texture(tex, texcoord_out);}\n";
 
-bool save_state = false;
-bool load_state = false;
-bool pause_execution = false;
-bool step_execution = false;
+bool show_debug_menus = false;
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
@@ -49,11 +44,7 @@ void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, in
 	}
 	else if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
 	{
-		save_state = true;
-	}
-	else if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
-	{
-		load_state = true;
+		show_debug_menus = !show_debug_menus;
 	}
 }
 
@@ -92,15 +83,6 @@ int main(int num_args, char ** args )
 		glfwTerminate();
 		return -1;
 	}
-
-	std::cout << "Setting up imgui\n";
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::StyleColorsDark();
-
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init(nullptr);
 
 	std::cout << "Setting up OpenGL\n";
 	GLuint vao, vbo, vert_shader, frag_shader, shader_program, tex;
@@ -180,6 +162,11 @@ int main(int num_args, char ** args )
 	std::cout << "Hooking up all peripherals to the DMA\n";
 	dma->init(ram, gpu);
 
+	// setting up debug menu
+	std::cout << "Setting up imgui debug menu\n";
+	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
+	debug_menu->init(window, cpu, gpu);
+
 	std::cout << "Running!\n";
 
 	double current_frame_time = 0.0;
@@ -187,18 +174,15 @@ int main(int num_args, char ** args )
 	{
 		auto start_time = glfwGetTime();
 
-		if (pause_execution == false || step_execution == true)
+		if (debug_menu->is_paused() == false || debug_menu->is_step_requested() == true)
 		{
 			cpu->tick();
 			dma->tick();
 			gpu->tick();
-			step_execution = false;
 		}
 
-		if (save_state)
+		if (debug_menu->is_save_state_requested())
 		{
-			save_state = false;
-
 			std::cout << "Saving state!\n";
 
 			std::ofstream state_file;
@@ -220,9 +204,8 @@ int main(int num_args, char ** args )
 				std::cout << "Failed to save state!\n";
 			}
 		}
-		if (load_state)
+		if (debug_menu->is_load_state_requested())
 		{
-			load_state = false;
 			std::ifstream state_file;
 			state_file.open("save_state.bin", std::ios::in | std::ios::binary);
 
@@ -255,83 +238,18 @@ int main(int num_args, char ** args )
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
-			// draw imgui debug menu
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-
-			ImGui::Begin("CPU Registers");
-
+			if (show_debug_menus)
 			{
-				std::stringstream current_pc_text;
-				current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
-				ImGui::Text(current_pc_text.str().c_str());
+				debug_menu->draw();
 			}
-
-			{
-				std::stringstream current_instr_text;
-				current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_instruction;
-				ImGui::Text(current_instr_text.str().c_str());
-				ImGui::Separator();
-			}
-
-			{
-				for (int idx = 0; idx < 32; idx++)
-				{
-					std::stringstream reg_text;
-					reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.gp_registers[idx];
-					ImGui::Text(reg_text.str().c_str());
-				}
-			}
-
-			ImGui::End();
-
-			ImGui::Begin("GPU");
-
-			{
-				std::stringstream status_text;
-				status_text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(8) << gpu->gpu_status.int_value;
-				ImGui::Text(status_text.str().c_str());
-
-				{
-					std::stringstream offset_text;
-					offset_text << "Drawing offsets: " << gpu->x_offset << " " << gpu->y_offset;
-					ImGui::Text(offset_text.str().c_str());
-				}
-
-				// todo add more
-			}
-
-			ImGui::End();
-
-			ImGui::Begin("Controls");
-
-			{
-				if (ImGui::Button(pause_execution ? "Start" : "Stop"))
-				{
-					pause_execution = !pause_execution;
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Step"))
-				{
-					step_execution = !step_execution;
-				}
-
-				save_state = ImGui::Button("Save state");
-				ImGui::SameLine();
-				load_state = ImGui::Button("Load state");
-			}
-
-			ImGui::End();
-
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 			current_frame_time = 0;
 		}
 	}
+
+	debug_menu->deinit();
 
 	// cleanup
 	glDeleteTextures(1, &tex);
@@ -340,10 +258,6 @@ int main(int num_args, char ** args )
 	glDeleteShader(vert_shader);
 	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
-
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
