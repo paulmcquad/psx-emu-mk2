@@ -165,7 +165,7 @@ int main(int num_args, char ** args )
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
 	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
-	debug_menu->init(window, cpu, gpu);
+	debug_menu->init(window, cpu, gpu, ram);
 
 	std::cout << "Running!\n";
 

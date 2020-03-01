@@ -374,6 +374,11 @@ void Cpu::store_word(const instruction_union& instr)
 	unsigned int addr = get_immediate_base_addr(instr);
 	unsigned int value = get_register(instr.immediate_instruction.rt);
 
+	if (addr == 0x00138d04)
+	{
+		std::cout << "Address being set!!!\n";
+	}
+
 	if (cop0->get<Cop0::status_register>().Isc == false)
 	{
 		ram->store<unsigned int>(addr, value);

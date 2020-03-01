@@ -6,11 +6,12 @@
 
 #include "Cpu.hpp"
 #include "Gpu.hpp"
+#include "MemoryMap.hpp"
 
 #include <sstream>
 #include <iomanip>
 
-void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu)
+void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -22,6 +23,7 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 
 	cpu = _cpu;
 	gpu = _gpu;
+	ram = _ram;
 }
 
 void DebugMenu::deinit()
@@ -45,6 +47,8 @@ void DebugMenu::draw()
 	draw_controls_menu();
 
 	draw_overview_menu();
+
+	draw_ram_menu();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -196,4 +200,32 @@ void DebugMenu::draw_controls_menu()
 void DebugMenu::draw_overview_menu()
 {
 
+}
+
+void DebugMenu::draw_ram_menu()
+{
+	ImGui::Begin("RAM");
+
+	static int address_of_interest = 0x0;
+	ImGui::InputInt("Address", &address_of_interest , 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	
+	{
+		std::stringstream text;
+		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) <<ram->load<unsigned int>(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << ram->load<unsigned short>(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)ram->load<unsigned char>(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+
+	ImGui::End();
 }

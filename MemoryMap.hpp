@@ -1,6 +1,8 @@
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <deque>
+#include <iostream>
 
 constexpr unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;
 constexpr unsigned int PARALLEL_PORT_SIZE = 1024 * 64;
