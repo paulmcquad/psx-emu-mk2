@@ -206,13 +206,26 @@ void DebugMenu::draw_ram_menu()
 {
 	ImGui::Begin("RAM");
 
-	static int address_of_interest = 0x0;
-	ImGui::InputInt("Address", &address_of_interest , 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	static int address_of_interest = 0x00138d04;
+	ImGui::InputInt("Address (hex)", &address_of_interest , 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+
+	static bool pause_on_write = false;
+	ImGui::Checkbox("Pause on write", &pause_on_write);
 	
 	{
+		static unsigned int prev_value = 0x0;
+		unsigned int value = ram->load<unsigned int>(address_of_interest);
+
 		std::stringstream text;
-		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) <<ram->load<unsigned int>(address_of_interest);
+		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << value;
 		ImGui::Text(text.str().c_str());
+
+		if (prev_value != value && pause_on_write == true)
+		{
+			paused_requested = true;
+		}
+
+		prev_value = value;
 	}
 
 	{
