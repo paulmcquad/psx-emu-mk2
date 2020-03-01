@@ -34,7 +34,7 @@ static const char* frag_shader_src =
 "void main(){\n"
 "color_out = texture(tex, texcoord_out);}\n";
 
-bool show_debug_menus = false;
+bool show_debug_menus = true;
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {

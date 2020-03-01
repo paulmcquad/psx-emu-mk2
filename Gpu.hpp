@@ -92,11 +92,15 @@ public:
 	int x_offset = 0;
 	int y_offset = 0;
 
+	bool logging_enabled = false;
+
 private:
 	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
 	std::unordered_map<gp1_commands, void (Gpu::*)(unsigned int)> gp1_command_map;
 
 	void execute_gp0_commands();
+	void add_gp0_command(unsigned int command, bool via_dma);
+	void execute_gp1_command(unsigned int command);
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
@@ -114,7 +118,7 @@ private:
 	unsigned int copy_rectangle_from_cpu_to_vram();
 	unsigned int copy_rectangle_from_vram_to_cpu();
 
-	unsigned int shader_3_pt_opaque();
+	unsigned int shaded_3_pt_opaque();
 	unsigned int mono_4_pt_opaque();
 	unsigned int shaded_4_pt_opaque();
 	unsigned int tex_4_pt_opaque_blend();

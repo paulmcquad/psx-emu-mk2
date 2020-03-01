@@ -89,9 +89,79 @@ void DebugMenu::draw_gpu_menu()
 		ImGui::Text(status_text.str().c_str());
 
 		{
-			std::stringstream offset_text;
-			offset_text << "Drawing offsets: " << gpu->x_offset << " " << gpu->y_offset;
-			ImGui::Text(offset_text.str().c_str());
+			std::stringstream text;
+			text << "Drawing offsets: " << gpu->x_offset << " " << gpu->y_offset;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Video Mode: " << (gpu->gpu_status.video_mode == 0 ? "NTSC" : "PAL");
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Vertical Interface: " << gpu->gpu_status.v_interlace;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			// 0 = Enabled
+			text << "Display Enable: " << (gpu->gpu_status.display_enable == 0);
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Interrupt Request: " << gpu->gpu_status.irq_request;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Ready DMA block: " << gpu->gpu_status.ready_dma;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Ready CMD Word: " << gpu->gpu_status.ready_cmd_word;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Ready VRAM to CPU: " << gpu->gpu_status.ready_vram_to_cpu;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "DMA Direction: ";
+			switch (gpu->gpu_status.dma_direction)
+			{
+			case 0:
+				text << "Off";
+				break;
+			case 1:
+				text << "?";
+				break;
+			case 2:
+				text << "CPUtoGP0";
+				break;
+			case 3:
+				text << "GPUREADtoCPU";
+				break;
+			}
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Drawing: " << (gpu->gpu_status.even_odd ? "Odd" : "Even/Vblank");
+			ImGui::Text(text.str().c_str());
 		}
 
 		// todo add more

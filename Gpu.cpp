@@ -42,22 +42,11 @@ void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char va
 		{
 			case GP0_SEND:
 			{
-				gp0_command_queue.push_back(command);
+				add_gp0_command(command, false);
 			} break;
 			case GP1_SEND:
 			{
-				color_command gp1_command(command);
-				gp1_commands current_command = static_cast<gp1_commands>(gp1_command.op);
-				auto iter = gp1_command_map.find(current_command);
-				if (iter != gp1_command_map.end())
-				{
-					(this->*iter->second)(command);
-				}
-				else
-				{
-					std::cout << "GP1: " << std::hex << gp1_command.value << std::endl;
-					throw std::logic_error("not implemented");
-				}
+				execute_gp1_command(command);
 			} break;
 			default:
 				throw std::logic_error("can't write to this gpu register");
@@ -88,7 +77,7 @@ void Gpu::init()
 	gp0_command_map[gp0_commands::COPY_RECT_CPU_VRAM] = &Gpu::copy_rectangle_from_cpu_to_vram;
 	gp0_command_map[gp0_commands::COPY_RECT_VRAM_CPU] = &Gpu::copy_rectangle_from_vram_to_cpu;
 
-	gp0_command_map[gp0_commands::SHADED_3_PT_OPAQUE] = &Gpu::shader_3_pt_opaque;
+	gp0_command_map[gp0_commands::SHADED_3_PT_OPAQUE] = &Gpu::shaded_3_pt_opaque;
 
 	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
 	gp0_command_map[gp0_commands::SHADED_4_PT_OPAQUE] = &Gpu::shaded_4_pt_opaque;
@@ -160,16 +149,11 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 
-	static unsigned int x = 0;
-	static unsigned int y = 0;
-	unsigned int width = 32;
 	while (num_words > 0)
 	{
 		num_words--;
 
 		unsigned int word = ram->load<unsigned int>(addr);
-		
-		// TODO do something with this
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
@@ -190,7 +174,7 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 			addr = (addr + 4) & 0x1ffffc;
 
 			unsigned int command = ram->load<unsigned int>(addr);
-			gp0_command_queue.push_back(command);
+			add_gp0_command(command, true);
 
 			num_words--;
 		}
@@ -244,6 +228,27 @@ void Gpu::execute_gp0_commands()
 	}
 }
 
+void Gpu::add_gp0_command(unsigned int command, bool via_dma)
+{
+	gp0_command_queue.push_back(command);
+}
+
+void Gpu::execute_gp1_command(unsigned int command)
+{
+	color_command gp1_command(command);
+	gp1_commands current_command = static_cast<gp1_commands>(gp1_command.op);
+	auto iter = gp1_command_map.find(current_command);
+	if (iter != gp1_command_map.end())
+	{
+		(this->*iter->second)(command);
+	}
+	else
+	{
+		std::cout << "GP1: " << std::hex << gp1_command.value << std::endl;
+		throw std::logic_error("not implemented");
+	}
+}
+
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
 void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb)
 {
@@ -275,8 +280,8 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 {
-	int x = v.x;
-	int y = v.y;
+	unsigned int x = v.x;
+	unsigned int y = v.y;
 
 	if (x >= 0 && x < width)
 	{
@@ -323,7 +328,7 @@ unsigned int Gpu::mono_4_pt_opaque()
 	return 5;
 }
 
-unsigned int Gpu::shader_3_pt_opaque()
+unsigned int Gpu::shaded_3_pt_opaque()
 {
 	if (gp0_command_queue.size() < 6)
 	{
@@ -522,7 +527,7 @@ void Gpu::reset_gpu(unsigned int command)
 
 void Gpu::reset_command_buffer(unsigned int command)
 {
-
+	gp0_command_queue.clear();
 }
 
 void Gpu::ack_gpu_interrupt(unsigned int command)
