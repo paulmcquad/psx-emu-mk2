@@ -46,8 +46,6 @@ void DebugMenu::draw()
 
 	draw_controls_menu();
 
-	draw_overview_menu();
-
 	draw_ram_menu();
 
 	ImGui::Render();
