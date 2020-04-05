@@ -57,6 +57,12 @@ void DebugMenu::draw_cpu_menu()
 	ImGui::Begin("CPU Registers");
 
 	{
+		std::stringstream current_ticks_text;
+		current_ticks_text << "Ticks per frame: " << std::dec << ticks_per_frame;
+		ImGui::Text(current_ticks_text.str().c_str());
+	}
+
+	{
 		std::stringstream current_pc_text;
 		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
 		ImGui::Text(current_pc_text.str().c_str());

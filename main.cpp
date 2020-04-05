@@ -171,7 +171,6 @@ int main(int num_args, char ** args )
 	debug_menu->init(window, cpu, gpu, ram);
 
 	std::cout << "Running!\n";
-
 	double current_frame_time = 0.0;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -182,6 +181,7 @@ int main(int num_args, char ** args )
 			cpu->tick();
 			dma->tick();
 			gpu->tick();
+			debug_menu->ticks_per_frame++;
 		}
 
 		if (debug_menu->is_save_state_requested())
@@ -245,6 +245,8 @@ int main(int num_args, char ** args )
 			{
 				debug_menu->draw();
 			}
+
+			debug_menu->ticks_per_frame = 0;
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();

@@ -34,6 +34,8 @@ public:
 		return result;
 	};
 
+	long ticks_per_frame = 0;
+
 private:
 
 	void draw_cpu_menu();
@@ -46,7 +48,7 @@ private:
 	std::shared_ptr<Gpu> gpu = nullptr;
 	std::shared_ptr<Ram> ram = nullptr;
 
-	bool paused_requested = true;
+	bool paused_requested = false;
 	bool step_requested = false;
 	bool save_state_requested = false;
 	bool load_state_requested = false;
