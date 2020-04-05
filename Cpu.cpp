@@ -189,22 +189,352 @@ void Cpu::execute(unsigned int instruction)
 
 	cpu_instructions opcode = static_cast<cpu_instructions>(instruction >> 26);
 
-	auto fn_ptr = main_instructions[opcode];
-	(this->*fn_ptr)(instr);
+	switch (opcode)
+	{
+		case cpu_instructions::ADDI:
+		{
+			add_immediate(instr);
+		} break;
+
+		case cpu_instructions::ADDIU:
+		{
+			add_immediate_unsigned(instr);
+		} break;
+
+		case cpu_instructions::ANDI:
+		{
+			and_immediate(instr);
+		} break;
+
+		case cpu_instructions::BCOND:
+		{
+			execute_bcond(instr);
+		} break;
+
+		case cpu_instructions::BEQ:
+		{
+			branch_on_equal(instr);
+		} break;
+
+		case cpu_instructions::BGTZ:
+		{
+			branch_on_greater_than_zero(instr);
+		} break;
+		
+		case cpu_instructions::BLEZ:
+		{
+			branch_on_less_than_or_equal_zero(instr);
+		} break;
+
+		case cpu_instructions::BNE:
+		{
+			branch_on_not_equal(instr);
+		} break;
+
+		case cpu_instructions::COP0:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::COP2:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::J:
+		{
+			jump(instr);
+		} break;
+
+		case cpu_instructions::JAL:
+		{
+			jump_and_link(instr);
+		} break;
+
+		case cpu_instructions::LB:
+		{
+			load_byte(instr);
+		} break;
+
+		case cpu_instructions::LBU:
+		{
+			load_byte_unsigned(instr);
+		} break;
+
+		case cpu_instructions::LH:
+		{
+			load_halfword(instr);
+		} break;
+
+		case cpu_instructions::LHU:
+		{
+			load_halfword_unsigned(instr);
+		} break;
+
+		case cpu_instructions::LUI:
+		{
+			load_upper_immediate(instr);
+		} break;
+
+		case cpu_instructions::LW:
+		{
+			load_word(instr);
+		} break;
+
+		case cpu_instructions::LWC0:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::LWC2:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::LWL:
+		{
+			load_word_left(instr);
+		} break;
+
+		case cpu_instructions::LWR:
+		{
+			load_word_right(instr);
+		} break;
+
+		case cpu_instructions::ORI:
+		{
+			or_immediate(instr);
+		} break;
+
+		case cpu_instructions::SB:
+		{
+			store_byte(instr);
+		} break;
+
+		case cpu_instructions::SH:
+		{
+			store_halfword(instr);
+		} break;
+
+		case cpu_instructions::SLTI:
+		{
+			set_on_less_than_immediate(instr);
+		} break;
+
+		case cpu_instructions::SLTIU:
+		{
+			set_on_less_than_unsigned_immediate(instr);
+		} break;
+
+		case cpu_instructions::SPECIAL:
+		{
+			execute_special(instr);
+		} break;
+
+		case cpu_instructions::SW:
+		{
+			store_word(instr);
+		} break;
+
+		case cpu_instructions::SWC0:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::SWC2:
+		{
+			execute_cop(instr);
+		} break;
+
+		case cpu_instructions::SWL:
+		{
+			store_word_left(instr);
+		} break;
+
+		case cpu_instructions::SWR:
+		{
+			store_word_right(instr);
+		} break;
+
+		case cpu_instructions::XORI:
+		{
+			xor_immediate(instr);
+		} break;
+	}
 }
 
 void Cpu::execute_special(const instruction_union& instr)
 {
 	cpu_special_funcs func = static_cast<cpu_special_funcs>(instr.register_instruction.funct);
-	auto fn_ptr = special_instructions[func];
-	(this->*fn_ptr)(instr);
+	switch (func)
+	{
+		case cpu_special_funcs::ADD:
+		{
+			add(instr);
+		} break;
+
+		case cpu_special_funcs::ADDU:
+		{
+			add_unsigned(instr);
+		} break;
+
+		case cpu_special_funcs::AND:
+		{
+			and (instr);
+		} break;
+
+		case cpu_special_funcs::BREAK:
+		{
+			breakpoint(instr);
+		} break;
+
+		case cpu_special_funcs::DIV:
+		{
+			div(instr);
+		} break;
+
+		case cpu_special_funcs::DIVU:
+		{
+			div_unsigned(instr);
+		} break;
+
+		case cpu_special_funcs::JALR:
+		{
+			jump_and_link_register(instr);
+		} break;
+
+		case cpu_special_funcs::JR:
+		{
+			jump_register(instr);
+		} break;
+
+		case cpu_special_funcs::MFHI:
+		{
+			move_from_hi(instr);
+		} break;
+
+		case cpu_special_funcs::MFLO:
+		{
+			move_from_lo(instr);
+		} break;
+
+		case cpu_special_funcs::MTHI:
+		{
+			move_to_hi(instr);
+		} break;
+
+		case cpu_special_funcs::MTLO:
+		{
+			move_to_lo(instr);
+		} break;
+
+		case cpu_special_funcs::MULT:
+		{
+			mult(instr);
+		} break;
+
+		case cpu_special_funcs::MULTU:
+		{
+			mult_unsigned(instr);
+		} break;
+
+		case cpu_special_funcs::NOR:
+		{
+			nor(instr);
+		} break;
+
+		case cpu_special_funcs::OR:
+		{
+			or(instr);
+		} break;
+
+		case cpu_special_funcs::SLL:
+		{
+			shift_left_logical(instr);
+		} break;
+
+		case cpu_special_funcs::SLLV:
+		{
+			shift_left_logical_variable(instr);
+		} break;
+
+		case cpu_special_funcs::SLT:
+		{
+			set_on_less_than(instr);
+		} break;
+
+		case cpu_special_funcs::SLTU:
+		{
+			set_on_less_than_unsigned(instr);
+		} break;
+
+		case cpu_special_funcs::SRA:
+		{
+			shift_right_arithmetic(instr);
+		} break;
+
+		case cpu_special_funcs::SRAV:
+		{
+			shift_right_arithmetic_variable(instr);
+		} break;
+
+		case cpu_special_funcs::SRL:
+		{
+			shift_right_logical(instr);
+		} break;
+
+		case cpu_special_funcs::SRLV:
+		{
+			shift_right_logical_variable(instr);
+		} break;
+
+		case cpu_special_funcs::SUB:
+		{
+			sub(instr);
+		} break;
+
+		case cpu_special_funcs::SUBU:
+		{
+			sub_unsigned(instr);
+		} break;
+
+		case cpu_special_funcs::SYSCALL:
+		{
+			system_call(instr);
+		} break;
+
+		case cpu_special_funcs::XOR:
+		{
+			xor(instr);
+		}
+	}
 }
 
 void Cpu::execute_bcond(const instruction_union& instr)
 {
 	cpu_bconds cond = static_cast<cpu_bconds>(instr.immediate_instruction.rt);
-	auto fn_ptr = bcond_instructions[cond];
-	(this->*fn_ptr)(instr);
+	switch (cond)
+	{
+		case cpu_bconds::BGEZ:
+		{
+			branch_on_greater_than_or_equal_zero(instr);
+		} break;
+
+		case cpu_bconds::BGEZAL:
+		{
+			branch_on_greater_than_or_equal_zero_and_link(instr);
+		} break;
+
+		case cpu_bconds::BLTZ:
+		{
+			branch_on_less_than_zero(instr);
+		} break;
+
+		case cpu_bconds::BLTZAL:
+		{
+			branch_on_less_than_zero_and_link(instr);
+		} break;
+	}
 }
 
 void Cpu::execute_cop(const instruction_union& instr)
