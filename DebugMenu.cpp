@@ -197,11 +197,6 @@ void DebugMenu::draw_controls_menu()
 	ImGui::End();
 }
 
-void DebugMenu::draw_overview_menu()
-{
-
-}
-
 void DebugMenu::draw_ram_menu()
 {
 	ImGui::Begin("RAM");
