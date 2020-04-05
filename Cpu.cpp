@@ -506,7 +506,7 @@ void Cpu::execute_special(const instruction_union& instr)
 		case cpu_special_funcs::XOR:
 		{
 			xor(instr);
-		}
+		} break;
 	}
 }
 
