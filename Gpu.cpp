@@ -352,7 +352,7 @@ unsigned int Gpu::shaded_3_pt_opaque()
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb);
 
-	/*std::cout << std::dec << "v0: " << v0.x << " " << v0.y << std::endl;
+	std::cout << std::dec << "v0: " << v0.x << " " << v0.y << std::endl;
 	std::cout << std::dec << "v1: " << v1.x << " " << v1.y << std::endl;
 	std::cout << std::dec << "v2: " << v2.x << " " << v2.y << std::endl;
 
@@ -361,7 +361,7 @@ unsigned int Gpu::shaded_3_pt_opaque()
 		std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << gp0_command_queue[idx] << std::endl;
 	}
 
-	getchar();*/
+	getchar();
 
 	return 6;
 }

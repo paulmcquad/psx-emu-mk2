@@ -47,7 +47,7 @@ private:
 	std::shared_ptr<Gpu> gpu = nullptr;
 	std::shared_ptr<Ram> ram = nullptr;
 
-	bool paused_requested = false;
+	bool paused_requested = true;
 	bool step_requested = false;
 	bool save_state_requested = false;
 	bool load_state_requested = false;

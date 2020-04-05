@@ -207,10 +207,10 @@ void DebugMenu::draw_ram_menu()
 	ImGui::Begin("RAM");
 
 	static int address_of_interest = 0x00138d04;
-	ImGui::InputInt("Address (hex)", &address_of_interest , 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	ImGui::InputInt("Address (hex)", &address_of_interest , 4, 100, ImGuiInputTextFlags_CharsHexadecimal);
 
 	static bool pause_on_write = false;
-	ImGui::Checkbox("Pause on write", &pause_on_write);
+	ImGui::Checkbox("Pause on write (roughly)", &pause_on_write);
 	
 	{
 		static unsigned int prev_value = 0x0;
