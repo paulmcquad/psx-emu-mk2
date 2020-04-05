@@ -25,20 +25,35 @@ constexpr unsigned int SCRATCH_START  = 0x1f800000;
 constexpr unsigned int IO_START = 0x1f801000;
 constexpr unsigned int BIOS_START     = 0x1fc00000;
 
-void Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
+bool Ram::init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports)
 {
 	if (bios_filepath.empty() == false)
 	{
 		std::ifstream bios_file(bios_filepath);
-		bios_file.seekg(0, std::ios::end);
-		std::streampos len = bios_file.tellg();
 
-		bios_file.seekg(0, std::ios::beg);
-		bios_file.read((char*)&bios, len);
-		bios_file.close();
+		if (bios_file.good())
+		{
+			bios_file.seekg(0, std::ios::end);
+			std::streampos len = bios_file.tellg();
+
+			bios_file.seekg(0, std::ios::beg);
+			bios_file.read((char*)&bios, len);
+			bios_file.close();
+		}
+		else
+		{
+			std::cerr << "Unable to load " << bios_filepath << "\n";
+			return false;
+		}
+	}
+	else
+	{
+		std::cerr << "No bios file specified!\n";
+		return false;
 	}
 
 	io_ports = _io_ports;
+	return true;
 }
 
 void Ram::reset()
