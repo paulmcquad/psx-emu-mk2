@@ -193,17 +193,47 @@ void Cpu::execute(unsigned int instruction)
 	{
 		case cpu_instructions::ADDI:
 		{
-			add_immediate(instr);
+			int immediate = (short)instr.immediate_instruction.immediate;
+			int rs_value = get_register(instr.immediate_instruction.rs);
+
+			unsigned int value = rs_value + immediate;
+
+			// check for overflow
+			{
+				int signed_value = value;
+				if (immediate >= 0 && rs_value >= 0)
+				{
+					if (signed_value < 0)
+					{
+						throw overflow_exception();
+					}
+				}
+				else if (immediate < 0 && rs_value < 0)
+				{
+					if (signed_value >= 0)
+					{
+						throw overflow_exception();
+					}
+				}
+			}
+
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 
 		case cpu_instructions::ADDIU:
 		{
-			add_immediate_unsigned(instr);
+			int immediate = (short)instr.immediate_instruction.immediate;
+			int rs_value = get_register(instr.immediate_instruction.rs);
+
+			unsigned int value = rs_value + immediate;
+
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 
 		case cpu_instructions::ANDI:
 		{
-			and_immediate(instr);
+			unsigned int value = instr.immediate_instruction.immediate & get_register(instr.immediate_instruction.rs);
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 
 		case cpu_instructions::BCOND:
@@ -213,22 +243,52 @@ void Cpu::execute(unsigned int instruction)
 
 		case cpu_instructions::BEQ:
 		{
-			branch_on_equal(instr);
+			unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+			unsigned int rt_value = get_register(instr.immediate_instruction.rt);
+			if (rs_value == rt_value)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_instructions::BGTZ:
 		{
-			branch_on_greater_than_zero(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value > 0)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 		
 		case cpu_instructions::BLEZ:
 		{
-			branch_on_less_than_or_equal_zero(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value <= 0)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_instructions::BNE:
 		{
-			branch_on_not_equal(instr);
+			unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+			unsigned int rt_value = get_register(instr.immediate_instruction.rt);
+			if (rs_value != rt_value)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_instructions::COP0:
@@ -243,42 +303,82 @@ void Cpu::execute(unsigned int instruction)
 
 		case cpu_instructions::J:
 		{
-			jump(instr);
+			unsigned int target = instr.jump_instruction.target << 2;
+
+			next_pc = target | (0xF0000000 & next_pc);
+
+			in_delay_slot = true;
 		} break;
 
 		case cpu_instructions::JAL:
 		{
-			jump_and_link(instr);
+			set_register(31, next_pc);
+			unsigned int target = instr.jump_instruction.target << 2;
+
+			next_pc = target | (0xF0000000 & next_pc);
+
+			in_delay_slot = true;
 		} break;
 
 		case cpu_instructions::LB:
 		{
-			load_byte(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned char value = ram->load<unsigned char>(addr);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				set_register(instr.immediate_instruction.rt, value, true);
+			}
 		} break;
 
 		case cpu_instructions::LBU:
 		{
-			load_byte_unsigned(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			int value = (char)ram->load<unsigned char>(addr);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				set_register(instr.immediate_instruction.rt, value, true);
+			}
 		} break;
 
 		case cpu_instructions::LH:
 		{
-			load_halfword(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			int value = (short)ram->load<unsigned short>(addr);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				set_register(instr.immediate_instruction.rt, value, true);
+			}
 		} break;
 
 		case cpu_instructions::LHU:
 		{
-			load_halfword_unsigned(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned short value = ram->load<unsigned short>(addr);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				set_register(instr.immediate_instruction.rt, value, true);
+			}
 		} break;
 
 		case cpu_instructions::LUI:
 		{
-			load_upper_immediate(instr);
+			unsigned int value = instr.immediate_instruction.immediate << 16;
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 
 		case cpu_instructions::LW:
 		{
-			load_word(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int value = ram->load<unsigned int>(addr);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				set_register(instr.immediate_instruction.rt, value, true);
+			}
 		} break;
 
 		case cpu_instructions::LWC0:
@@ -293,37 +393,77 @@ void Cpu::execute(unsigned int instruction)
 
 		case cpu_instructions::LWL:
 		{
-			load_word_left(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+
+			// can load on top of value currently in the pipeline
+			unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
+
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0x00ffffff >> (alignment * 8);
+			unsigned int new_value = (current_value & mask) | (aligned_value << ((3 - alignment) * 8));
+			set_register(instr.immediate_instruction.rt, new_value);
 		} break;
 
 		case cpu_instructions::LWR:
 		{
-			load_word_right(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+
+			// can load on top of value currently in the pipeline
+			unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
+
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0xffffff00 << ((3 - alignment) * 8);
+			unsigned int new_value = (current_value & mask) | (aligned_value >> alignment * 8);
+			set_register(instr.immediate_instruction.rt, new_value);
 		} break;
 
 		case cpu_instructions::ORI:
 		{
-			or_immediate(instr);
+			unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+			unsigned int value = rs_value | instr.immediate_instruction.immediate;
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 
 		case cpu_instructions::SB:
 		{
-			store_byte(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int value = get_register(instr.immediate_instruction.rt);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				ram->store<unsigned char>(addr, value);
+			}
 		} break;
 
 		case cpu_instructions::SH:
 		{
-			store_halfword(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int value = get_register(instr.immediate_instruction.rt);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				ram->store<unsigned short>(addr, value);
+			}
 		} break;
 
 		case cpu_instructions::SLTI:
 		{
-			set_on_less_than_immediate(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			int immediate_value = (short)instr.immediate_instruction.immediate;
+
+			set_register(instr.immediate_instruction.rt, rs_value < immediate_value ? 1 : 0);
 		} break;
 
 		case cpu_instructions::SLTIU:
 		{
-			set_on_less_than_unsigned_immediate(instr);
+			unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+			int immediate_value = (short)instr.immediate_instruction.immediate;
+
+			set_register(instr.immediate_instruction.rt, rs_value < (unsigned int)immediate_value ? 1 : 0);
 		} break;
 
 		case cpu_instructions::SPECIAL:
@@ -333,7 +473,13 @@ void Cpu::execute(unsigned int instruction)
 
 		case cpu_instructions::SW:
 		{
-			store_word(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int value = get_register(instr.immediate_instruction.rt);
+
+			if (cop0->get<Cop0::status_register>().Isc == false)
+			{
+				ram->store<unsigned int>(addr, value);
+			}
 		} break;
 
 		case cpu_instructions::SWC0:
@@ -348,17 +494,37 @@ void Cpu::execute(unsigned int instruction)
 
 		case cpu_instructions::SWL:
 		{
-			store_word_left(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
+
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0xffffff00 << (alignment * 8);
+
+			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
+			ram->store<unsigned int>(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::SWR:
 		{
-			store_word_right(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
+
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
+
+			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
+			ram->store<unsigned int>(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::XORI:
 		{
-			xor_immediate(instr);
+			unsigned int rs_value = get_register(instr.immediate_instruction.rs);
+			unsigned int value = rs_value ^ instr.immediate_instruction.immediate;
+			set_register(instr.immediate_instruction.rt, value);
 		} break;
 	}
 }
@@ -370,142 +536,277 @@ void Cpu::execute_special(const instruction_union& instr)
 	{
 		case cpu_special_funcs::ADD:
 		{
-			add(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value + rt_value;
+
+			// check for overflow
+			{
+				int signed_value = value;
+				if (rt_value >= 0 && rs_value >= 0)
+				{
+					if (signed_value < 0)
+					{
+						throw overflow_exception();
+					}
+				}
+				else if (rt_value < 0 && rs_value < 0)
+				{
+					if (signed_value >= 0)
+					{
+						throw overflow_exception();
+					}
+				}
+			}
+
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::ADDU:
 		{
-			add_unsigned(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value + rt_value;
+
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::AND:
 		{
-			and (instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value & rt_value;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::BREAK:
 		{
-			breakpoint(instr);
+			throw breakpoint_exception();
 		} break;
 
 		case cpu_special_funcs::DIV:
 		{
-			div(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+
+			if (rt_value == 0)
+			{
+				hi = rs_value;
+				if (rs_value >= 0)
+				{
+					lo = 0xffffffff;
+				}
+				else
+				{
+					lo = 1;
+				}
+			}
+			else if (rs_value == 0x80000000 && rt_value == -1)
+			{
+				hi = 0;
+				lo = 0x80000000;
+			}
+			else
+			{
+				hi = rs_value % rt_value;
+				lo = rs_value / rt_value;
+			}
 		} break;
 
 		case cpu_special_funcs::DIVU:
 		{
-			div_unsigned(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+
+			if (rt_value == 0)
+			{
+				hi = rs_value;
+				lo = 0xffffffff;
+			}
+			else
+			{
+				hi = rs_value % rt_value;
+				lo = rs_value / rt_value;
+			}
 		} break;
 
 		case cpu_special_funcs::JALR:
 		{
-			jump_and_link_register(instr);
+			set_register(instr.register_instruction.rd, next_pc);
+			next_pc = get_register(instr.register_instruction.rs);
+			in_delay_slot = true;
 		} break;
 
 		case cpu_special_funcs::JR:
 		{
-			jump_register(instr);
+			next_pc = get_register(instr.register_instruction.rs);
+			in_delay_slot = true;
 		} break;
 
 		case cpu_special_funcs::MFHI:
 		{
-			move_from_hi(instr);
+			set_register(instr.register_instruction.rd, hi);
 		} break;
 
 		case cpu_special_funcs::MFLO:
 		{
-			move_from_lo(instr);
+			set_register(instr.register_instruction.rd, lo);
 		} break;
 
 		case cpu_special_funcs::MTHI:
 		{
-			move_to_hi(instr);
+			hi = get_register(instr.register_instruction.rs);
 		} break;
 
 		case cpu_special_funcs::MTLO:
 		{
-			move_to_lo(instr);
+			lo = get_register(instr.register_instruction.rs);
 		} break;
 
 		case cpu_special_funcs::MULT:
 		{
-			mult(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+			long long result = rs_value * rt_value;
+			hi = result >> 32;
+			lo = result & 0xFFFF;
 		} break;
 
 		case cpu_special_funcs::MULTU:
 		{
-			mult_unsigned(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned long long result = rs_value * rt_value;
+			hi = result >> 32;
+			lo = result & 0xFFFF;
 		} break;
 
 		case cpu_special_funcs::NOR:
 		{
-			nor(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = ~(rs_value | rt_value);
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::OR:
 		{
-			or(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value | rt_value;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SLL:
 		{
-			shift_left_logical(instr);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rt_value << instr.register_instruction.shamt;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SLLV:
 		{
-			shift_left_logical_variable(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			// restrict shift values to lower 5 bits so shifts over 32 bits, result in effectively a NOP instruction
+			unsigned int value = rt_value << (0x1F & rs_value);
+
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SLT:
 		{
-			set_on_less_than(instr);
+			int rt_value = get_register(instr.register_instruction.rt);
+			int rs_value = get_register(instr.register_instruction.rs);
+
+			set_register(instr.register_instruction.rd, rs_value < rt_value ? 1 : 0);
 		} break;
 
 		case cpu_special_funcs::SLTU:
 		{
-			set_on_less_than_unsigned(instr);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+
+			set_register(instr.register_instruction.rd, rs_value < rt_value ? 1 : 0);
 		} break;
 
 		case cpu_special_funcs::SRA:
 		{
-			shift_right_arithmetic(instr);
+			int rt_value = (int)(get_register(instr.register_instruction.rt));
+			unsigned int value = rt_value >> instr.register_instruction.shamt;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SRAV:
 		{
-			shift_right_arithmetic_variable(instr);
+			int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int value = rt_value >> (0x1F & rs_value);
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SRL:
 		{
-			shift_right_logical(instr);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rt_value >> instr.register_instruction.shamt;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SRLV:
 		{
-			shift_right_logical_variable(instr);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int value = rt_value >> (0x1F & rs_value);
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SUB:
 		{
-			sub(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value - rt_value;
+
+			// check for overflow
+			{
+				int signed_value = value;
+				if (rt_value >= 0 && rs_value >= 0)
+				{
+					if (signed_value < 0)
+					{
+						throw overflow_exception();
+					}
+				}
+				else if (rt_value < 0 && rs_value < 0)
+				{
+					if (signed_value >= 0)
+					{
+						throw overflow_exception();
+					}
+				}
+			}
+
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SUBU:
 		{
-			sub_unsigned(instr);
+			int rs_value = get_register(instr.register_instruction.rs);
+			int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value - rt_value;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 
 		case cpu_special_funcs::SYSCALL:
 		{
-			system_call(instr);
+			throw sys_call();
 		} break;
 
 		case cpu_special_funcs::XOR:
 		{
-			xor(instr);
+			unsigned int rs_value = get_register(instr.register_instruction.rs);
+			unsigned int rt_value = get_register(instr.register_instruction.rt);
+			unsigned int value = rs_value ^ rt_value;
+			set_register(instr.register_instruction.rd, value);
 		} break;
 	}
 }
@@ -517,22 +818,52 @@ void Cpu::execute_bcond(const instruction_union& instr)
 	{
 		case cpu_bconds::BGEZ:
 		{
-			branch_on_greater_than_or_equal_zero(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value >= 0)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_bconds::BGEZAL:
 		{
-			branch_on_greater_than_or_equal_zero_and_link(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value >= 0)
+			{
+				set_register(instr.register_instruction.rd, next_pc);
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_bconds::BLTZ:
 		{
-			branch_on_less_than_zero(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value < 0)
+			{
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 
 		case cpu_bconds::BLTZAL:
 		{
-			branch_on_less_than_zero_and_link(instr);
+			int rs_value = get_register(instr.immediate_instruction.rs);
+			if (rs_value < 0)
+			{
+				set_register(instr.register_instruction.rd, next_pc);
+				unsigned int offset = (short)instr.immediate_instruction.immediate << 2;
+				next_pc += offset;
+				next_pc -= 4;
+				in_delay_slot = true;
+			}
 		} break;
 	}
 }
