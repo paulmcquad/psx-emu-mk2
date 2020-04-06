@@ -29,8 +29,8 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 	control_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CONTROL_REGISTER_START]);
 	interrupt_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_INTERRUPT_REGISTER_START]);
 
-	devices[DMA_channel_type::OTC] = this;
-	devices[DMA_channel_type::GPU] = gpu.get();
+	devices[static_cast<unsigned int>(DMA_channel_type::OTC)] = this;
+	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = gpu.get();
 	
 	reset();
 }
@@ -63,7 +63,7 @@ void Dma::tick()
 
 		DMA_channel_type type = static_cast<DMA_channel_type>(chan_idx);
 
-		DMA_interface * device =  devices[type];
+		DMA_interface * device =  devices[static_cast<unsigned int>(type)];
 
 		if (channel_control.start_busy == 1)
 		{

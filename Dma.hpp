@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <unordered_map>
+#include <stdexcept>
 
 class Gpu;
 class Ram;
@@ -150,7 +150,7 @@ public:
 	// for OTC channel - since its basically DMA to ram
 	virtual void sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
-	std::unordered_map<DMA_channel_type, DMA_interface*> devices;
+	DMA_interface* devices[7] = { nullptr };
 private:
 
 	std::shared_ptr<Ram> ram = nullptr;
