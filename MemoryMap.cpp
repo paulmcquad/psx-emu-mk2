@@ -84,20 +84,26 @@ void Ram::store_byte(unsigned int address, unsigned char value)
 
 void Ram::store_halfword(unsigned int address, unsigned short value)
 {
-	store_byte(address, value);
-	value >>= 8;
-	store_byte(address, value);
+	int num_bytes = sizeof(unsigned short);
+	for (int offset = 0; offset < num_bytes; offset++)
+	{
+		unsigned int current_address = address + offset;
+		unsigned char byte_value = value & 0xFF;
+		value >>= 8;
+		store_byte(current_address, byte_value);
+	}
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
 {
-	store_byte(address, value);
-	value >>= 8;
-	store_byte(address + 1, value);
-	value >>= 8;
-	store_byte(address + 2, value);
-	value >>= 8;
-	store_byte(address + 3, value);
+	int num_bytes = sizeof(unsigned int);
+	for (int offset = 0; offset < num_bytes; offset++)
+	{
+		unsigned int current_address = address + offset;
+		unsigned char byte_value = value & 0xFF;
+		value >>= 8;
+		store_byte(current_address, byte_value);
+	}
 }
 
 unsigned char Ram::load_byte(unsigned int address)
@@ -107,23 +113,31 @@ unsigned char Ram::load_byte(unsigned int address)
 
 unsigned short Ram::load_halfword(unsigned int address)
 {
-	unsigned short result;
-	result = load_byte(address + 1);
-	result <<= 8;
-	result |= load_byte(address);
+	unsigned short result = 0;
+
+	int num_bytes = sizeof(unsigned short);
+	for (int offset = num_bytes - 1; offset >= 0; offset--)
+	{
+		unsigned int current_address = address + offset;
+		result <<= 8;
+		result |= load_byte(current_address);
+	}
+
 	return result;
 }
 
 unsigned int Ram::load_word(unsigned int address)
 {
-	unsigned int result;
-	result = load_byte(address + 3);
-	result <<= 8;
-	result |= load_byte(address + 2);
-	result <<= 8;
-	result |= load_byte(address + 1);
-	result <<= 8;
-	result |= load_byte(address);
+	unsigned int result = 0;
+
+	int num_bytes = sizeof(unsigned int);
+	for (int offset = num_bytes - 1; offset >= 0; offset--)
+	{
+		unsigned int current_address = address + offset;
+		result <<= 8;
+		result |= load_byte(current_address);
+	}
+
 	return result;
 }
 
