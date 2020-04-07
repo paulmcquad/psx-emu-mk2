@@ -20,56 +20,6 @@ public:
 	void save_state(std::ofstream& file);
 	void load_state(std::ifstream& file);
 
-	// =============================================================================
-	// These load/store templates replace a series of somewhat nasty reinterpret_casts
-	// of unsigned char pointers, I wasn't happy with relying on potentially unaligned
-	// and heavily aliased accesses so felt these templates were acceptable replacements.
-	//
-	// For the moment i'm not going to bother checking for unaligned loads or stores as
-	// I am going to work under the assumption that normal programs don't do them
-	// except through the specific unaligned loading/storing instructions
-	// =============================================================================
-	template <class T>
-	T load(unsigned int address)
-	{
-		T result = 0;
-
-		int num_bytes = sizeof(T);
-		for (int offset = num_bytes - 1; offset >= 0; offset--)
-		{
-			unsigned int current_address = address + offset;
-			result <<= 8;
-			result |= load<unsigned char>(current_address);
-		}
-
-		return result;
-	};
-
-	template <>
-	unsigned char load<unsigned char>(unsigned int address)
-	{
-		return get_byte(address);
-	};
-
-	template <class T>
-	void store(unsigned int address, T value)
-	{
-		int num_bytes = sizeof(T);
-		for (int offset = 0; offset < num_bytes; offset++)
-		{
-			unsigned int current_address = address + offset;
-			unsigned char byte_value = value & 0xFF;
-			value >>= 8;
-			store<unsigned char>(current_address, byte_value);
-		}
-	};
-
-	template<>
-	void store<unsigned char>(unsigned int address, unsigned char value)
-	{
-		set_byte(address, value);
-	};
-
 	void store_byte(unsigned int address, unsigned char value);
 	void store_halfword(unsigned int address, unsigned short value);
 	void store_word(unsigned int address, unsigned int value);

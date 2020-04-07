@@ -84,12 +84,20 @@ void Ram::store_byte(unsigned int address, unsigned char value)
 
 void Ram::store_halfword(unsigned int address, unsigned short value)
 {
-	store<unsigned short>(address, value);
+	store_byte(address, value);
+	value >>= 8;
+	store_byte(address, value);
 }
 
 void Ram::store_word(unsigned int address, unsigned int value)
 {
-	store<unsigned int>(address, value);
+	store_byte(address, value);
+	value >>= 8;
+	store_byte(address + 1, value);
+	value >>= 8;
+	store_byte(address + 2, value);
+	value >>= 8;
+	store_byte(address + 3, value);
 }
 
 unsigned char Ram::load_byte(unsigned int address)
@@ -99,12 +107,24 @@ unsigned char Ram::load_byte(unsigned int address)
 
 unsigned short Ram::load_halfword(unsigned int address)
 {
-	return load<unsigned short>(address);
+	unsigned short result;
+	result = load_byte(address + 1);
+	result <<= 8;
+	result |= load_byte(address);
+	return result;
 }
 
 unsigned int Ram::load_word(unsigned int address)
 {
-	return load<unsigned int>(address);
+	unsigned int result;
+	result = load_byte(address + 3);
+	result <<= 8;
+	result |= load_byte(address + 2);
+	result <<= 8;
+	result |= load_byte(address + 1);
+	result <<= 8;
+	result |= load_byte(address);
+	return result;
 }
 
 void Ram::set_byte(unsigned int address, unsigned char value)
