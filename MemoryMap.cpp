@@ -77,6 +77,36 @@ void Ram::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&cache_control[0]), sizeof(unsigned char) * CACHE_CONTROL_SIZE);
 }
 
+void Ram::store_byte(unsigned int address, unsigned char value)
+{
+	set_byte(address, value);
+}
+
+void Ram::store_halfword(unsigned int address, unsigned short value)
+{
+	store<unsigned short>(address, value);
+}
+
+void Ram::store_word(unsigned int address, unsigned int value)
+{
+	store<unsigned int>(address, value);
+}
+
+unsigned char Ram::load_byte(unsigned int address)
+{
+	return get_byte(address);
+}
+
+unsigned short Ram::load_halfword(unsigned int address)
+{
+	return load<unsigned short>(address);
+}
+
+unsigned int Ram::load_word(unsigned int address)
+{
+	return load<unsigned int>(address);
+}
+
 void Ram::set_byte(unsigned int address, unsigned char value)
 {
 	// determine memory region

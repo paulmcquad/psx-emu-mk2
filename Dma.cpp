@@ -125,11 +125,11 @@ void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_addr
 		num_words--;
 		if (num_words == 0)
 		{
-			ram->store<unsigned int>(addr, 0xffffffff);
+			ram->store_word(addr, 0xffffffff);
 		}
 		else
 		{
-			ram->store<unsigned int>(addr, (addr - 4) & 0x1fffff);
+			ram->store_word(addr, (addr - 4) & 0x1fffff);
 		}
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);

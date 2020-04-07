@@ -153,7 +153,7 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 	{
 		num_words--;
 
-		unsigned int word = ram->load<unsigned int>(addr);
+		unsigned int word = ram->load_word(addr);
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
@@ -166,14 +166,14 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
-		unsigned int header = ram->load<unsigned int>(addr);
+		unsigned int header = ram->load_word(addr);
 		unsigned int num_words = header >> 24;
 
 		while (num_words > 0)
 		{
 			addr = (addr + 4) & 0x1ffffc;
 
-			unsigned int command = ram->load<unsigned int>(addr);
+			unsigned int command = ram->load_word(addr);
 			add_gp0_command(command, true);
 
 			num_words--;
@@ -230,6 +230,10 @@ void Gpu::execute_gp0_commands()
 
 void Gpu::add_gp0_command(unsigned int command, bool via_dma)
 {
+	if (command == 0x300000b2)
+	{
+		printf("WTF\n");
+	}
 	gp0_command_queue.push_back(command);
 }
 

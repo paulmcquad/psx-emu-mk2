@@ -103,8 +103,8 @@ void Cop0::set_control_register(unsigned int index, unsigned int value)
 void Cop0::load_word_to_cop(const instruction_union& instr) 
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
-	unsigned int word = ram->load<unsigned int>(addr);
-	set_control_register(instr.immediate_instruction.rt,word);
+	unsigned int word = ram->load_word(addr);
+	set_control_register(instr.immediate_instruction.rt, word);
 }
 
 // SWCz rt, offset(base)
@@ -112,7 +112,7 @@ void Cop0::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
 	unsigned int control_value = get_control_register(instr.immediate_instruction.rt);
-	ram->store<unsigned int>(addr, control_value);
+	ram->store_word(addr, control_value);
 }
 
 // MTCz rt, rd

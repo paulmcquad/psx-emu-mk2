@@ -32,7 +32,7 @@ void Cpu::tick()
 	current_pc = next_pc;
 	current_instruction = next_instruction;
 
-	next_instruction = ram->load<unsigned int>(current_pc);
+	next_instruction = ram->load_word(current_pc);
 	next_pc = current_pc + 4;
 
 	try
@@ -251,7 +251,7 @@ void Cpu::execute(unsigned int instruction)
 		case cpu_instructions::LB:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned char value = ram->load<unsigned char>(addr);
+			unsigned char value = ram->load_byte(addr);
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
@@ -262,7 +262,7 @@ void Cpu::execute(unsigned int instruction)
 		case cpu_instructions::LBU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			int value = (char)ram->load<unsigned char>(addr);
+			int value = (char)ram->load_byte(addr);
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
@@ -273,7 +273,7 @@ void Cpu::execute(unsigned int instruction)
 		case cpu_instructions::LH:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			int value = (short)ram->load<unsigned short>(addr);
+			int value = (short)ram->load_halfword(addr);
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
@@ -284,7 +284,7 @@ void Cpu::execute(unsigned int instruction)
 		case cpu_instructions::LHU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned short value = ram->load<unsigned short>(addr);
+			unsigned short value = ram->load_halfword(addr);
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
@@ -301,7 +301,7 @@ void Cpu::execute(unsigned int instruction)
 		case cpu_instructions::LW:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned int value = ram->load<unsigned int>(addr);
+			unsigned int value = ram->load_word(addr);
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
@@ -313,7 +313,7 @@ void Cpu::execute(unsigned int instruction)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int aligned_value = ram->load_word(addr_aligned);
 
 			// can load on top of value currently in the pipeline
 			unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
@@ -328,7 +328,7 @@ void Cpu::execute(unsigned int instruction)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int aligned_value = ram->load_word(addr_aligned);
 
 			// can load on top of value currently in the pipeline
 			unsigned int current_value = register_file.shadow_gp_registers_first[instr.immediate_instruction.rt];
@@ -353,7 +353,7 @@ void Cpu::execute(unsigned int instruction)
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
-				ram->store<unsigned char>(addr, value);
+				ram->store_byte(addr, value);
 			}
 		} break;
 
@@ -364,7 +364,7 @@ void Cpu::execute(unsigned int instruction)
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
-				ram->store<unsigned short>(addr, value);
+				ram->store_halfword(addr, value);
 			}
 		} break;
 
@@ -396,7 +396,7 @@ void Cpu::execute(unsigned int instruction)
 
 			if (cop0->get<Cop0::status_register>().Isc == false)
 			{
-				ram->store<unsigned int>(addr, value);
+				ram->store_word(addr, value);
 			}
 		} break;
 
@@ -404,28 +404,28 @@ void Cpu::execute(unsigned int instruction)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int aligned_value = ram->load_word(addr_aligned);
 			unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
 
 			unsigned int alignment = addr & 3;
 			unsigned int mask = 0xffffff00 << (alignment * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
-			ram->store<unsigned int>(addr_aligned, new_value);
+			ram->store_word(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::SWR:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load<unsigned int>(addr_aligned);
+			unsigned int aligned_value = ram->load_word(addr_aligned);
 			unsigned int value_to_set = get_register(instr.immediate_instruction.rt);
 
 			unsigned int alignment = addr & 3;
 			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
-			ram->store<unsigned int>(addr_aligned, new_value);
+			ram->store_word(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::XORI:

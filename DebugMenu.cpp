@@ -213,7 +213,7 @@ void DebugMenu::draw_ram_menu()
 	
 	{
 		static unsigned int prev_value = 0x0;
-		unsigned int value = ram->load<unsigned int>(address_of_interest);
+		unsigned int value = ram->load_word(address_of_interest);
 
 		std::stringstream text;
 		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << value;
@@ -229,13 +229,13 @@ void DebugMenu::draw_ram_menu()
 
 	{
 		std::stringstream text;
-		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << ram->load<unsigned short>(address_of_interest);
+		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << ram->load_halfword(address_of_interest);
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)ram->load<unsigned char>(address_of_interest);
+		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)ram->load_byte(address_of_interest);
 		ImGui::Text(text.str().c_str());
 	}
 
