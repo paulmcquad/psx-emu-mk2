@@ -230,10 +230,6 @@ void Gpu::execute_gp0_commands()
 
 void Gpu::add_gp0_command(unsigned int command, bool via_dma)
 {
-	if (command == 0x300000b2)
-	{
-		printf("WTF\n");
-	}
 	gp0_command_queue.push_back(command);
 }
 
