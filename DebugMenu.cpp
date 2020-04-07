@@ -26,7 +26,7 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 	ram = _ram;
 }
 
-void DebugMenu::deinit()
+void DebugMenu::uninit()
 {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

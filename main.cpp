@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <thread>
 
 #include "MemoryMap.hpp"
 #include "Dma.hpp"
@@ -254,7 +255,7 @@ int main(int num_args, char ** args )
 		}
 	}
 
-	debug_menu->deinit();
+	debug_menu->uninit();
 
 	// cleanup
 	glDeleteTextures(1, &tex);

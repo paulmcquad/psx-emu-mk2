@@ -8,10 +8,6 @@
 #include "InstructionEnums.hpp"
 #include "Exceptions.hpp"
 
-Cpu::Cpu()
-{
-}
-
 void Cpu::init(std::shared_ptr<Ram> _ram)
 {
 	ram = _ram;
@@ -223,12 +219,12 @@ void Cpu::execute(unsigned int instruction)
 			}
 		} break;
 
-		case cpu_instructions::COP0:
-		{
-			execute_cop(instr);
-		} break;
-
+		case cpu_instructions::SWC0:
+		case cpu_instructions::SWC2:
+		case cpu_instructions::LWC0:
+		case cpu_instructions::LWC2:
 		case cpu_instructions::COP2:
+		case cpu_instructions::COP0:
 		{
 			execute_cop(instr);
 		} break;
@@ -311,16 +307,6 @@ void Cpu::execute(unsigned int instruction)
 			{
 				set_register(instr.immediate_instruction.rt, value, true);
 			}
-		} break;
-
-		case cpu_instructions::LWC0:
-		{
-			execute_cop(instr);
-		} break;
-
-		case cpu_instructions::LWC2:
-		{
-			execute_cop(instr);
 		} break;
 
 		case cpu_instructions::LWL:
@@ -412,16 +398,6 @@ void Cpu::execute(unsigned int instruction)
 			{
 				ram->store<unsigned int>(addr, value);
 			}
-		} break;
-
-		case cpu_instructions::SWC0:
-		{
-			execute_cop(instr);
-		} break;
-
-		case cpu_instructions::SWC2:
-		{
-			execute_cop(instr);
 		} break;
 
 		case cpu_instructions::SWL:

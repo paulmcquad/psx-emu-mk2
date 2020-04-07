@@ -44,7 +44,6 @@ public:
 		}
 	} register_file;
 
-	Cpu();
 	void init(std::shared_ptr<Ram> _ram);
 	void reset();
 	void tick();

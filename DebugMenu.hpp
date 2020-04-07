@@ -11,7 +11,7 @@ class DebugMenu
 {
 public:
 	void init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram);
-	void deinit();
+	void uninit();
 	void draw();
 
 	bool is_paused() { return paused_requested; };
