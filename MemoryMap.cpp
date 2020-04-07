@@ -115,13 +115,8 @@ unsigned short Ram::load_halfword(unsigned int address)
 {
 	unsigned short result = 0;
 
-	int num_bytes = sizeof(unsigned short);
-	for (int offset = num_bytes - 1; offset >= 0; offset--)
-	{
-		unsigned int current_address = address + offset;
-		result <<= 8;
-		result |= load_byte(current_address);
-	}
+	result = (load_byte(address + 1) << 8) |
+		      load_byte(address);
 
 	return result;
 }
@@ -130,13 +125,10 @@ unsigned int Ram::load_word(unsigned int address)
 {
 	unsigned int result = 0;
 
-	int num_bytes = sizeof(unsigned int);
-	for (int offset = num_bytes - 1; offset >= 0; offset--)
-	{
-		unsigned int current_address = address + offset;
-		result <<= 8;
-		result |= load_byte(current_address);
-	}
+	result = (load_byte(address + 3) << 24) |
+		     (load_byte(address + 2) << 16) |
+		     (load_byte(address + 1) << 8) |
+		      load_byte(address);
 
 	return result;
 }
