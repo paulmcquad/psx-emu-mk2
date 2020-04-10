@@ -3,6 +3,11 @@
 // using technically undefined behaviour but it's generally supported
 union instruction_union
 {
+	instruction_union(unsigned int value)
+	{
+		raw = value;
+	}
+
 	unsigned int raw;
 	struct
 	{

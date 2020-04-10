@@ -37,7 +37,8 @@ void Cpu::tick()
 
 	try
 	{
-		execute(current_instruction);
+		instruction_union instr(current_instruction);
+		execute(instr);
 	}
 	catch(sys_call& /*e*/)
 	{
@@ -110,12 +111,10 @@ void Cpu::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&in_delay_slot), sizeof(bool));
 }
 
-void Cpu::execute(unsigned int instruction)
+void Cpu::execute(const instruction_union& instr)
 {
-	instruction_union instr;
-	instr.raw = instruction;
-
-	cpu_instructions opcode = static_cast<cpu_instructions>(instruction >> 26);
+	// doesn't matter if its a jump instruction or not, the opcode bits are the same for all instructions
+	cpu_instructions opcode = static_cast<cpu_instructions>(instr.jump_instruction.op);
 
 	switch (opcode)
 	{
