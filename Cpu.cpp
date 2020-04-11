@@ -304,36 +304,35 @@ void Cpu::execute(const instruction_union& instr)
 			}
 		} break;
 
-		case cpu_instructions::LWL:
-		{
-			throw std::logic_error("not implemented");
-			//unsigned int addr = get_immediate_base_addr(instr);
-			//unsigned int addr_aligned = addr & ~3;
-			//unsigned int aligned_value = ram->load_word(addr_aligned);
-
-			//// can load on top of value currently in the pipeline
-			//unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt);
-
-			//unsigned int alignment = addr & 3;
-			//unsigned int mask = 0x00ffffff >> (alignment * 8);
-			//unsigned int new_value = (current_value & mask) | (aligned_value << ((3 - alignment) * 8));
-			//register_file.set_register(instr.immediate_instruction.rt, new_value);
-		} break;
-
+		//http://db.cs.duke.edu/courses/cps104/fall02/homework/lwswlr.html
 		case cpu_instructions::LWR:
 		{
-			throw std::logic_error("not implemented");
-			//unsigned int addr = get_immediate_base_addr(instr);
-			//unsigned int addr_aligned = addr & ~3;
-			//unsigned int aligned_value = ram->load_word(addr_aligned);
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load_word(addr_aligned);
 
-			//// can load on top of value currently in the pipeline
-			//unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt);
+			// can load on top of value currently in the pipeline
+			unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt);
 
-			//unsigned int alignment = addr & 3;
-			//unsigned int mask = 0xffffff00 << ((3 - alignment) * 8);
-			//unsigned int new_value = (current_value & mask) | (aligned_value >> alignment * 8);
-			//register_file.set_register(instr.immediate_instruction.rt, new_value);
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0x00ffffff >> (alignment * 8);
+			unsigned int new_value = (current_value & mask) | (aligned_value << ((3 - alignment) * 8));
+			register_file.set_register(instr.immediate_instruction.rt, new_value);
+		} break;
+
+		case cpu_instructions::LWL:
+		{
+			unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr_aligned = addr & ~3;
+			unsigned int aligned_value = ram->load_word(addr_aligned);
+
+			// can load on top of value currently in the pipeline
+			unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt);
+
+			unsigned int alignment = addr & 3;
+			unsigned int mask = 0xffffff00 << ((3 - alignment) * 8);
+			unsigned int new_value = (current_value & mask) | (aligned_value >> alignment * 8);
+			register_file.set_register(instr.immediate_instruction.rt, new_value);
 		} break;
 
 		case cpu_instructions::ORI:
@@ -397,10 +396,9 @@ void Cpu::execute(const instruction_union& instr)
 			}
 		} break;
 
-		case cpu_instructions::SWL:
+		case cpu_instructions::SWR:
 		{
-			throw std::logic_error("not implemented");
-			/*unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
 			unsigned int aligned_value = ram->load_word(addr_aligned);
 			unsigned int value_to_set = register_file.get_register(instr.immediate_instruction.rt);
@@ -409,13 +407,12 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0xffffff00 << (alignment * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
-			ram->store_word(addr_aligned, new_value);*/
+			ram->store_word(addr_aligned, new_value);
 		} break;
 
-		case cpu_instructions::SWR:
+		case cpu_instructions::SWL:
 		{
-			throw std::logic_error("not implemented");
-			/*unsigned int addr = get_immediate_base_addr(instr);
+			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
 			unsigned int aligned_value = ram->load_word(addr_aligned);
 			unsigned int value_to_set = register_file.get_register(instr.immediate_instruction.rt);
@@ -424,7 +421,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
-			ram->store_word(addr_aligned, new_value);*/
+			ram->store_word(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::XORI:
