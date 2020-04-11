@@ -1,5 +1,5 @@
 #include "Dma.hpp"
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "Gpu.hpp"
 #include <iostream>
 #include <fstream>

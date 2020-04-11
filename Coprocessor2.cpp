@@ -5,7 +5,7 @@
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Cpu.hpp"
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 
 Cop2::Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Cop(_ram, _cpu)
@@ -86,39 +86,39 @@ void Cop2::set_control_register(unsigned int index, unsigned int value)
 
 void Cop2::load_word_to_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
 void Cop2::store_word_from_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
 void Cop2::move_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->get_register(instr.register_instruction.rt);
+	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_data_register(instr.register_instruction.rd, value);
 }
 
 void Cop2::move_from_cop(const instruction_union& instr)
 {
 	unsigned value = get_data_register(instr.register_instruction.rd);
-	cpu->set_register(instr.register_instruction.rs, value);
+	cpu->register_file.set_register(instr.register_instruction.rs, value);
 }
 
 void Cop2::move_control_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->get_register(instr.register_instruction.rt);
+	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
 void Cop2::move_control_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
-	cpu->set_register(instr.register_instruction.rt, value);
+	cpu->register_file.set_register(instr.register_instruction.rt, value);
 }
 
 void Cop2::move_control_to_cop_fun(const instruction_union& instr)

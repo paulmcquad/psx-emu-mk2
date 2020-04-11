@@ -3,7 +3,7 @@
 #include "Coprocessor0.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "Cpu.hpp"
 #include "Exceptions.hpp"
 
@@ -102,7 +102,7 @@ void Cop0::set_control_register(unsigned int index, unsigned int value)
 // LWCz rt, offset(base)
 void Cop0::load_word_to_cop(const instruction_union& instr) 
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
 	set_control_register(instr.immediate_instruction.rt, word);
 }
@@ -110,7 +110,7 @@ void Cop0::load_word_to_cop(const instruction_union& instr)
 // SWCz rt, offset(base)
 void Cop0::store_word_from_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->get_register(instr.immediate_instruction.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int control_value = get_control_register(instr.immediate_instruction.rt);
 	ram->store_word(addr, control_value);
 }
@@ -118,7 +118,7 @@ void Cop0::store_word_from_cop(const instruction_union& instr)
 // MTCz rt, rd
 void Cop0::move_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->get_register(instr.register_instruction.rt);
+	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
@@ -126,7 +126,7 @@ void Cop0::move_to_cop(const instruction_union& instr)
 void Cop0::move_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
-	cpu->set_register(instr.register_instruction.rt, value);
+	cpu->register_file.set_register(instr.register_instruction.rt, value);
 }
 
 // CTCz rt, rd

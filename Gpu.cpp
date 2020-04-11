@@ -1,5 +1,5 @@
 #include "Gpu.hpp"
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "InstructionEnums.hpp"
 #include "InstructionTypes.hpp"
 #include <fstream>

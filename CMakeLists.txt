@@ -34,8 +34,10 @@ set(source_files
 		Dma.cpp
 		Cpu.hpp
 		Cpu.cpp
-		MemoryMap.hpp
-		MemoryMap.cpp
+		Ram.hpp
+		Ram.cpp
+		RegisterFile.hpp
+		RegisterFile.cpp
 		Coprocessor.hpp
 		Coprocessor0.hpp
 		Coprocessor0.cpp

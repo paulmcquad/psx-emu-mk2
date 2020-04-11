@@ -5,7 +5,7 @@
 #include <sstream>
 #include <thread>
 
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "Dma.hpp"
 #include "Cpu.hpp"
 #include "Gpu.hpp"

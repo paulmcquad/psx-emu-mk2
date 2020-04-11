@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <assert.h>
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "IOPorts.hpp"
 #include "Exceptions.hpp"
 

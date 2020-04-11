@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 #include "Cpu.hpp"
 #include "IOPorts.hpp"
 #include "Coprocessor0.hpp"
@@ -22,12 +22,120 @@ TEST_CASE("Cpu")
 	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
 	cpu->init(ram);
 
+	// make sure the cache isn't isolated
+	Cop0::status_register status = cpu->cop0->get<Cop0::status_register>();
+	status.Isc = false;
+	cpu->cop0->set<Cop0::status_register>(status);
+
+
+	SECTION("Load delay")
+	{
+		cpu->register_file.reset();
+		ram->store_word(0x0, 0x1);
+
+		// load value 0x1 from address 0x0 into register 1
+		{
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LW);
+			instr.immediate_instruction.immediate = 0;
+			instr.immediate_instruction.rt = 1;
+
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) != 0x1);
+
+			cpu->register_file.tick();
+		}
+		
+		// nop
+		{
+
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::ADD);
+			instr.register_instruction.rd = 0;
+			instr.register_instruction.rt = 0;
+			instr.register_instruction.rs = 0;
+
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) != 0x1);
+
+			cpu->register_file.tick();
+		}
+		
+		// on third instruction value is present
+		{
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+			instr.immediate_instruction.immediate = 1;
+			instr.immediate_instruction.rt = 1;
+			instr.immediate_instruction.rs = 1;
+
+			// 1 in register now so adding 1 will result in 2
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0x2);
+		}
+	}
+
+	SECTION("Load delay with overlay")
+	{
+		cpu->register_file.reset();
+		ram->store_word(0x0, 0x1);
+
+		// load value 0x1 from address 0x0 into register 1
+		{
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LW);
+			instr.immediate_instruction.immediate = 0;
+			instr.immediate_instruction.rt = 1;
+
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) != 0x1);
+
+			cpu->register_file.tick();
+		}
+
+		// overwrite register 1 with 0 + 0
+		{
+
+			instruction_union instr;
+			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
+			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::ADD);
+			instr.register_instruction.rd = 1;
+			instr.register_instruction.rt = 0;
+			instr.register_instruction.rs = 0;
+
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) != 0x1);
+
+			cpu->register_file.tick();
+		}
+
+		// on third instruction value is present
+		{
+			instruction_union instr;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
+			instr.immediate_instruction.immediate = 1;
+			instr.immediate_instruction.rt = 1;
+			instr.immediate_instruction.rs = 1;
+
+			// 1 loaded by now but it was overwritten by 0 in the previous instruction
+			cpu->execute(instr);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0x1);
+		}
+	}
+
 	SECTION("r0 is always zero")
 	{
 		cpu->reset();
-		REQUIRE(cpu->get_register(0) == 0x0);
-		cpu->set_register(0, 0xDEADBEEF);
-		REQUIRE(cpu->get_register(0) == 0x0);
+		REQUIRE(cpu->register_file.get_register(0) == 0x0);
+		cpu->register_file.set_register(0, 0xDEADBEEF);
+		REQUIRE(cpu->register_file.get_register(0) == 0x0);
 	}
 
 	SECTION("ensure r1 - r31 work")
@@ -35,36 +143,36 @@ TEST_CASE("Cpu")
 		cpu->reset();
 		for (int index = 1; index < 32; index++)
 		{
-			REQUIRE(cpu->get_register(index) == 0x0);
+			REQUIRE(cpu->register_file.get_register(index) == 0x0);
 			unsigned int value = 1 << (index - 1);
-			cpu->set_register(index, value);
-			REQUIRE(cpu->get_register(index) == value);
+			cpu->register_file.set_register(index, value);
+			REQUIRE(cpu->register_file.get_register(index) == value);
 		}
 	}
 
 	SECTION("little endian load/store")
 	{
 		cpu->reset();
-		REQUIRE(ram->load<unsigned int>(0) == 0x0);
-		REQUIRE(ram->load<unsigned short>(0) == 0x0);
-		REQUIRE(ram->load<unsigned char>(0) == 0x0);
+		REQUIRE(ram->load_word(0) == 0x0);
+		REQUIRE(ram->load_halfword(0) == 0x0);
+		REQUIRE(ram->load_byte(0) == 0x0);
 
-		ram->store<unsigned int>(0, 0xDEADBEEF);
-		REQUIRE(ram->load<unsigned int>(0) == 0xDEADBEEF);
+		ram->store_word(0, 0xDEADBEEF);
+		REQUIRE(ram->load_word(0) == 0xDEADBEEF);
 
-		REQUIRE(ram->load<unsigned char>(0) == 0xEF);
-		REQUIRE(ram->load<unsigned char>(1) == 0xBE);
-		REQUIRE(ram->load<unsigned char>(2) == 0xAD);
-		REQUIRE(ram->load<unsigned char>(3) == 0xDE);
+		REQUIRE(ram->load_byte(0) == 0xEF);
+		REQUIRE(ram->load_byte(1) == 0xBE);
+		REQUIRE(ram->load_byte(2) == 0xAD);
+		REQUIRE(ram->load_byte(3) == 0xDE);
 
-		REQUIRE(ram->load<unsigned short>(0) == 0xBEEF);
-		REQUIRE(ram->load<unsigned short>(2) == 0xDEAD);
+		REQUIRE(ram->load_halfword(0) == 0xBEEF);
+		REQUIRE(ram->load_halfword(2) == 0xDEAD);
 
-		ram->store<unsigned short>(0, 0xDEAD);
-		REQUIRE(ram->load<unsigned int>(0) == 0xDEADDEAD);
+		ram->store_halfword(0, 0xDEAD);
+		REQUIRE(ram->load_word(0) == 0xDEADDEAD);
 
-		ram->store<unsigned char>(0, 0xEE);
-		REQUIRE(ram->load<unsigned int>(0) == 0xDEADDEEE);
+		ram->store_byte(0, 0xEE);
+		REQUIRE(ram->load_word(0) == 0xDEADDEEE);
 	}
 
 	SECTION("ALU immediate")
@@ -78,30 +186,30 @@ TEST_CASE("Cpu")
 
 			// simple addition
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 0xFFFFFFFE);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 0xFFFFFFFE);
 
 				instr.immediate_instruction.immediate = 0x1;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 			}
 
 			// simple addition of negative immediate
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 0xFFFFFFFF);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 0xFFFFFFFF);
 
 				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFE);
 			}
 
 			// overflow exception thrown
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
 
 				instr.immediate_instruction.immediate = 1;
 
@@ -110,8 +218,8 @@ TEST_CASE("Cpu")
 
 			// overflow exception thrown
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
 
 				instr.immediate_instruction.immediate = -1;
 
@@ -127,30 +235,30 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.rs = 2;
 			// simple addition
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 0xFFFFFFFE);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 0xFFFFFFFE);
 
 				instr.immediate_instruction.immediate = 0x1;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 			}
 
 			// simple addition of negative immediate
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 0xFFFFFFFF);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 0xFFFFFFFF);
 
 				instr.immediate_instruction.immediate = static_cast<short>(-0x1);
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0xFFFFFFFE);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFE);
 			}
 
 			// overflow exception not thrown
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
 
 				instr.immediate_instruction.immediate = 1;
 
@@ -159,8 +267,8 @@ TEST_CASE("Cpu")
 
 			// overflow exception not thrown
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
 				instr.immediate_instruction.immediate = -1;
 
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
@@ -174,44 +282,44 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.rt = 1;
 			instr.immediate_instruction.rs = 2;
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 0x10);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 0x10);
 
 				instr.immediate_instruction.immediate = 0x11;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 
 				instr.immediate_instruction.immediate = 0x09;
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 			}
 
 			// extremes
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
 
 				instr.immediate_instruction.immediate = 0;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 
-				cpu->set_register(2, INT_MIN);
+				cpu->register_file.set_register(2, INT_MIN);
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 
-				cpu->set_register(2, 0x0);
+				cpu->register_file.set_register(2, 0x0);
 				instr.immediate_instruction.immediate = SHRT_MIN;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 
 				instr.immediate_instruction.immediate = SHRT_MAX;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 			}
 		}
 
@@ -223,13 +331,13 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.rs = 2;
 			// unsigned so INT_MIN will actually be a large positive value
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
 
 				instr.immediate_instruction.immediate = 0x0;
 				cpu->execute(instr.raw);
 
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 			}
 		}
 
@@ -244,16 +352,16 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.immediate = 0xFFFF;
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0x0);
+			REQUIRE(cpu->register_file.get_register(1) == 0x0);
 
-			cpu->set_register(2, 0xFFFFFFFF);
+			cpu->register_file.set_register(2, 0xFFFFFFFF);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0x0000FFFF);
+			REQUIRE(cpu->register_file.get_register(1) == 0x0000FFFF);
 
-			cpu->set_register(2, 0xFFFFFFFF);
+			cpu->register_file.set_register(2, 0xFFFFFFFF);
 			instr.immediate_instruction.immediate = 0x0000;
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0x00000000);
+			REQUIRE(cpu->register_file.get_register(1) == 0x00000000);
 		}
 
 		// or immediate [rt 1] = [rs 2] | immediate
@@ -267,12 +375,12 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.immediate = 0xFFFF;
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0x0000FFFF);
+			REQUIRE(cpu->register_file.get_register(1) == 0x0000FFFF);
 
-			cpu->set_register(2, 0xFFFF0000);
+			cpu->register_file.set_register(2, 0xFFFF0000);
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 		}
 
 		// xor immediate [rt 1] = [rs 2] ^ immediate
@@ -286,12 +394,12 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.immediate = 0xFFFF;
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0x0000FFFF);
+			REQUIRE(cpu->register_file.get_register(1) == 0x0000FFFF);
 
-			cpu->set_register(2, 0xFFFFFFFF);
+			cpu->register_file.set_register(2, 0xFFFFFFFF);
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 		}
 
 		// lui [rt 1] = immediate << 16
@@ -304,13 +412,13 @@ TEST_CASE("Cpu")
 			instr.immediate_instruction.immediate = 0xFFFF;
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 
-			cpu->set_register(2, 0x0000FFFF);
+			cpu->register_file.set_register(2, 0x0000FFFF);
 			cpu->execute(instr.raw);
 
 			// the lower half of the word is not preserved
-			REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 		}
 	}
 
@@ -330,44 +438,44 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 400);
+				REQUIRE(cpu->register_file.get_register(1) == 400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, -300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, -300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == -200);
+				REQUIRE(cpu->register_file.get_register(1) == -200);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 200);
+				REQUIRE(cpu->register_file.get_register(1) == 200);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MAX);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MAX);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MIN);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MIN);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, INT_MAX);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, INT_MAX);
 				REQUIRE_THROWS_AS(cpu->execute(instr.raw), overflow_exception);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
-				cpu->set_register(3, INT_MIN);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
+				cpu->register_file.set_register(3, INT_MIN);
 				REQUIRE_THROWS_AS(cpu->execute(instr.raw), overflow_exception);
 			}
 		}
@@ -382,44 +490,44 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 400);
+				REQUIRE(cpu->register_file.get_register(1) == 400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, -300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, -300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == -200);
+				REQUIRE(cpu->register_file.get_register(1) == -200);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 200);
+				REQUIRE(cpu->register_file.get_register(1) == 200);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MAX);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MAX);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MIN);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MIN);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, INT_MAX);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, INT_MAX);
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
-				cpu->set_register(3, INT_MIN);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
+				cpu->register_file.set_register(3, INT_MIN);
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 			}
 		}
@@ -434,38 +542,38 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, -300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, -300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 400);
+				REQUIRE(cpu->register_file.get_register(1) == 400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == -400);
+				REQUIRE(cpu->register_file.get_register(1) == -400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MAX);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MAX);
 
 				// TODO - double check if this is correct!!!
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 300);
 				REQUIRE_THROWS_AS(cpu->execute(instr.raw), overflow_exception);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, -1);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, -1);
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MIN);
-				cpu->set_register(3, 1);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MIN);
+				cpu->register_file.set_register(3, 1);
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 			}
 		}
@@ -480,28 +588,28 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, -300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, -300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 400);
+				REQUIRE(cpu->register_file.get_register(1) == 400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -100);
+				cpu->register_file.set_register(3, 300);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == -400);
+				REQUIRE(cpu->register_file.get_register(1) == -400);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, INT_MAX);
-				cpu->set_register(3, 0x0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, INT_MAX);
+				cpu->register_file.set_register(3, 0x0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == INT_MAX);
+				REQUIRE(cpu->register_file.get_register(1) == INT_MAX);
 
 				// TODO - double check if this is correct!!!
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 300);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 300);
 				REQUIRE_NOTHROW(cpu->execute(instr.raw));
 			}
 		}
@@ -516,29 +624,29 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 200);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 200);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 200);
-				cpu->set_register(3, 100);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 200);
+				cpu->register_file.set_register(3, 100);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -200);
-				cpu->set_register(3, 100);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -200);
+				cpu->register_file.set_register(3, 100);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -100);
-				cpu->set_register(3, 0);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -100);
+				cpu->register_file.set_register(3, 0);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 			}
 		}
 
@@ -552,23 +660,23 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 100);
-				cpu->set_register(3, 200);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 100);
+				cpu->register_file.set_register(3, 200);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 1);
+				REQUIRE(cpu->register_file.get_register(1) == 1);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, 200);
-				cpu->set_register(3, 100);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, 200);
+				cpu->register_file.set_register(3, 100);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 
-				cpu->set_register(1, 0x0); // result register
-				cpu->set_register(2, -200);
-				cpu->set_register(3, 100);
+				cpu->register_file.set_register(1, 0x0); // result register
+				cpu->register_file.set_register(2, -200);
+				cpu->register_file.set_register(3, 100);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0);
+				REQUIRE(cpu->register_file.get_register(1) == 0);
 			}
 		}
 
@@ -582,20 +690,20 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(2, 0xDEAD0000);
-				cpu->set_register(3, 0x0000BEEF);
+				cpu->register_file.set_register(2, 0xDEAD0000);
+				cpu->register_file.set_register(3, 0x0000BEEF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0x0);
+				REQUIRE(cpu->register_file.get_register(1) == 0x0);
 
-				cpu->set_register(2, 0xDEADBEEF);
-				cpu->set_register(3, 0x0000FFFF);
+				cpu->register_file.set_register(2, 0xDEADBEEF);
+				cpu->register_file.set_register(3, 0x0000FFFF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xBEEF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xBEEF);
 
-				cpu->set_register(2, 0xDEADBEEF);
-				cpu->set_register(3, 0xDEAD0000);
+				cpu->register_file.set_register(2, 0xDEADBEEF);
+				cpu->register_file.set_register(3, 0xDEAD0000);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xDEAD0000);
+				REQUIRE(cpu->register_file.get_register(1) == 0xDEAD0000);
 			}
 		}
 
@@ -609,20 +717,20 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(2, 0xDEAD0000);
-				cpu->set_register(3, 0x0000BEEF);
+				cpu->register_file.set_register(2, 0xDEAD0000);
+				cpu->register_file.set_register(3, 0x0000BEEF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xDEADBEEF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xDEADBEEF);
 
-				cpu->set_register(2, 0xDEADBEEF);
-				cpu->set_register(3, 0x0000FFFF);
+				cpu->register_file.set_register(2, 0xDEADBEEF);
+				cpu->register_file.set_register(3, 0x0000FFFF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xDEADFFFF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xDEADFFFF);
 
-				cpu->set_register(2, 0xDEADBEEF);
-				cpu->set_register(3, 0xFFFF0000);
+				cpu->register_file.set_register(2, 0xDEADBEEF);
+				cpu->register_file.set_register(3, 0xFFFF0000);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xFFFFBEEF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFFBEEF);
 			}
 		}
 
@@ -636,15 +744,15 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(2, 0xDEAD0000);
-				cpu->set_register(3, 0x0000BEEF);
+				cpu->register_file.set_register(2, 0xDEAD0000);
+				cpu->register_file.set_register(3, 0x0000BEEF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xDEADBEEF);
+				REQUIRE(cpu->register_file.get_register(1) == 0xDEADBEEF);
 
-				cpu->set_register(2, 0xDEADBEEF);
-				cpu->set_register(3, 0xDEADBEEF);
+				cpu->register_file.set_register(2, 0xDEADBEEF);
+				cpu->register_file.set_register(3, 0xDEADBEEF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0x0);
+				REQUIRE(cpu->register_file.get_register(1) == 0x0);
 			}
 		}
 
@@ -658,10 +766,10 @@ TEST_CASE("Cpu")
 			instr.register_instruction.rt = 3;
 
 			{
-				cpu->set_register(2, 0x0);
-				cpu->set_register(3, 0x0000FFFF);
+				cpu->register_file.set_register(2, 0x0);
+				cpu->register_file.set_register(3, 0x0000FFFF);
 				cpu->execute(instr.raw);
-				REQUIRE(cpu->get_register(1) == 0xFFFF0000);
+				REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 			}
 		}
 	}
@@ -677,52 +785,52 @@ TEST_CASE("Cpu")
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SLL);
 			instr.register_instruction.shamt = 16;
-			cpu->set_register(2, 0xDEADBEEF);
+			cpu->register_file.set_register(2, 0xDEADBEEF);
 			cpu->execute(instr.raw);
 
-			REQUIRE(cpu->get_register(1) == 0xBEEF0000);
+			REQUIRE(cpu->register_file.get_register(1) == 0xBEEF0000);
 		}
 
 		//srl [rd 1] = [rt 2] >> shamt
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRL);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0x0000DEAD);
+			REQUIRE(cpu->register_file.get_register(1) == 0x0000DEAD);
 		}
 
 		//sra [rd 1] = [rt 2] >> shamt
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRA);
-			cpu->set_register(2, 0xFFFF0000);
+			cpu->register_file.set_register(2, 0xFFFF0000);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0xFFFFFFFF);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 		}
 
 		//sllv [rd 1] = [rt 2] << [rs 3]
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SLLV);
-			cpu->set_register(2, 0xDEADBEEF);
-			cpu->set_register(3, 8);
+			cpu->register_file.set_register(2, 0xDEADBEEF);
+			cpu->register_file.set_register(3, 8);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0xADBEEF00);
+			REQUIRE(cpu->register_file.get_register(1) == 0xADBEEF00);
 		}
 
 		//srlv [rd 1] = [rt 2] >> [rs 3]
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRLV);
-			cpu->set_register(2, 0xDEADBEEF);
-			cpu->set_register(3, 8);
+			cpu->register_file.set_register(2, 0xDEADBEEF);
+			cpu->register_file.set_register(3, 8);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0x00DEADBE);
+			REQUIRE(cpu->register_file.get_register(1) == 0x00DEADBE);
 		}
 
 		//srav [rd 1] = [rt 2] >> [rs 3]
 		{
 			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::SRAV);
-			cpu->set_register(2, 0xF0000000);
-			cpu->set_register(3, 8);
+			cpu->register_file.set_register(2, 0xF0000000);
+			cpu->register_file.set_register(3, 8);
 			cpu->execute(instr.raw);
-			REQUIRE(cpu->get_register(1) == 0xFFF00000);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFF00000);
 		}
 	}
 
@@ -747,7 +855,7 @@ TEST_CASE("Cpu")
 		// mult hi,lo = [rs 3] * [rt 2]
 		{
 			/*instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::MULT);
-			cpu->set_register(3, INT_MAX);
+			cpu->register_file.set_register(3, INT_MAX);
 			cpu->set_register(2, 4);
 			cpu->execute(instr.raw);
 			unsigned long long result = cpu->lo;
@@ -773,4 +881,4 @@ TEST_CASE("Cpu")
 
 		}
 	}
-};
+}

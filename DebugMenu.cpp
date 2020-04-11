@@ -6,7 +6,7 @@
 
 #include "Cpu.hpp"
 #include "Gpu.hpp"
-#include "MemoryMap.hpp"
+#include "Ram.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -79,7 +79,7 @@ void DebugMenu::draw_cpu_menu()
 		for (int idx = 0; idx < 32; idx++)
 		{
 			std::stringstream reg_text;
-			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.gp_registers[idx];
+			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.get_register(idx);
 			ImGui::Text(reg_text.str().c_str());
 		}
 	}
