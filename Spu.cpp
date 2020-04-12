@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include "Spu.hpp"
 
+//https://gist.github.com/armornick/3447121
 void Spu::init()
 {
 
