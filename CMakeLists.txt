@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 project (psx-emu-mk2)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
+
+find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -9,6 +12,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(glfw/)
 add_subdirectory(glm/)
+
 include_directories(includes/)
 
 set(source_files
@@ -57,10 +61,12 @@ set(source_files
 		Exceptions.hpp
 )
 
-add_executable(psx-mk2 main.cpp ${source_files})
-target_link_libraries(psx-mk2 glfw)
-target_link_libraries(psx-mk2 glm)
+add_executable(${PROJECT_NAME} main.cpp ${source_files})
+target_link_libraries(${PROJECT_NAME} glfw)
+target_link_libraries(${PROJECT_NAME} glm)
+target_link_libraries(${PROJECT_NAME} SDL2::Main)
 
-add_executable(psx-mk2-test main_test.cpp ${source_files})
-target_link_libraries(psx-mk2-test glfw)
-target_link_libraries(psx-mk2-test glm)
+add_executable(${PROJECT_NAME}-test main_test.cpp ${source_files})
+target_link_libraries(${PROJECT_NAME}-test glfw)
+target_link_libraries(${PROJECT_NAME}-test glm)
+target_link_libraries(${PROJECT_NAME}-test SDL2::Main)
