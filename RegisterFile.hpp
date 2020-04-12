@@ -10,7 +10,7 @@ public:
 	void reset();
 	void tick();
 
-	unsigned int get_register(unsigned int index);
+	unsigned int get_register(unsigned int index, bool ignore_load_delay = false);
 	void set_register(unsigned int index, unsigned int value, bool load_delay = false);
 
 private:

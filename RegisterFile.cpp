@@ -30,9 +30,16 @@ void RegisterFile::tick()
 	memcpy(&stage_2_registers, &stage_1_registers, sizeof(unsigned int) * 32);
 }
 
-unsigned int RegisterFile::get_register(unsigned int index)
+unsigned int RegisterFile::get_register(unsigned int index, bool ignore_load_delay)
 {
-	return stage_3_registers[index];
+	if (ignore_load_delay)
+	{
+		return stage_1_registers[index]; // this always has the most up to date value
+	}
+	else
+	{
+		return stage_3_registers[index];
+	}
 }
 
 void RegisterFile::set_register(unsigned int index, unsigned int value, bool load_delay)

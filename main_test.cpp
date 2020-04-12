@@ -48,7 +48,6 @@ TEST_CASE("Cpu")
 		
 		// nop
 		{
-
 			instruction_union instr;
 			cpu->execute(instr);
 
@@ -72,130 +71,30 @@ TEST_CASE("Cpu")
 		}
 	}
 
-	SECTION("Load delay with overlay")
+	SECTION("Unaligned load delay")
 	{
-		cpu->register_file.reset();
-		ram->store_word(0x0, 0x1);
-
-		// load value 0x1 from address 0x0 into register 1
-		{
-			instruction_union instr;
-			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LW);
-			instr.immediate_instruction.immediate = 0;
-			instr.immediate_instruction.rt = 1;
-
-			cpu->execute(instr);
-
-			REQUIRE(cpu->register_file.get_register(1) != 0x1);
-
-			cpu->register_file.tick();
-		}
-
-		// overwrite register 1 with 0 + 0
-		{
-
-			instruction_union instr;
-			instr.register_instruction.op = static_cast<unsigned int>(cpu_instructions::SPECIAL);
-			instr.register_instruction.funct = static_cast<unsigned int>(cpu_special_funcs::ADD);
-			instr.register_instruction.rd = 1;
-			instr.register_instruction.rt = 0;
-			instr.register_instruction.rs = 0;
-
-			cpu->execute(instr);
-
-			REQUIRE(cpu->register_file.get_register(1) != 0x1);
-
-			cpu->register_file.tick();
-		}
-
-		// on third instruction value is present
-		{
-			instruction_union instr;
-			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::ADDI);
-			instr.immediate_instruction.immediate = 1;
-			instr.immediate_instruction.rt = 1;
-			instr.immediate_instruction.rs = 1;
-
-			// 1 loaded by now but it was overwritten by 0 in the previous instruction
-			cpu->execute(instr);
-
-			REQUIRE(cpu->register_file.get_register(1) == 0x1);
-		}
-	}
-
-	SECTION("LWR")
-	{
-		ram->store_word(0x0, 0x03020100);
-		cpu->register_file.set_register(4, 0x0D0C0B0A);
-
-		{
-			instruction_union instr;
-			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LWR);
-			instr.immediate_instruction.immediate = 2;
-			instr.immediate_instruction.rt = 4;
-			cpu->execute(instr);
-			cpu->register_file.tick();
-			cpu->register_file.tick();
-			REQUIRE(cpu->register_file.get_register(4) == 0x0201000A);
-		}
-	}
-
-	SECTION("LWL")
-	{
-		ram->store_word(0x0, 0x03020100);
-		cpu->register_file.set_register(4, 0x0D0C0B0A);
+		ram->store_word(0x0, 0xFFFFFFFF);
+		cpu->register_file.set_register(2, 0x0);
 
 		{
 			instruction_union instr;
 			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LWL);
-			instr.immediate_instruction.immediate = 2;
-			instr.immediate_instruction.rt = 4;
+			instr.immediate_instruction.immediate = 3;
+			instr.immediate_instruction.rt = 2;
 			cpu->execute(instr);
 			cpu->register_file.tick();
-			cpu->register_file.tick();
-			REQUIRE(cpu->register_file.get_register(4) == 0x0D0C0302);
 		}
-	}
-
-	SECTION("SWR")
-	{
-		ram->store_word(0x0, 0x03020100);
-		ram->store_word(0x4, 0x07060504);
-		cpu->register_file.set_register(4, 0x0D0C0B0A);
 
 		{
 			instruction_union instr;
-			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::SWR);
-			instr.immediate_instruction.immediate = 5;
-			instr.immediate_instruction.rt = 4;
+			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::LWR);
+			instr.immediate_instruction.immediate = 0;
+			instr.immediate_instruction.rt = 2;
 			cpu->execute(instr);
 			cpu->register_file.tick();
-			cpu->register_file.tick();
-			REQUIRE(ram->load_word(0x4) == 0X07060D0C);
 		}
-	}
 
-	SECTION("SWL")
-	{
-		ram->store_word(0x0, 0x03020100);
-		ram->store_word(0x4, 0x07060504);
-		cpu->register_file.set_register(4, 0x0D0C0B0A);
-
-		{
-			instruction_union instr;
-			instr.immediate_instruction.op = static_cast<unsigned int>(cpu_instructions::SWL);
-			instr.immediate_instruction.immediate = 5;
-			instr.immediate_instruction.rt = 4;
-			cpu->execute(instr);
-			cpu->register_file.tick();
-			cpu->register_file.tick();
-			REQUIRE(ram->load_word(0x4) == 0x0C0B0A04);
-		}
-	}
-
-	SECTION("Unaligned load delay")
-	{
-
+		REQUIRE(cpu->register_file.get_register(2) == 0xFFFFFFFF);
 	}
 
 	SECTION("r0 is always zero")
