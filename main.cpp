@@ -9,6 +9,8 @@
 #include "Dma.hpp"
 #include "Cpu.hpp"
 #include "Gpu.hpp"
+#include "Spu.hpp"
+#include "Cdrom.hpp"
 #include "IOPorts.hpp"
 #include "glad.h"
 
@@ -145,9 +147,17 @@ int main(int num_args, char ** args )
 	std::shared_ptr<Gpu> gpu = std::make_shared<Gpu>();
 	gpu->init();
 
+	std::cout << "Creating SPU\n";
+	std::shared_ptr<Spu> spu = std::make_shared<Spu>();
+	spu->init();
+
+	std::cout << "Creating CDROM\n";
+	std::shared_ptr<Cdrom> cdrom = std::make_shared<Cdrom>();
+	cdrom->init();
+
 	std::cout << "Creating IO ports\n";
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-	io_ports->init(gpu, dma);
+	io_ports->init(gpu, dma, spu, cdrom);
 
 	// RAM
 	std::cout << "Creating Ram\n";

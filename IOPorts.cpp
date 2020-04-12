@@ -1,7 +1,10 @@
 #include <typeinfo.h>
 #include <fstream>
+#include <iostream>
 #include "IOPorts.hpp"
 #include "Gpu.hpp"
+#include "Spu.hpp"
+#include "Cdrom.hpp"
 #include "Dma.hpp"
 #include "Exceptions.hpp"
 
@@ -17,11 +20,8 @@ constexpr unsigned int MEMORY_CONTROL_1_END = MEMORY_CONTROL_1_START + MEMORY_CO
 constexpr unsigned int MEMORY_CONTROL_2_START = 0x1F801060 - IO_START;
 constexpr unsigned int MEMORY_CONTROL_2_END = MEMORY_CONTROL_2_START + MEMORY_CONTROL_2_SIZE;
 
-constexpr unsigned int SPU_CONTROL_START = 0x1F801D80 - IO_START;
-constexpr unsigned int SPU_CONTROL_END = SPU_CONTROL_START + SPU_CONTROL_SIZE;
-
-constexpr unsigned int SPU_VOICE_START = 0x1F801C00 - IO_START;
-constexpr unsigned int SPU_VOICE_END = SPU_VOICE_START + SPU_VOICE_SIZE;
+constexpr unsigned int SPU_START = 0x1F801C00 - IO_START;
+constexpr unsigned int SPU_END = SPU_START + SPU_VOICE_SIZE + SPU_CONTROL_SIZE;
 
 constexpr unsigned int POST = 0x1F802041 - IO_START;
 
@@ -41,10 +41,12 @@ constexpr unsigned int DMA_SIZE = 128;
 constexpr unsigned int DMA_START = 0x1F801080 - IO_START;
 constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 
-void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma)
+void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma, std::shared_ptr<Spu> _spu, std::shared_ptr<Cdrom> _cdrom)
 {
 	gpu = _gpu;
 	dma = _dma;
+	spu = _spu;
+	cdrom = _cdrom;
 }
 
 void IOPorts::save_state(std::ofstream& file)
@@ -52,8 +54,6 @@ void IOPorts::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
 	file.write(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
 	file.write(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
-	file.write(reinterpret_cast<char*>(&spu_control), sizeof(unsigned char) * SPU_CONTROL_SIZE);
-	file.write(reinterpret_cast<char*>(&spu_voice_registers), sizeof(unsigned char) * SPU_VOICE_SIZE);
 	file.write(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
 	file.write(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
 	file.write(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
@@ -65,8 +65,6 @@ void IOPorts::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
 	file.read(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
 	file.read(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
-	file.read(reinterpret_cast<char*>(&spu_control), sizeof(unsigned char) * SPU_CONTROL_SIZE);
-	file.read(reinterpret_cast<char*>(&spu_voice_registers), sizeof(unsigned char) * SPU_VOICE_SIZE);
 	file.read(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
 	file.read(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
 	file.read(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
@@ -95,15 +93,10 @@ unsigned char IOPorts::get(unsigned int address)
 	{
 		return memory_control_2[address - MEMORY_CONTROL_2_START];
 	}
-	else if (address >= SPU_CONTROL_START &&
-		address < SPU_CONTROL_END)
+	else if (address >= SPU_START &&
+		address < SPU_END)
 	{
-		return spu_control[address - SPU_CONTROL_START];
-	}
-	else if (address >= SPU_VOICE_START &&
-		address < SPU_VOICE_END)
-	{
-		return spu_voice_registers[address - SPU_VOICE_START];
+		return spu->get(address - SPU_START);
 	}
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
@@ -131,7 +124,7 @@ unsigned char IOPorts::get(unsigned int address)
 	}
 	else if (address >= CDROM_START && address < CDROM_END)
 	{
-		return cdrom[address - CDROM_START];
+		return cdrom->get(address - CDROM_START);
 	}
 	else
 	{
@@ -161,15 +154,10 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	{
 		memory_control_2[address - MEMORY_CONTROL_2_START] = value;
 	}
-	else if (address >= SPU_CONTROL_START &&
-		address < SPU_CONTROL_END)
+	else if (address >= SPU_START &&
+		address < SPU_END)
 	{
-		spu_control[address - SPU_CONTROL_START] = value;
-	}
-	else if (address >= SPU_VOICE_START &&
-		address < SPU_VOICE_END)
-	{
-		spu_voice_registers[address - SPU_VOICE_START] = value;
+		spu->set(address - SPU_START, value);
 	}
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
@@ -197,7 +185,7 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	}
 	else if (address >= CDROM_START && address < CDROM_END)
 	{
-		cdrom[address - CDROM_START] = value;
+		cdrom->set(address - CDROM_START, value);
 	}
 	else
 	{

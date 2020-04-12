@@ -49,6 +49,10 @@ set(source_files
 		IOPorts.cpp
 		Gpu.hpp
 		Gpu.cpp
+		Spu.hpp
+		Spu.cpp
+		Cdrom.hpp
+		Cdrom.cpp
 		Exceptions.hpp
 )
 
