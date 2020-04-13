@@ -315,7 +315,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int alignment = addr & 3;
 			unsigned int mask = 0x00ffffff >> (alignment * 8);
 			unsigned int new_value = (current_value & mask) | (aligned_value << ((3 - alignment) * 8));
-			register_file.set_register(instr.immediate_instruction.rt, new_value);
+			register_file.set_register(instr.immediate_instruction.rt, new_value, true);
 		} break;
 
 		case cpu_instructions::LWR:
@@ -330,7 +330,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int alignment = addr & 3;
 			unsigned int mask = 0xffffff00 << ((3 - alignment) * 8);
 			unsigned int new_value = (current_value & mask) | (aligned_value >> alignment * 8);
-			register_file.set_register(instr.immediate_instruction.rt, new_value);
+			register_file.set_register(instr.immediate_instruction.rt, new_value, true);
 		} break;
 
 		case cpu_instructions::SWR:
