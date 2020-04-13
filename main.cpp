@@ -149,7 +149,11 @@ int main(int num_args, char ** args )
 
 	std::cout << "Creating SPU\n";
 	std::shared_ptr<Spu> spu = std::make_shared<Spu>();
-	spu->init();
+	if (spu->init() == false)
+	{
+		std::cerr << "Failed to initialise SPU\n";
+		return -1;
+	}
 
 	std::cout << "Creating CDROM\n";
 	std::shared_ptr<Cdrom> cdrom = std::make_shared<Cdrom>();

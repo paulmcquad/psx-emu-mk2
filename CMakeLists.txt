@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 project (psx-emu-mk2)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
-
-find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -14,6 +11,15 @@ add_subdirectory(glfw/)
 add_subdirectory(glm/)
 
 include_directories(includes/)
+include_directories(SDL2/include/)
+link_directories(SDL2/lib)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64 bits
+    link_directories(SDL2/lib/x64/)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    # 32 bits
+    link_directories(SDL2/lib/x86/)
+endif()
 
 set(source_files
 		glad.h
@@ -64,9 +70,9 @@ set(source_files
 add_executable(${PROJECT_NAME} main.cpp ${source_files})
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} glm)
-target_link_libraries(${PROJECT_NAME} SDL2::Main)
+target_link_libraries(${PROJECT_NAME} SDL2)
 
 add_executable(${PROJECT_NAME}-test main_test.cpp ${source_files})
 target_link_libraries(${PROJECT_NAME}-test glfw)
 target_link_libraries(${PROJECT_NAME}-test glm)
-target_link_libraries(${PROJECT_NAME}-test SDL2::Main)
+target_link_libraries(${PROJECT_NAME}-test SDL2)
