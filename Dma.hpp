@@ -4,6 +4,7 @@
 
 class Gpu;
 class Ram;
+class Spu;
 
 union DMA_base_address
 {
@@ -138,7 +139,7 @@ public:
 class Dma : public DMA_interface
 {
 public:
-	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu);
+	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
 	void reset();
 	void tick();
 	void save_state(std::ofstream& file);
@@ -154,7 +155,6 @@ public:
 private:
 
 	std::shared_ptr<Ram> ram = nullptr;
-	std::shared_ptr<Gpu> gpu = nullptr;
 
 	unsigned char dma_registers[128] = { 0 };
 	unsigned int * base_address_registers[7] = { nullptr };

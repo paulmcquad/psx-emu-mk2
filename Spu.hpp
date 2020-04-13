@@ -1,7 +1,10 @@
+#pragma once
+#include "Dma.hpp"
+
 constexpr unsigned int SPU_CONTROL_SIZE = 64;
 constexpr unsigned int SPU_VOICE_SIZE = 576;
 
-class Spu
+class Spu : public DMA_interface
 {
 public:
 	bool init();

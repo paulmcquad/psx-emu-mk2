@@ -178,7 +178,7 @@ int main(int num_args, char ** args )
 	cpu->init(ram);
 
 	std::cout << "Hooking up all peripherals to the DMA\n";
-	dma->init(ram, gpu);
+	dma->init(ram, gpu, spu);
 
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";

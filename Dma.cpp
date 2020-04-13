@@ -1,6 +1,7 @@
 #include "Dma.hpp"
 #include "Ram.hpp"
 #include "Gpu.hpp"
+#include "Spu.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -14,10 +15,9 @@ constexpr unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
 constexpr unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
 constexpr unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
 
-void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
+void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu)
 {
 	ram = _ram;
-	gpu = _gpu;
 
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
@@ -30,7 +30,8 @@ void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu)
 	interrupt_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_INTERRUPT_REGISTER_START]);
 
 	devices[static_cast<unsigned int>(DMA_channel_type::OTC)] = this;
-	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = gpu.get();
+	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = _gpu.get();
+	devices[static_cast<unsigned int>(DMA_channel_type::SPU)] = _spu.get();
 	
 	reset();
 }
