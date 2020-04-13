@@ -1,31 +1,31 @@
 #include <stdexcept>
 #include <fstream>
 
-#include "Coprocessor2.hpp"
+#include "GTECoprocessor.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Cpu.hpp"
 #include "Ram.hpp"
 
-Cop2::Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
+GTECoprocessor::GTECoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Cop(_ram, _cpu)
 {
 
 }
 
-void Cop2::save_state(std::ofstream& file)
+void GTECoprocessor::save_state(std::ofstream& file)
 {
 	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 	file.write(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);
 }
 
-void Cop2::load_state(std::ifstream& file)
+void GTECoprocessor::load_state(std::ifstream& file)
 {
 	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 	file.read(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);
 }
 
-void Cop2::execute(const instruction_union& instruction)
+void GTECoprocessor::execute(const instruction_union& instruction)
 {
 	switch (static_cast<cpu_instructions>(instruction.immediate_instruction.op))
 	{
@@ -64,64 +64,64 @@ void Cop2::execute(const instruction_union& instruction)
 	}
 }
 
-unsigned int Cop2::get_data_register(unsigned int index)
+unsigned int GTECoprocessor::get_data_register(unsigned int index)
 {
 	return data_registers[index];
 }
 
-void Cop2::set_data_register(unsigned int index, unsigned int value)
+void GTECoprocessor::set_data_register(unsigned int index, unsigned int value)
 {
 	data_registers[index] = value;
 }
 
-unsigned int Cop2::get_control_register(unsigned int index)
+unsigned int GTECoprocessor::get_control_register(unsigned int index)
 {
 	return control_registers[index];
 }
 
-void Cop2::set_control_register(unsigned int index, unsigned int value)
+void GTECoprocessor::set_control_register(unsigned int index, unsigned int value)
 {
 	control_registers[index] = value;
 }
 
-void Cop2::load_word_to_cop(const instruction_union& instr)
+void GTECoprocessor::load_word_to_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
-void Cop2::store_word_from_cop(const instruction_union& instr)
+void GTECoprocessor::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
-void Cop2::move_to_cop(const instruction_union& instr)
+void GTECoprocessor::move_to_cop(const instruction_union& instr)
 {
 	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_data_register(instr.register_instruction.rd, value);
 }
 
-void Cop2::move_from_cop(const instruction_union& instr)
+void GTECoprocessor::move_from_cop(const instruction_union& instr)
 {
 	unsigned value = get_data_register(instr.register_instruction.rd);
 	cpu->register_file.set_register(instr.register_instruction.rs, value);
 }
 
-void Cop2::move_control_to_cop(const instruction_union& instr)
+void GTECoprocessor::move_control_to_cop(const instruction_union& instr)
 {
 	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
-void Cop2::move_control_from_cop(const instruction_union& instr)
+void GTECoprocessor::move_control_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
 	cpu->register_file.set_register(instr.register_instruction.rt, value);
 }
 
-void Cop2::move_control_to_cop_fun(const instruction_union& instr)
+void GTECoprocessor::move_control_to_cop_fun(const instruction_union& instr)
 {
 	throw std::logic_error("not implemented");
 }

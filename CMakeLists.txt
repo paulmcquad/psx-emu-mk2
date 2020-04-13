@@ -50,10 +50,10 @@ set(source_files
 		RegisterFile.hpp
 		RegisterFile.cpp
 		Coprocessor.hpp
-		Coprocessor0.hpp
-		Coprocessor0.cpp
-		Coprocessor2.hpp
-		Coprocessor2.cpp
+		SystemControlCoprocessor.hpp
+		SystemControlCoprocessor.cpp
+		GTECoprocessor.hpp
+		GTECoprocessor.cpp
 		InstructionTypes.hpp
 		InstructionEnums.hpp
 		IOPorts.hpp

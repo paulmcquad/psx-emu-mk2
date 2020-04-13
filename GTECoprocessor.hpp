@@ -1,8 +1,8 @@
 #include "Coprocessor.hpp"
 
-class Cop2 : public Cop {
+class GTECoprocessor : public Cop {
 public:
-	Cop2(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	GTECoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void save_state(std::ofstream& file) override;
 	void load_state(std::ifstream& file) override;

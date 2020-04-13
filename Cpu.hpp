@@ -4,8 +4,8 @@
 #include "InstructionTypes.hpp"
 #include "RegisterFile.hpp"
 
-class Cop0;
-class Cop2;
+class SystemControlCoprocessor;
+class GTECoprocessor;
 class Ram;
 
 enum class cpu_instructions : unsigned char;
@@ -19,8 +19,8 @@ enum class cpu_bconds : unsigned char;
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 public:
-	std::shared_ptr<Cop0> cop0 = nullptr;
-	std::shared_ptr<Cop2> cop2 = nullptr;
+	std::shared_ptr<SystemControlCoprocessor> cop0 = nullptr;
+	std::shared_ptr<GTECoprocessor> cop2 = nullptr;
 
 	std::shared_ptr<Ram> ram = nullptr;
 

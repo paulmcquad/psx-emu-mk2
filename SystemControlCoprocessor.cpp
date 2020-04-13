@@ -1,28 +1,28 @@
 #include <stdexcept>
 #include <fstream>
-#include "Coprocessor0.hpp"
+#include "SystemControlCoprocessor.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Ram.hpp"
 #include "Cpu.hpp"
 #include "Exceptions.hpp"
 
-Cop0::Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
+SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
 	Cop(_ram, _cpu)
 {
 }
 
-void Cop0::save_state(std::ofstream& file)
+void SystemControlCoprocessor::save_state(std::ofstream& file)
 {
 	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 }
 
-void Cop0::load_state(std::ifstream& file)
+void SystemControlCoprocessor::load_state(std::ifstream& file)
 {
 	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 }
 
-void Cop0::execute(const instruction_union& instruction)
+void SystemControlCoprocessor::execute(const instruction_union& instruction)
 {
 	switch (static_cast<cpu_instructions>(instruction.immediate_instruction.op))
 	{
@@ -77,30 +77,30 @@ void Cop0::execute(const instruction_union& instruction)
 	}
 }
 
-unsigned int Cop0::get_control_register(Cop0::register_names register_name)
+unsigned int SystemControlCoprocessor::get_control_register(SystemControlCoprocessor::register_names register_name)
 {
 	unsigned int index = static_cast<unsigned int>(register_name);
 	return control_registers[index];
 }
 
-void Cop0::set_control_register(Cop0::register_names register_name, unsigned int value)
+void SystemControlCoprocessor::set_control_register(SystemControlCoprocessor::register_names register_name, unsigned int value)
 {
 	unsigned int index = static_cast<unsigned int>(register_name);
 	control_registers[index] = value;
 }
 
-unsigned int Cop0::get_control_register(unsigned int index)
+unsigned int SystemControlCoprocessor::get_control_register(unsigned int index)
 {
 	return control_registers[index];
 }
 
-void Cop0::set_control_register(unsigned int index, unsigned int value)
+void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned int value)
 {
 	control_registers[index] = value;
 }
 
 // LWCz rt, offset(base)
-void Cop0::load_word_to_cop(const instruction_union& instr) 
+void SystemControlCoprocessor::load_word_to_cop(const instruction_union& instr) 
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int word = ram->load_word(addr);
@@ -108,7 +108,7 @@ void Cop0::load_word_to_cop(const instruction_union& instr)
 }
 
 // SWCz rt, offset(base)
-void Cop0::store_word_from_cop(const instruction_union& instr)
+void SystemControlCoprocessor::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int control_value = get_control_register(instr.immediate_instruction.rt);
@@ -116,54 +116,54 @@ void Cop0::store_word_from_cop(const instruction_union& instr)
 }
 
 // MTCz rt, rd
-void Cop0::move_to_cop(const instruction_union& instr)
+void SystemControlCoprocessor::move_to_cop(const instruction_union& instr)
 {
 	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
 // MFCz rt, rd
-void Cop0::move_from_cop(const instruction_union& instr)
+void SystemControlCoprocessor::move_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
 	cpu->register_file.set_register(instr.register_instruction.rt, value);
 }
 
 // CTCz rt, rd
-void Cop0::move_control_to_cop(const instruction_union& instr)
+void SystemControlCoprocessor::move_control_to_cop(const instruction_union& instr)
 {
 	move_to_cop(instr);
 }
 
 // CFCz rt, rd
-void Cop0::move_control_from_cop(const instruction_union& instr)
+void SystemControlCoprocessor::move_control_from_cop(const instruction_union& instr)
 {
 	move_from_cop(instr);
 }
 
 // COPz cofun
-void Cop0::move_control_to_cop_fun(const instruction_union& instr)
+void SystemControlCoprocessor::move_control_to_cop_fun(const instruction_union& instr)
 {
 	throw std::logic_error("not supported on cop0");
 }
 
-void Cop0::move_to_cp0(const instruction_union& instr)
+void SystemControlCoprocessor::move_to_cp0(const instruction_union& instr)
 {
 	move_to_cop(instr);
 }
 
-void Cop0::move_from_cp0(const instruction_union& instr)
+void SystemControlCoprocessor::move_from_cp0(const instruction_union& instr)
 {
 	move_from_cop(instr);
 }
 
-void Cop0::restore_from_exception(const instruction_union& instr)
+void SystemControlCoprocessor::restore_from_exception(const instruction_union& instr)
 {
-	Cop0::status_register sr = get<Cop0::status_register>();
+	SystemControlCoprocessor::status_register sr = get<SystemControlCoprocessor::status_register>();
 
 	unsigned int mode = sr.raw & 0x3f;
 	sr.raw &= ~0x3f;
 	sr.raw |= mode >> 2;
 
-	set<Cop0::status_register>(sr);
+	set<SystemControlCoprocessor::status_register>(sr);
 }

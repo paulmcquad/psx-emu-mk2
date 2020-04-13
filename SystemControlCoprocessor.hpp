@@ -3,7 +3,7 @@
 class Ram;
 class Cpu;
 
-class Cop0 : public Cop {
+class SystemControlCoprocessor : public Cop {
 public:
 	enum class register_names : unsigned int
 	{
@@ -182,7 +182,7 @@ public:
 		UTLB_MISS_BEV1 = 0xBFC00100
 	};
 
-	Cop0(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	SystemControlCoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
 
 	void save_state(std::ofstream& file) override;
 	void load_state(std::ifstream& file) override;

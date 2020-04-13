@@ -23,9 +23,9 @@ TEST_CASE("Cpu")
 	cpu->init(ram);
 
 	// make sure the cache isn't isolated
-	Cop0::status_register status = cpu->cop0->get<Cop0::status_register>();
+	SystemControlCoprocessor::status_register status = cpu->cop0->get<SystemControlCoprocessor::status_register>();
 	status.Isc = false;
-	cpu->cop0->set<Cop0::status_register>(status);
+	cpu->cop0->set<SystemControlCoprocessor::status_register>(status);
 
 	SECTION("Load delay")
 	{

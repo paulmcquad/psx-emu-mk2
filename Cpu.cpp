@@ -3,16 +3,16 @@
 #include <fstream>
 #include "Ram.hpp"
 #include "Cpu.hpp"
-#include "Coprocessor0.hpp"
-#include "Coprocessor2.hpp"
+#include "SystemControlCoprocessor.hpp"
+#include "GTECoprocessor.hpp"
 #include "InstructionEnums.hpp"
 #include "Exceptions.hpp"
 
 void Cpu::init(std::shared_ptr<Ram> _ram)
 {
 	ram = _ram;
-	cop0 = std::make_shared<Cop0>(ram, shared_from_this());
-	cop2 = std::make_shared<Cop2>(ram, shared_from_this());
+	cop0 = std::make_shared<SystemControlCoprocessor>(ram, shared_from_this());
+	cop2 = std::make_shared<GTECoprocessor>(ram, shared_from_this());
 	reset();
 }
 
@@ -20,7 +20,7 @@ void Cpu::reset()
 {
 	current_instruction = 0;
 	next_instruction = 0;
-	current_pc = static_cast<unsigned int>(Cop0::exception_vector::RESET);
+	current_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::RESET);
 	next_pc = current_pc;
 	cop0->reset();
 	cop2->reset();
@@ -42,25 +42,25 @@ void Cpu::tick()
 	}
 	catch(sys_call& /*e*/)
 	{
-		Cop0::cause_register cause = cop0->get<Cop0::cause_register>();
-		cop0->set_control_register(Cop0::register_names::EPC, current_pc);
+		SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
+		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
 
 		if (in_delay_slot) {
 			cause.BD = true;
-			cop0->set_control_register(Cop0::register_names::EPC, current_pc - 4);
+			cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc - 4);
 		}
 
-		Cop0::status_register sr = cop0->get<Cop0::status_register>();
-		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? Cop0::exception_vector::GENERAL_BEV0 : Cop0::exception_vector::GENERAL_BEV1);
+		SystemControlCoprocessor::status_register sr = cop0->get<SystemControlCoprocessor::status_register>();
+		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? SystemControlCoprocessor::exception_vector::GENERAL_BEV0 : SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
 
 		unsigned int mode = sr.raw & 0x3f;
 		sr.raw &= ~0x3f;
 		sr.raw |= (mode << 2) & 0x3f;
 
-		cop0->set<Cop0::status_register>(sr);
+		cop0->set<SystemControlCoprocessor::status_register>(sr);
 		
-		cause.Excode = static_cast<unsigned int>(Cop0::excode::Syscall);
-		cop0->set<Cop0::cause_register>(cause);
+		cause.Excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall);
+		cop0->set<SystemControlCoprocessor::cause_register>(cause);
 
 		// dump the next instruction
 		next_instruction = 0x0;
@@ -248,7 +248,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned char value = ram->load_byte(addr);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -259,7 +259,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (char)ram->load_byte(addr);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -270,7 +270,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (short)ram->load_halfword(addr);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -281,7 +281,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned short value = ram->load_halfword(addr);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -298,7 +298,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = ram->load_word(addr);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -374,7 +374,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				ram->store_byte(addr, value);
 			}
@@ -385,7 +385,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				ram->store_halfword(addr, value);
 			}
@@ -417,7 +417,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<Cop0::status_register>().Isc == false)
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
 				ram->store_word(addr, value);
 			}
