@@ -221,24 +221,55 @@ TEST_CASE("Standard Opcodes")
 		}
 	}
 
+	// AND immediate
+	// ANDI rt, rs, imm
 	SECTION("ANDI")
 	{
+		cpu->register_file.reset();
 
+		instruction_union instruction(cpu_instructions::ANDI, 1, 1, 0xF0F0);
+
+		cpu->register_file.set_register(1, 0xFFFFFFFF);
+		cpu->execute(instruction);
+
+		REQUIRE(cpu->register_file.get_register(1) == 0xF0F0);
 	}
 
+	// OR immediate
+	// ORI rt, rs, imm
 	SECTION("ORI")
 	{
+		instruction_union instruction(cpu_instructions::ORI, 1, 1, 0xF0F0);
 
+		cpu->register_file.set_register(1, 0xFFFF0000);
+		cpu->execute(instruction);
+
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFFF0F0);
 	}
 
+	// Exclusive OR immediate
+	// XORI rt, rs, immediate
 	SECTION("XORI")
 	{
+		instruction_union instruction(cpu_instructions::XORI, 1, 1, 0xFF0F);
 
+		cpu->register_file.set_register(1, 0xFFFFFFFF);
+		cpu->execute(instruction);
+
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF00F0);
 	}
 
+	// Load Upper Immediate
+	// LUI rt, immediate
 	SECTION("LUI")
 	{
+		instruction_union instruction(cpu_instructions::LUI, 1, 1, 0xFFFF);
 
+		cpu->register_file.set_register(1, 0x0000FFFF);
+		cpu->execute(instruction);
+
+		// LUI fills in the lower 16 bits with zeros regardless of previous content
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 	}
 }
 
@@ -277,16 +308,59 @@ TEST_CASE("Normal branching opcodes")
 
 TEST_CASE("Special Opcodes")
 {
+	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
+
+	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
+	ram->init("", io_ports);
+
+	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
+	cpu->init(ram);
+
+	// make sure the cache isn't isolated
+	SystemControlCoprocessor::status_register status = cpu->cop0->get<SystemControlCoprocessor::status_register>();
+	status.Isc = false;
+	cpu->cop0->set<SystemControlCoprocessor::status_register>(status);
+
+	// Shift Word Left Logical
+	// SLL rd, rt, sa
+	// rd = rt << sa
 	SECTION("SLL")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 0, 2, 1, 16, cpu_special_funcs::SLL);
 
+		// rt
+		cpu->register_file.set_register(2, 0xFFFF);
+
+		// rd
+		cpu->register_file.set_register(1, 0x0);
+
+		cpu->execute(instruction);
+
+		// LUI fills in the lower 16 bits with zeros regardless of previous content
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 	}
 
+	// Shift Word Right Logical
+	// SRL rd, rt, sa
+	// rd = rd >> sa
 	SECTION("SRL")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 0, 2, 1, 16, cpu_special_funcs::SRL);
 
+		// rt
+		cpu->register_file.set_register(2, 0xFFFF0000);
+
+		// rd
+		cpu->register_file.set_register(1, 0x0);
+
+		cpu->execute(instruction);
+
+		// LUI fills in the lower 16 bits with zeros regardless of previous content
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF);
 	}
 
+	// Shift Word Right Arithmetic
+	// SRA rd, rt, sa
 	SECTION("SRA")
 	{
 
@@ -303,16 +377,6 @@ TEST_CASE("Special Opcodes")
 	}
 
 	SECTION("SRAV")
-	{
-
-	}
-
-	SECTION("JR")
-	{
-
-	}
-
-	SECTION("JALR")
 	{
 
 	}
@@ -418,6 +482,16 @@ TEST_CASE("Special Opcodes")
 	}
 
 	SECTION("SLTU")
+	{
+
+	}
+
+	SECTION("JR")
+	{
+
+	}
+
+	SECTION("JALR")
 	{
 
 	}
