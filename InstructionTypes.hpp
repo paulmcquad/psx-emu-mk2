@@ -1,4 +1,5 @@
 #pragma once
+#include "InstructionEnums.hpp"
 
 // using technically undefined behaviour but it's generally supported
 union instruction_union
@@ -6,6 +7,29 @@ union instruction_union
 	instruction_union()
 	{
 		raw = 0x0;
+	}
+	instruction_union(cpu_instructions op, unsigned int rs, unsigned int rt, unsigned int immediate)
+	{
+		immediate_instruction.op = static_cast<unsigned int>(op);
+		immediate_instruction.rs = rs;
+		immediate_instruction.rt = rt;
+		immediate_instruction.immediate = immediate;
+	}
+
+	instruction_union(cpu_instructions op, unsigned int target)
+	{
+		jump_instruction.op = static_cast<unsigned int>(op);
+		jump_instruction.target = target;
+	}
+
+	instruction_union(cpu_instructions op, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, cpu_special_funcs funct)
+	{
+		register_instruction.op = static_cast<unsigned int>(op);
+		register_instruction.rs = rs;
+		register_instruction.rt = rt;
+		register_instruction.rd = rd;
+		register_instruction.shamt = shamt;
+		register_instruction.funct = static_cast<unsigned int>(funct);
 	}
 
 	instruction_union(unsigned int value)

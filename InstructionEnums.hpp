@@ -1,3 +1,4 @@
+#pragma once
 enum class gte_commands : unsigned char
 {
 	RTPS = 0x01,
