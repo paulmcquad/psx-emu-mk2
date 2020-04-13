@@ -31,6 +31,7 @@ TEST_CASE("Standard Opcodes")
 	// Add Immediate Word
 	// add rt, rs, imm
 	// rt = rs + (signed) imm
+	// throws exception on overflow
 	SECTION("ADDI")
 	{
 		cpu->register_file.reset();
@@ -77,19 +78,147 @@ TEST_CASE("Standard Opcodes")
 		}
 	}
 
+	// Add Immediate Unsigned Word
+	// add rt, rs, imm
+	// rt = rs + imm
 	SECTION("ADDIU")
 	{
+		cpu->register_file.reset();
 
+		// add positive
+		{
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, 10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 10);
+		}
+
+		// add negative
+		{
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, -10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0);
+		}
+
+		// test for overflow - the same as above just all except no throw
+		{
+			cpu->register_file.set_register(1, std::numeric_limits<int>::max());
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::max());
+			REQUIRE_NOTHROW(cpu->execute(instruction));
+		}
+
+		{
+			cpu->register_file.set_register(1, std::numeric_limits<int>::min());
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::min());
+			REQUIRE_NOTHROW(cpu->execute(instruction));
+		}
+
+		{
+			cpu->register_file.set_register(1, 0);
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::max());
+			REQUIRE_NOTHROW(cpu->execute(instruction));
+		}
+
+		{
+			cpu->register_file.set_register(1, 0);
+			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::min());
+			REQUIRE_NOTHROW(cpu->execute(instruction));
+		}
 	}
 
+	// Set on Less Than Immediate
+	// rt = (rs < immediate)
 	SECTION("SLTI")
 	{
+		cpu->register_file.reset();
 
+		// register is negative
+		{
+			instruction_union instruction(cpu_instructions::SLTI, 1, 1, 0);
+
+			cpu->register_file.set_register(1, -10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 1);
+		}
+
+		// register is positive
+		{
+			instruction_union instruction(cpu_instructions::SLTI, 1, 1, 0);
+
+			cpu->register_file.set_register(1, 10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0);
+		}
+
+		// immediate is positive
+		{
+			instruction_union instruction(cpu_instructions::SLTI, 1, 1, 10);
+
+			cpu->register_file.set_register(1, 0);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 1);
+		}
+
+		// immediate is negative
+		{
+			instruction_union instruction(cpu_instructions::SLTI, 1, 1, -10);
+
+			cpu->register_file.set_register(1, 0);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0);
+		}
 	}
 
+	// Set on Less Than Immediate Unsigned
+	// SLTIU rt, rs, imm
 	SECTION("SLTIU")
 	{
+		cpu->register_file.reset();
 
+		// register is negative - which being unsigned is really positive
+		{
+			instruction_union instruction(cpu_instructions::SLTIU, 1, 1, 0);
+
+			cpu->register_file.set_register(1, -10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0);
+		}
+
+		// register is positive
+		{
+			instruction_union instruction(cpu_instructions::SLTIU, 1, 1, 0);
+
+			cpu->register_file.set_register(1, 10);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 0);
+		}
+
+		// immediate is positive
+		{
+			instruction_union instruction(cpu_instructions::SLTIU, 1, 1, 10);
+
+			cpu->register_file.set_register(1, 0);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 1);
+		}
+
+		// immediate is negative - which will actually be a positive as its unsigned
+		{
+			instruction_union instruction(cpu_instructions::SLTIU, 1, 1, -10);
+
+			cpu->register_file.set_register(1, 0);
+			cpu->execute(instruction);
+
+			REQUIRE(cpu->register_file.get_register(1) == 1);
+		}
 	}
 
 	SECTION("ANDI")
