@@ -5,6 +5,7 @@ class Spu
 {
 public:
 	bool init();
+	~Spu();
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);
 private:
@@ -12,4 +13,5 @@ private:
 
 	unsigned char spu_control[SPU_CONTROL_SIZE] = { 0 };
 	unsigned char spu_voice_registers[SPU_VOICE_SIZE] = { 0 };
+	unsigned char * spu_ram = nullptr;
 };
