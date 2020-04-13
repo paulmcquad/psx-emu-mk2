@@ -344,7 +344,9 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
-			ram->store_word(addr_aligned, new_value);
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
+				ram->store_word(addr_aligned, new_value);
+			}
 		} break;
 
 		// SWR is always called AFTER SWL
@@ -359,7 +361,9 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0xffffff00 << (alignment * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
-			ram->store_word(addr_aligned, new_value);
+			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
+				ram->store_word(addr_aligned, new_value);
+			}
 		} break;
 
 		case cpu_instructions::ORI:
