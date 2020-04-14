@@ -346,10 +346,8 @@ TEST_CASE("Special Opcodes")
 	SECTION("SRL")
 	{
 		instruction_union instruction(cpu_instructions::SPECIAL, 0, 2, 1, 16, cpu_special_funcs::SRL);
-
 		// rt
 		cpu->register_file.set_register(2, 0xFFFF0000);
-
 		// rd
 		cpu->register_file.set_register(1, 0x0);
 
@@ -363,30 +361,93 @@ TEST_CASE("Special Opcodes")
 	// SRA rd, rt, sa
 	SECTION("SRA")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 0, 2, 1, 16, cpu_special_funcs::SRA);
+		// rt
+		cpu->register_file.set_register(2, 0xFFFF0000);
+		// rd
+		cpu->register_file.set_register(1, 0x0);
 
+		cpu->execute(instruction);
+		// LUI fills in the lower 16 bits with zeros regardless of previous content
+		REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 	}
 
+	// Shift World Left Logical Variable
+	// SLLV rd, rt, rs
+	// rd = rt << rs
 	SECTION("SLLV")
 	{
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SLLV);
 
+			// rs
+			cpu->register_file.set_register(3, 16);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
+		}
+
+		// only the lower 5 bits of rs are used
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SLLV);
+
+			// rs
+			cpu->register_file.set_register(3, 0xFFFFFFE0);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+
+			// no shifting should have occurred since the lower 5 bits were 0
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF);
+		}
 	}
 
+	// Shift Word Right Logical Variable
+	// SRLV rd, rt, rs
+	// rd = rd >> rs
 	SECTION("SRLV")
 	{
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SRLV);
 
+			// rs
+			cpu->register_file.set_register(3, 16);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF0000);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF);
+		}
+
+		// only the lower 5 bits of rs are used
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SRLV
+			);
+
+			// rs
+			cpu->register_file.set_register(3, 0xFFFFFFE0);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF0000);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+
+			// no shifting should have occurred since the lower 5 bits were 0
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
+		}
 	}
 
 	SECTION("SRAV")
-	{
-
-	}
-
-	SECTION("SYSCALL")
-	{
-
-	}
-
-	SECTION("BREAK")
 	{
 
 	}
@@ -486,6 +547,19 @@ TEST_CASE("Special Opcodes")
 
 	}
 
+	SECTION("SYSCALL")
+	{
+
+	}
+
+	SECTION("BREAK")
+	{
+
+	}
+}
+
+TEST_CASE("Special branching opcodes")
+{
 	SECTION("JR")
 	{
 
