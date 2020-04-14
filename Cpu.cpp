@@ -576,7 +576,7 @@ void Cpu::execute_special(const instruction_union& instr)
 			int rt_value = register_file.get_register(instr.register_instruction.rt);
 			long long result = rs_value * rt_value;
 			hi = result >> 32;
-			lo = result & 0xFFFF;
+			lo = result & 0xFFFFFFFF;
 		} break;
 
 		case cpu_special_funcs::MULTU:
@@ -585,7 +585,7 @@ void Cpu::execute_special(const instruction_union& instr)
 			unsigned int rt_value = register_file.get_register(instr.register_instruction.rt);
 			unsigned long long result = rs_value * rt_value;
 			hi = result >> 32;
-			lo = result & 0xFFFF;
+			lo = result & 0xFFFFFFFF;
 		} break;
 
 		case cpu_special_funcs::NOR:

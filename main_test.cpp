@@ -542,9 +542,29 @@ TEST_CASE("Special Opcodes")
 		REQUIRE(cpu->lo == 0x0F0F0F0F);
 	}
 
+
+	// Multiply Word
+	// MULT rs, rt
 	SECTION("MULT")
 	{
+		// normal positive * positive value that takes up more than 32 bits
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 2, 1, 0, 0, cpu_special_funcs::MULT);
 
+			// rs
+			cpu->register_file.set_register(2, std::numeric_limits<int>::max());
+
+			// rt
+			cpu->register_file.set_register(1, 4);
+
+			cpu->execute(instruction);
+
+			long long result = ((long long)(cpu->hi) << 32) | cpu->lo;
+			long long correct_result = std::numeric_limits<int>::max() * 4;
+
+			REQUIRE(result == correct_result);
+		}
+		
 	}
 
 	SECTION("MULTU")
