@@ -336,7 +336,6 @@ TEST_CASE("Special Opcodes")
 
 		cpu->execute(instruction);
 
-		// LUI fills in the lower 16 bits with zeros regardless of previous content
 		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
 	}
 
@@ -353,7 +352,6 @@ TEST_CASE("Special Opcodes")
 
 		cpu->execute(instruction);
 
-		// LUI fills in the lower 16 bits with zeros regardless of previous content
 		REQUIRE(cpu->register_file.get_register(1) == 0xFFFF);
 	}
 
@@ -368,7 +366,6 @@ TEST_CASE("Special Opcodes")
 		cpu->register_file.set_register(1, 0x0);
 
 		cpu->execute(instruction);
-		// LUI fills in the lower 16 bits with zeros regardless of previous content
 		REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
 	}
 
@@ -447,29 +444,102 @@ TEST_CASE("Special Opcodes")
 		}
 	}
 
+	// Shift Word Right Arithmetic Variable
+	// SRAV rd, rt, rs
 	SECTION("SRAV")
 	{
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SRAV);
 
+			// rs
+			cpu->register_file.set_register(3, 16);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF0000);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFFFFFF);
+		}
+		
+		// only lower 5 bits used
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 3, 2, 1, 0, cpu_special_funcs::SRAV);
+
+			// rs
+			cpu->register_file.set_register(3, 0xFFFFFFE0);
+			// rt
+			cpu->register_file.set_register(2, 0xFFFF0000);
+			// rd
+			cpu->register_file.set_register(1, 0x0);
+
+			cpu->execute(instruction);
+			REQUIRE(cpu->register_file.get_register(1) == 0xFFFF0000);
+		}
 	}
 
+	// Move From Hi
+	// MFHI rd
+	// rd = hi
 	SECTION("MFHI")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 0, 0, 1, 0, cpu_special_funcs::MFHI);
 
+		cpu->hi = 0xF0F0F0F0;
+
+		// rd
+		cpu->register_file.set_register(1, 0x0);
+
+		cpu->execute(instruction);
+		REQUIRE(cpu->register_file.get_register(1) == 0xF0F0F0F0);
 	}
 
+	// Move To Hi
+	// MTHI rs
+	// hi = rs
 	SECTION("MTHI")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 1, 0, 0, 0, cpu_special_funcs::MTHI);
 
+		cpu->hi = 0x0;
+
+		// rs
+		cpu->register_file.set_register(1, 0x0F0F0F0F);
+
+		cpu->execute(instruction);
+		REQUIRE(cpu->hi == 0x0F0F0F0F);
 	}
 
+	// Move From Lo
+	// MFLO rd
+	// rd = lo
 	SECTION("MFLO")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 0, 0, 1, 0, cpu_special_funcs::MFLO);
 
+		cpu->lo = 0xF0F0F0F0;
+
+		// rd
+		cpu->register_file.set_register(1, 0x0);
+
+		cpu->execute(instruction);
+		REQUIRE(cpu->register_file.get_register(1) == 0xF0F0F0F0);
 	}
 
+	// Move To Lo
+	// MTLO rs
+	// lo = rs
 	SECTION("MTLO")
 	{
+		instruction_union instruction(cpu_instructions::SPECIAL, 1, 0, 0, 0, cpu_special_funcs::MTLO);
 
+		cpu->lo = 0x0;
+
+		// rs
+		cpu->register_file.set_register(1, 0x0F0F0F0F);
+
+		cpu->execute(instruction);
+		REQUIRE(cpu->lo == 0x0F0F0F0F);
 	}
 
 	SECTION("MULT")
