@@ -250,7 +250,7 @@ void Gpu::execute_gp1_command(unsigned int command)
 }
 
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb)
+void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2)
 {
 	glm::vec2 e0 = v1 - v0;
 	glm::vec2 e1 = v2 - v0;
@@ -272,6 +272,12 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 
 			if (s >= 0 && t >= 0 && (s + t <= 1))
 			{
+				glm::vec3 w(1 - t - s, t, s);
+				glm::u8vec3 rgb;
+				rgb.r = std::floor(rgb0.r * w.x + rgb1.r * w.y + rgb2.r * w.z);
+				rgb.g = std::floor(rgb0.g * w.x + rgb1.g * w.y + rgb2.g * w.z);
+				rgb.b = std::floor(rgb0.b * w.x + rgb1.b * w.y + rgb2.b * w.z);
+
 				draw_pixel(cur_pos, rgb);
 			}
 		}
@@ -288,7 +294,7 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 		if (y >= 0 && y < height)
 		{
 			unsigned int index = ((y*FRAME_WIDTH) + x);
-			unsigned short colour_16 = (rgb.b >> 3) | ((rgb.g >> 2) << 5) | ((rgb.r >> 3) << 11);
+			unsigned short colour_16 = (rgb.r >> 3) | ((rgb.g >> 2) << 5) | ((rgb.b >> 3) << 11);
 			video_ram[index] = colour_16;
 		}
 	}
@@ -320,10 +326,10 @@ unsigned int Gpu::mono_4_pt_opaque()
 	glm::u8vec3 rgb(color.r, color.g, color.b);
 
 	// triangle 1
-	draw_triangle(v0, v1, v2, rgb);
+	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
 
 	// triangle 2
-	draw_triangle(v1, v2, v3, rgb);
+	draw_triangle(v1, v2, v3, rgb, rgb, rgb);
 
 	return 5;
 }
@@ -335,9 +341,9 @@ unsigned int Gpu::shaded_3_pt_opaque()
 		return 0;
 	}
 
-	color_command color1(gp0_command_queue[0]);
-	color_command color2(gp0_command_queue[2]);
-	color_command color3(gp0_command_queue[4]);
+	color_command color0(gp0_command_queue[0]);
+	color_command color1(gp0_command_queue[2]);
+	color_command color2(gp0_command_queue[4]);
 
 	vert_command vert0(gp0_command_queue[1]);
 	vert_command vert1(gp0_command_queue[3]);
@@ -347,10 +353,12 @@ unsigned int Gpu::shaded_3_pt_opaque()
 	glm::ivec2 v1(vert1.x, vert1.y);
 	glm::ivec2 v2(vert2.x, vert2.y);
 
-	glm::u8vec3 rgb(255, 0, 0);
+	glm::u8vec3 rgb0(color0.r, color0.g, color0.b);
+	glm::u8vec3 rgb1(color1.r, color1.g, color1.b);
+	glm::u8vec3 rgb2(color2.r, color2.g, color2.b);
 
 	// triangle 1
-	draw_triangle(v0, v1, v2, rgb);
+	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
 
 	return 6;
 }
@@ -362,10 +370,10 @@ unsigned int Gpu::shaded_4_pt_opaque()
 		return 0;
 	}
 
-	color_command color1(gp0_command_queue[0]);
-	color_command color2(gp0_command_queue[2]);
-	color_command color3(gp0_command_queue[4]);
-	color_command color4(gp0_command_queue[6]);
+	color_command color0(gp0_command_queue[0]);
+	color_command color1(gp0_command_queue[2]);
+	color_command color2(gp0_command_queue[4]);
+	color_command color3(gp0_command_queue[6]);
 
 	vert_command vert0(gp0_command_queue[1]);
 	vert_command vert1(gp0_command_queue[3]);
@@ -377,13 +385,16 @@ unsigned int Gpu::shaded_4_pt_opaque()
 	glm::ivec2 v2(vert2.x, vert2.y);
 	glm::ivec2 v3(vert3.x, vert3.y);
 
-	glm::u8vec3 rgb(color1.r, color1.g, color1.b);
+	glm::u8vec3 rgb0(color0.r, color0.g, color0.b);
+	glm::u8vec3 rgb1(color1.r, color1.g, color1.b);
+	glm::u8vec3 rgb2(color2.r, color2.g, color2.b);
+	glm::u8vec3 rgb3(color3.r, color3.g, color3.b);
 
 	// triangle 1
-	draw_triangle(v0, v1, v2, rgb);
+	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
 
 	// triangle 2
-	draw_triangle(v1, v2, v3, rgb);
+	draw_triangle(v2, v3, v1, rgb1, rgb2, rgb3);
 
 	return 8;
 }
