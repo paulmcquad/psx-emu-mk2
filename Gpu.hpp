@@ -104,6 +104,7 @@ private:
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
+	glm::vec3 calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2);
 
 	// GP0 commands
 	unsigned int nop();

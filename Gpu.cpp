@@ -250,6 +250,7 @@ void Gpu::execute_gp1_command(unsigned int command)
 }
 
 // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+// https://codeplea.com/triangular-interpolation
 void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2)
 {
 	glm::vec2 e0 = v1 - v0;
@@ -264,19 +265,14 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 		for (int x = min_val.x; x <= max_val.x; x++)
 		{
 			glm::ivec2 cur_pos = glm::ivec2(x, y);
-			glm::vec2 q = cur_pos - v0;
+			glm::vec3 w = calc_barycentric(cur_pos, v0, v1, v2);
 
-			// glm::determinant(glm::dmat2(a, b)) is equivalent of a,b cross product in 2d
-			float s = glm::determinant(glm::dmat2(q, e1)) / glm::determinant(glm::dmat2(e0, e1));
-			float t = glm::determinant(glm::dmat2(e0, q)) / glm::determinant(glm::dmat2(e0, e1));
-
-			if (s >= 0 && t >= 0 && (s + t <= 1))
+			if (w[0] >= 0 && w[1] >= 0 && (w[0] + w[1] <= 1))
 			{
-				glm::vec3 w(1 - t - s, t, s);
 				glm::u8vec3 rgb;
-				rgb.r = std::floor(rgb0.r * w.x + rgb1.r * w.y + rgb2.r * w.z);
-				rgb.g = std::floor(rgb0.g * w.x + rgb1.g * w.y + rgb2.g * w.z);
-				rgb.b = std::floor(rgb0.b * w.x + rgb1.b * w.y + rgb2.b * w.z);
+				rgb.r = rgb0.r*w[0] + rgb1.r*w[1] + rgb2.r*w[2];
+				rgb.g = rgb0.g*w[0] + rgb1.g*w[1] + rgb2.g*w[2];
+				rgb.b = rgb0.b*w[0] + rgb1.b*w[1] + rgb2.b*w[2];
 
 				draw_pixel(cur_pos, rgb);
 			}
@@ -298,6 +294,24 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
 			video_ram[index] = colour_16;
 		}
 	}
+}
+
+// https://codeplea.com/triangular-interpolation
+glm::vec3 Gpu::calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2)
+{
+	glm::vec3 w;
+
+	float d = (v1.y - v2.y)*(v0.x - v2.x) + (v2.x - v1.x)*(v0.y - v2.y);
+
+	w[0] = (v1.y - v2.y)*(pos.x - v2.x) + (v2.x - v1.x)*(pos.y - v2.y);
+	w[0] /= d;
+
+	w[1] = (v2.y - v0.y)*(pos.x - v2.x) + (v0.x - v2.x)*(pos.y - v2.y);
+	w[1] /= d;
+
+	w[2] = 1 - w[0] - w[1];
+
+	return w;
 }
 
 unsigned int Gpu::nop()
@@ -394,7 +408,7 @@ unsigned int Gpu::shaded_4_pt_opaque()
 	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
 
 	// triangle 2
-	draw_triangle(v2, v3, v1, rgb1, rgb2, rgb3);
+	draw_triangle(v1, v2, v3, rgb1, rgb2, rgb3);
 
 	return 8;
 }
