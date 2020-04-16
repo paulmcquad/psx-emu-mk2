@@ -10,6 +10,13 @@ constexpr unsigned int HEADER_SIZE = 16;
 constexpr unsigned int MODE1_DATA_SIZE = 2048;
 constexpr unsigned int MODE2_DATA_SIZE = 2336;
 
+// each data sector is composed of frames of 33 bytes, each composed of a 24 byte
+// data part, 8 byte error correction part and 1 byte subcode part
+constexpr unsigned int FRAME_SIZE = 33;
+constexpr unsigned int FRAME_DATA_SIZE = 24;
+constexpr unsigned int FRAME_ERROR_CORRECT_SIZE = 8;
+constexpr unsigned int FRAME_SUBCODE_SIZE = 1;
+
 void Cdrom::init()
 {
 
@@ -34,6 +41,7 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 		std::cout << "Loaded: " << bin_file << " Num Sectors: " << num_sectors << "\n";
 
 		rom_file.close();
+
 		return true;
 	}
 
