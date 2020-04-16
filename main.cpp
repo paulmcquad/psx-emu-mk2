@@ -53,9 +53,9 @@ void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, in
 
 int main(int num_args, char ** args )
 {
-	if (num_args != 2)
+	if (num_args != 4)
 	{
-		std::cerr << "Wrong number of arguments\n";
+		std::cerr << "Wrong number of arguments, must specify bios path, bin path and cue path\n";
 		return -1;
 	}
 
@@ -156,8 +156,20 @@ int main(int num_args, char ** args )
 	}
 
 	std::cout << "Creating CDROM\n";
+	std::string bin_file(args[2]);
+	std::string cue_file(args[3]);
+
 	std::shared_ptr<Cdrom> cdrom = std::make_shared<Cdrom>();
 	cdrom->init();
+	if (cdrom->load(bin_file, cue_file))
+	{
+		glfwSetWindowTitle(window, bin_file.c_str());
+	}
+	else
+	{
+		std::cerr << "Unable to load ROM\n";
+		return -1;
+	}
 
 	std::cout << "Creating IO ports\n";
 	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();

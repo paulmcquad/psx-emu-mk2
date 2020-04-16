@@ -420,7 +420,26 @@ unsigned int Gpu::tex_4_pt_opaque_blend()
 		return 0;
 	}
 
-	// todo implement
+	color_command color0(gp0_command_queue[0]);
+	// todo texture coords + palette
+
+	vert_command vert0(gp0_command_queue[1]);
+	vert_command vert1(gp0_command_queue[3]);
+	vert_command vert2(gp0_command_queue[5]);
+	vert_command vert3(gp0_command_queue[7]);
+
+	glm::ivec2 v0(vert0.x, vert0.y);
+	glm::ivec2 v1(vert1.x, vert1.y);
+	glm::ivec2 v2(vert2.x, vert2.y);
+	glm::ivec2 v3(vert3.x, vert3.y);
+
+	glm::u8vec3 rgb(color0.r, color0.g, color0.b);
+
+	// triangle 1
+	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
+
+	// triangle 2
+	draw_triangle(v1, v2, v3, rgb, rgb, rgb);
 
 	return 9;
 }
