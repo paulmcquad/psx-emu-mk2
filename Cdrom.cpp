@@ -6,18 +6,32 @@
 // https://en.wikipedia.org/wiki/CD-ROM
 constexpr unsigned int SECTOR_SIZE = 2352;
 
-constexpr unsigned int HEADER_SIZE = 16;
-constexpr unsigned int MODE1_DATA_SIZE = 2048;
-constexpr unsigned int MODE2_DATA_SIZE = 2336;
+constexpr unsigned int CDROM_PORT_START = 0x1F801800;
 
-// each data sector is composed of frames of 33 bytes, each composed of a 24 byte
-// data part, 8 byte error correction part and 1 byte subcode part
-constexpr unsigned int FRAME_SIZE = 33;
-constexpr unsigned int FRAME_DATA_SIZE = 24;
-constexpr unsigned int FRAME_ERROR_CORRECT_SIZE = 8;
-constexpr unsigned int FRAME_SUBCODE_SIZE = 1;
+constexpr unsigned int STATUS_REGISTER_START = 0x1F801800 - CDROM_PORT_START;
+constexpr unsigned int STATUS_REGISTER_END = 0x1F801801 - CDROM_PORT_START;
+
+
 
 void Cdrom::init()
+{
+	status_register.raw = 0x0;
+
+	interrupt_flag_register.raw = 0x0;
+	interrupt_flag_register.values.na4 = 0x1;
+	interrupt_flag_register.values.na3 = 0x1;
+	interrupt_flag_register.values.na2 = 0x1;
+	interrupt_flag_register.values.na1 = 0x0;
+
+	interrupt_enable_register.raw = 0x0;
+}
+
+void Cdrom::save_state(std::ofstream& file)
+{
+
+}
+
+void Cdrom::load_state(std::ifstream& file)
 {
 
 }
@@ -50,12 +64,56 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 
 unsigned char Cdrom::get(unsigned int address)
 {
-	std::cout << "CDROM " << std::endl;
+	if (address >= STATUS_REGISTER_START &&
+		address < STATUS_REGISTER_END)
+	{
+
+		return status_register.raw;
+	}
+	// depending on the index, different io ports operate differently
+	else if (status_register.values.INDEX == 0)
+	{
+
+	}
+	else if (status_register.values.INDEX == 1)
+	{
+
+	}
+	else if (status_register.values.INDEX == 2)
+	{
+
+	}
+	else
+	{
+
+	}
+
 	return 0;
 }
 
 void Cdrom::set(unsigned int address, unsigned char value)
 {
-	std::cout << "CDROM " << std::endl;
-	//throw std::logic_error("not implemented");
+	if (address >= STATUS_REGISTER_START &&
+		address < STATUS_REGISTER_END)
+	{
+		// only the index value is writable
+		status_register.values.INDEX = 0x03 & value;
+	}
+	// depending on the index, different io ports operate differently
+	else if (status_register.values.INDEX == 0)
+	{
+
+	}
+	else if (status_register.values.INDEX == 1)
+	{
+
+	}
+	else if (status_register.values.INDEX == 2)
+	{
+
+	}
+	else
+	{
+
+	}
 }

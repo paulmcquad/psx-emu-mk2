@@ -224,6 +224,7 @@ int main(int num_args, char ** args )
 				gpu->save_state(state_file);
 				dma->save_state(state_file);
 				ram->save_state(state_file);
+				cdrom->save_state(state_file);
 				io_ports->save_state(state_file);
 
 				state_file.close();
@@ -245,6 +246,7 @@ int main(int num_args, char ** args )
 				gpu->load_state(state_file);
 				dma->load_state(state_file);
 				ram->load_state(state_file);
+				cdrom->load_state(state_file);
 				io_ports->load_state(state_file);
 
 				state_file.close();
