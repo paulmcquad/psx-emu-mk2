@@ -27,6 +27,8 @@ public:
 	void save_state(std::ofstream& file);
 	void load_state(std::ifstream& file);
 
+	void tick();
+
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);
 
@@ -46,4 +48,42 @@ private:
 	unsigned char i_mask[I_MASK_SIZE] = { 0 };
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
+
+	union {
+		unsigned char raw[2];
+		struct
+		{
+			unsigned int baudrate_reload_factor : 2;
+			unsigned int character_length : 2;
+			unsigned int parity_enable : 1;
+			unsigned int parity_type : 1;
+			unsigned int unknown1 : 2;
+			unsigned int clk_output_polarity : 1;
+			unsigned int unknown2 : 7;
+		} values;
+	} joy_mode;
+
+	union
+	{
+		unsigned char raw[2];
+		struct
+		{
+			unsigned int tx_enable : 1;
+			unsigned int joyn_output : 1;
+			unsigned int rx_enable : 1;
+			unsigned int unknown1 : 1;
+			unsigned int ack : 1;
+			unsigned int unknown2 : 1;
+			unsigned int reset : 1;
+			unsigned int na1 : 1;
+			unsigned int rx_interrupt_mode : 2;
+			unsigned int tx_interrupt_enable : 1;
+			unsigned int rx_interrupt_enable : 1;
+			unsigned int ack_interrupt_enable : 1;
+			unsigned int desired_slot_number : 1;
+			unsigned int na2 : 2;
+		} values;
+	} joy_ctrl;
+
+	unsigned short joy_baud = 0x0;
 };

@@ -41,12 +41,20 @@ constexpr unsigned int DMA_SIZE = 128;
 constexpr unsigned int DMA_START = 0x1F801080 - IO_START;
 constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 
+constexpr unsigned int JOY_CTRL_START = 0x1F80104A - IO_START;
+constexpr unsigned int JOY_CTRL_END = JOY_CTRL_START + 2;
+
 void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma, std::shared_ptr<Spu> _spu, std::shared_ptr<Cdrom> _cdrom)
 {
 	gpu = _gpu;
 	dma = _dma;
 	spu = _spu;
 	cdrom = _cdrom;
+}
+
+void IOPorts::tick()
+{
+
 }
 
 void IOPorts::save_state(std::ofstream& file)
@@ -58,6 +66,7 @@ void IOPorts::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
 	file.write(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
 	file.write(reinterpret_cast<char*>(&post), sizeof(unsigned char));
+	file.write(reinterpret_cast<char*>(&joy_ctrl), sizeof(unsigned char) * 2);
 }
 
 void IOPorts::load_state(std::ifstream& file)
@@ -69,6 +78,7 @@ void IOPorts::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
 	file.read(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
 	file.read(reinterpret_cast<char*>(&post), sizeof(unsigned char));
+	file.read(reinterpret_cast<char*>(&joy_ctrl), sizeof(unsigned char) * 2);
 }
 
 unsigned char IOPorts::get(unsigned int address)
@@ -125,6 +135,10 @@ unsigned char IOPorts::get(unsigned int address)
 	else if (address >= CDROM_START && address < CDROM_END)
 	{
 		return cdrom->get(address - CDROM_START);
+	}
+	else if (address >= JOY_CTRL_START && address < JOY_CTRL_END)
+	{
+		return joy_ctrl.bytes[address - JOY_CTRL_START];
 	}
 	else
 	{
@@ -186,6 +200,10 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address >= CDROM_START && address < CDROM_END)
 	{
 		cdrom->set(address - CDROM_START, value);
+	}
+	else if (address >= JOY_CTRL_START && address < JOY_CTRL_END)
+	{
+		joy_ctrl.bytes[address - JOY_CTRL_START] = value;
 	}
 	else
 	{
