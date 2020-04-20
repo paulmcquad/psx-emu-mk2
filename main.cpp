@@ -208,6 +208,7 @@ int main(int num_args, char ** args )
 			cpu->tick();
 			dma->tick();
 			gpu->tick();
+			cdrom->tick();
 			debug_menu->ticks_per_frame++;
 		}
 
