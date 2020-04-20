@@ -138,7 +138,7 @@ unsigned char IOPorts::get(unsigned int address)
 	}
 	else if (address >= JOY_CTRL_START && address < JOY_CTRL_END)
 	{
-		return joy_ctrl.bytes[address - JOY_CTRL_START];
+		return joy_ctrl.raw[address - JOY_CTRL_START];
 	}
 	else
 	{
@@ -203,7 +203,7 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	}
 	else if (address >= JOY_CTRL_START && address < JOY_CTRL_END)
 	{
-		joy_ctrl.bytes[address - JOY_CTRL_START] = value;
+		joy_ctrl.raw[address - JOY_CTRL_START] = value;
 	}
 	else
 	{
