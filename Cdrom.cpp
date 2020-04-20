@@ -34,8 +34,8 @@ constexpr unsigned int RESPONSE_FIFO_SIZE = 16;
 
 void Cdrom::init()
 {
-	data_fifo.resize(DATA_FIFO_SIZE);
-	response_fifo.resize(RESPONSE_FIFO_SIZE);
+	data_fifo.data.resize(DATA_FIFO_SIZE);
+	response_fifo.data.resize(RESPONSE_FIFO_SIZE);
 
 	status_register.raw = 0x0;
 	status_register.values.PRMEMPT = 1;
@@ -142,6 +142,11 @@ unsigned char Cdrom::get_index0(unsigned int address)
 			return interrupt_enable_register.raw;
 		} break;
 
+		case RESPONSE_FIFO_REGISTER:
+		{
+			return response_fifo.get_next_byte();
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -154,6 +159,11 @@ unsigned char Cdrom::get_index1(unsigned int address)
 		case INTERRUPT_FLAG_REGISTER:
 		{
 			return interrupt_flag_response_register.raw;
+		} break;
+
+		case RESPONSE_FIFO_REGISTER:
+		{
+			return response_fifo.get_next_byte();
 		} break;
 
 		default:
@@ -170,6 +180,11 @@ unsigned char Cdrom::get_index2(unsigned int address)
 			return interrupt_enable_register.raw;
 		} break;
 
+		case RESPONSE_FIFO_REGISTER:
+		{
+			return response_fifo.get_next_byte();
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -184,6 +199,11 @@ unsigned char Cdrom::get_index3(unsigned int address)
 			return interrupt_flag_response_register.raw;
 		} break;
 
+		case RESPONSE_FIFO_REGISTER:
+		{
+			return response_fifo.get_next_byte();
+		} break;
+
 	default:
 		throw std::logic_error("not implemented");
 	}
@@ -195,17 +215,17 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 	{
 		case COMMAND_REGISTER:
 		{
-			// todo
+			command_register = value;
 		} break;
 
 		case PARAMETER_FIFO_REGISTER:
 		{
-			// todo
+			parameter_fifo.set_next_byte(value);
 		} break;
 
 		case REQUEST_REGISTER:
 		{
-			// todo
+			throw std::logic_error("not implemented");
 		} break;
 
 		default:
