@@ -44,6 +44,12 @@ constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 constexpr unsigned int JOY_CTRL_START = 0x1F80104A - IO_START;
 constexpr unsigned int JOY_CTRL_END = JOY_CTRL_START + 2;
 
+constexpr unsigned int JOY_BAUD_START = 0x1F80104E - IO_START;
+constexpr unsigned int JOY_BAUD_END = JOY_BAUD_START + 2;
+
+constexpr unsigned int JOY_MODE_START = 0x1F801048 - IO_START;
+constexpr unsigned int JOY_MODE_END = JOY_MODE_START + 2;
+
 void IOPorts::init(std::shared_ptr<Gpu> _gpu, std::shared_ptr<Dma> _dma, std::shared_ptr<Spu> _spu, std::shared_ptr<Cdrom> _cdrom)
 {
 	gpu = _gpu;
@@ -140,6 +146,14 @@ unsigned char IOPorts::get(unsigned int address)
 	{
 		return joy_ctrl.raw[address - JOY_CTRL_START];
 	}
+	else if (address >= JOY_BAUD_START && address < JOY_BAUD_END)
+	{
+		return joy_baud.raw[address - JOY_BAUD_START];
+	}
+	else if (address >= JOY_MODE_START && address < JOY_MODE_END)
+	{
+		return joy_mode.raw[address - JOY_MODE_START];
+	}
 	else
 	{
 		throw bus_error();
@@ -204,6 +218,14 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address >= JOY_CTRL_START && address < JOY_CTRL_END)
 	{
 		joy_ctrl.raw[address - JOY_CTRL_START] = value;
+	}
+	else if (address >= JOY_BAUD_START && address < JOY_BAUD_END)
+	{
+		joy_baud.raw[address - JOY_BAUD_START] = value;
+	}
+	else if (address >= JOY_MODE_START && address < JOY_MODE_END)
+	{
+		joy_mode.raw[address - JOY_MODE_START] = value;
 	}
 	else
 	{

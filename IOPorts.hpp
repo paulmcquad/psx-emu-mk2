@@ -49,20 +49,6 @@ private:
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
 
-	union {
-		unsigned char raw[2];
-		struct
-		{
-			unsigned int baudrate_reload_factor : 2;
-			unsigned int character_length : 2;
-			unsigned int parity_enable : 1;
-			unsigned int parity_type : 1;
-			unsigned int unknown1 : 2;
-			unsigned int clk_output_polarity : 1;
-			unsigned int unknown2 : 7;
-		} values;
-	} joy_mode;
-
 	union
 	{
 		unsigned char raw[2];
@@ -85,5 +71,23 @@ private:
 		} values;
 	} joy_ctrl;
 
-	unsigned short joy_baud = 0x0;
+	union
+	{
+		unsigned char raw[2];
+	} joy_baud;
+
+
+	union {
+		unsigned char raw[2];
+		struct
+		{
+			unsigned int baudrate_reload_factor : 2;
+			unsigned int character_length : 2;
+			unsigned int parity_enable : 1;
+			unsigned int parity_type : 1;
+			unsigned int unknown1 : 2;
+			unsigned int clk_output_polarity : 1;
+			unsigned int unknown2 : 7;
+		} values;
+	} joy_mode;
 };
