@@ -63,26 +63,6 @@ void Gpu::init()
 	gpu_status.ready_dma = true;
 	gpu_status.ready_cmd_word = true;
 
-	// GP0 commands
-	gp0_command_map[gp0_commands::NOP] = &Gpu::nop;
-	gp0_command_map[gp0_commands::SET_DRAW_TOP_LEFT] = &Gpu::set_draw_top_left;
-	gp0_command_map[gp0_commands::SET_DRAW_BOTTOM_RIGHT] = &Gpu::set_draw_bottom_right;
-	gp0_command_map[gp0_commands::SET_DRAWING_OFFSET] = &Gpu::set_drawing_offset;
-
-	gp0_command_map[gp0_commands::DRAW_MODE] = &Gpu::set_draw_mode;
-	gp0_command_map[gp0_commands::TEX_WINDOW] = &Gpu::set_texture_window;
-	gp0_command_map[gp0_commands::MASK_BIT] = &Gpu::set_mask_bit;
-	gp0_command_map[gp0_commands::CLEAR_CACHE] = &Gpu::clear_cache;
-
-	gp0_command_map[gp0_commands::COPY_RECT_CPU_VRAM] = &Gpu::copy_rectangle_from_cpu_to_vram;
-	gp0_command_map[gp0_commands::COPY_RECT_VRAM_CPU] = &Gpu::copy_rectangle_from_vram_to_cpu;
-
-	gp0_command_map[gp0_commands::SHADED_3_PT_OPAQUE] = &Gpu::shaded_3_pt_opaque;
-
-	gp0_command_map[gp0_commands::MONO_4_PT_OPAQUE] = &Gpu::mono_4_pt_opaque;
-	gp0_command_map[gp0_commands::SHADED_4_PT_OPAQUE] = &Gpu::shaded_4_pt_opaque;
-	gp0_command_map[gp0_commands::TEX_4_OPAQUE_TEX_BLEND] = &Gpu::tex_4_pt_opaque_blend;
-
 	// GP1 commands
 	gp1_command_map[gp1_commands::RESET_GPU] = &Gpu::reset_gpu;
 	gp1_command_map[gp1_commands::RESET_COMMAND_BUFFER] = &Gpu::reset_command_buffer;
@@ -198,32 +178,98 @@ void Gpu::execute_gp0_commands()
 		color_command command(gp0_command_queue.front());
 		gp0_commands current_command = static_cast<gp0_commands>(command.op);
 
-		// let's assume it always finds the function ptr :)
-		auto iter = gp0_command_map.find(current_command);
-		if (iter != gp0_command_map.end())
+		unsigned int commands_to_remove = 0;
+
+		switch (current_command)
 		{
-			// execute the command
-			unsigned int commands_to_remove = (this->*iter->second)();
-			// cleanup
-			if (commands_to_remove == 0)
+			case gp0_commands::NOP:
 			{
-				// waiting for more words
-				break;
-			}
-			while (commands_to_remove > 0)
+				commands_to_remove = nop();
+			} break;
+
+			case gp0_commands::DRAW_MODE:
 			{
-				if (gp0_command_queue.empty())
-				{
-					throw std::out_of_range("removed too many commands from queue");
-				}
-				gp0_command_queue.pop_front();
-				commands_to_remove--;
-			}
+				commands_to_remove = set_draw_mode();
+			} break;
+
+			case gp0_commands::SET_DRAW_TOP_LEFT:
+			{
+				commands_to_remove = set_draw_top_left();
+			} break;
+
+			case gp0_commands::SET_DRAW_BOTTOM_RIGHT:
+			{
+				commands_to_remove = set_draw_bottom_right();
+			} break;
+
+			case gp0_commands::SET_DRAWING_OFFSET:
+			{
+				commands_to_remove = set_drawing_offset();
+			} break;
+
+			case gp0_commands::TEX_WINDOW:
+			{
+				commands_to_remove = set_texture_window();
+			} break;
+
+			case gp0_commands::MASK_BIT:
+			{
+				commands_to_remove = set_mask_bit();
+			} break;
+
+			case gp0_commands::MONO_4_PT_OPAQUE:
+			{
+				commands_to_remove = mono_4_pt_opaque();
+			} break;
+
+			case gp0_commands::CLEAR_CACHE:
+			{
+				commands_to_remove = clear_cache();
+			} break;
+
+			case gp0_commands::COPY_RECT_CPU_VRAM:
+			{
+				commands_to_remove = copy_rectangle_from_cpu_to_vram();
+			} break;
+
+			case gp0_commands::COPY_RECT_VRAM_CPU:
+			{
+				commands_to_remove = copy_rectangle_from_vram_to_cpu();
+			} break;
+
+			case gp0_commands::SHADED_3_PT_OPAQUE:
+			{
+				commands_to_remove = shaded_3_pt_opaque();
+			} break;
+
+			case gp0_commands::SHADED_4_PT_OPAQUE:
+			{
+				commands_to_remove = shaded_4_pt_opaque();
+			} break;
+
+			case gp0_commands::TEX_4_OPAQUE_TEX_BLEND:
+			{
+				commands_to_remove = tex_4_pt_opaque_blend();
+			} break;
+
+			default:
+				throw std::logic_error("not implemented");
 		}
-		else
+
+		if (commands_to_remove == 0)
 		{
-			std::cout << "GP0: " << std::hex << command.value << std::endl;
-			throw std::logic_error("not implemented");
+			// waiting for more words
+			break;
+		}
+
+		while (commands_to_remove > 0)
+		{
+			if (gp0_command_queue.empty())
+			{
+				throw std::out_of_range("too many commands removed");
+			}
+			gp0_command_queue.pop_front();
+			commands_to_remove--;
 		}
 	}
 }

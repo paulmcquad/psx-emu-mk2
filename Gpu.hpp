@@ -124,7 +124,7 @@ private:
 	unsigned int shaded_4_pt_opaque();
 	unsigned int tex_4_pt_opaque_blend();
 
-	// GP1 commands]
+	// GP1 commands
 	void reset_gpu(unsigned int command);
 	void reset_command_buffer(unsigned int command);
 	void ack_gpu_interrupt(unsigned int command);
