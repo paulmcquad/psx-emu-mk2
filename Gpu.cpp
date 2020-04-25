@@ -61,19 +61,7 @@ void Gpu::init()
 	video_ram.resize(VRAM_SIZE, 0x0);
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	gpu_status.ready_dma = true;
-	gpu_status.ready_cmd_word = true;
-
-	// GP1 commands
-	gp1_command_map[gp1_commands::RESET_GPU] = &Gpu::reset_gpu;
-	gp1_command_map[gp1_commands::RESET_COMMAND_BUFFER] = &Gpu::reset_command_buffer;
-	gp1_command_map[gp1_commands::ACK_IRQ1] = &Gpu::ack_gpu_interrupt;
-	gp1_command_map[gp1_commands::DISPLAY_ENABLE] = &Gpu::display_enable;
-	gp1_command_map[gp1_commands::DMA_DIR] = &Gpu::dma_direction;
-	gp1_command_map[gp1_commands::START_OF_DISPLAY] = &Gpu::start_display_area;
-	gp1_command_map[gp1_commands::HOR_DISPLAY_RANGE] = &Gpu::horizontal_display_range;
-	gp1_command_map[gp1_commands::VERT_DISPLAY_RANGE] = &Gpu::vertical_display_range;
-	gp1_command_map[gp1_commands::DISPLAY_MODE] = &Gpu::display_mode;
-	gp1_command_map[gp1_commands::GET_GPU_INFO] = &Gpu::get_gpu_info;
+	gpu_status.ready_cmd_word = true;	
 }
 
 void Gpu::reset()
@@ -124,7 +112,6 @@ void Gpu::load_state(std::ifstream& file)
 
 void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	//std::cout << "Starting GPU request DMA\n";
 	unsigned int num_words = block_control.BS * block_control.BC;
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
@@ -137,12 +124,10 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-	//std::cout << "Finished GPU request DMA\n";
 }
 
 void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
-	//std::cout << "Starting GPU linked list DMA\n";
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
@@ -168,7 +153,6 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 			addr = header & 0x1ffffc;
 		}
 	}
-	//std::cout << "Finished GPU linked list DMA\n";
 }
 
 void Gpu::execute_gp0_commands()
@@ -283,15 +267,61 @@ void Gpu::execute_gp1_command(unsigned int command)
 {
 	color_command gp1_command(command);
 	gp1_commands current_command = static_cast<gp1_commands>(gp1_command.op);
-	auto iter = gp1_command_map.find(current_command);
-	if (iter != gp1_command_map.end())
+	
+	switch (current_command)
 	{
-		(this->*iter->second)(command);
-	}
-	else
-	{
-		std::cout << "GP1: " << std::hex << gp1_command.value << std::endl;
-		throw std::logic_error("not implemented");
+		case gp1_commands::RESET_GPU:
+		{
+			reset_gpu(command);
+		} break;
+
+		case gp1_commands::RESET_COMMAND_BUFFER:
+		{
+			reset_command_buffer(command);
+		} break;
+
+		case gp1_commands::ACK_IRQ1:
+		{
+			ack_gpu_interrupt(command);
+		} break;
+
+		case gp1_commands::DISPLAY_ENABLE:
+		{
+			display_enable(command);
+		} break;
+
+		case gp1_commands::DMA_DIR:
+		{
+			dma_direction(command);
+		} break;
+
+		case gp1_commands::START_OF_DISPLAY:
+		{
+			start_display_area(command);
+		} break;
+
+		case gp1_commands::HOR_DISPLAY_RANGE:
+		{
+			horizontal_display_range(command);
+		} break;
+
+		case gp1_commands::VERT_DISPLAY_RANGE:
+		{
+			vertical_display_range(command);
+		} break;
+
+		case gp1_commands::DISPLAY_MODE:
+		{
+			display_mode(command);
+		} break;
+
+		case gp1_commands::GET_GPU_INFO:
+		{
+			get_gpu_info(command);
+		} break;
+
+		default:
+			throw std::logic_error("not implemented");
 	}
 }
 

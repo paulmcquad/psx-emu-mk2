@@ -95,9 +95,6 @@ public:
 	bool logging_enabled = false;
 
 private:
-	std::unordered_map<gp0_commands, unsigned int (Gpu::*)()> gp0_command_map;
-	std::unordered_map<gp1_commands, void (Gpu::*)(unsigned int)> gp1_command_map;
-
 	void execute_gp0_commands();
 	void add_gp0_command(unsigned int command, bool via_dma);
 	void execute_gp1_command(unsigned int command);
