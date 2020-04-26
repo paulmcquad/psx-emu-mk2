@@ -43,9 +43,26 @@ private:
 	unsigned char peripheral_io[PERIPHERAL_IO_SIZE] = { 0 };
 	
 	unsigned char post = 0;
-	
-	unsigned char i_stat[I_STAT_SIZE] = { 0 };
-	unsigned char i_mask[I_MASK_SIZE] = { 0 };
+
+	union
+	{
+		unsigned bytes[4];
+		struct
+		{
+			unsigned int IRQ0_VBLANK : 1;
+			unsigned int IRQ1_GPU : 1;
+			unsigned int IRQ2_CDROM : 1;
+			unsigned int IRQ3_DMA : 1;
+			unsigned int IRQ4_TMR0 : 1;
+			unsigned int IRQ5_TMR1 : 1;
+			unsigned int IRQ6_TMR2 : 1;
+			unsigned int IRQ7_CTRL_MEM_CRD : 1;
+			unsigned int IRQ8_SIO : 1;
+			unsigned int IRQ9_SPU : 1;
+			unsigned int IRQ10_LIGHTPEN : 1;
+			unsigned int NA : 21;
+		} values;
+	} interrupt_status_register, interrupt_mask_register;
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
 
@@ -75,7 +92,6 @@ private:
 	{
 		unsigned char raw[2];
 	} joy_baud;
-
 
 	union {
 		unsigned char raw[2];

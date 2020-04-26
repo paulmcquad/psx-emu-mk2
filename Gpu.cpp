@@ -373,6 +373,7 @@ void Gpu::draw_rectangle(glm::ivec2 top_left, glm::ivec2 width_height, glm::u8ve
 		for (int x = top_left.x; x <= (top_left.x + width_height.x); x++)
 		{
 			glm::ivec2 cur_pos = glm::ivec2(x, y);
+			// fill rect ignores the pixel draw area
 			draw_pixel(cur_pos, rgb, true);
 		}
 	}

@@ -68,8 +68,8 @@ void IOPorts::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
 	file.write(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
 	file.write(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
-	file.write(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
-	file.write(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
+	file.write(reinterpret_cast<char*>(interrupt_status_register.bytes), sizeof(unsigned char) * I_STAT_SIZE);
+	file.write(reinterpret_cast<char*>(interrupt_mask_register.bytes), sizeof(unsigned char) * I_MASK_SIZE);
 	file.write(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
 	file.write(reinterpret_cast<char*>(&post), sizeof(unsigned char));
 	file.write(reinterpret_cast<char*>(&joy_ctrl), sizeof(unsigned char) * 2);
@@ -80,8 +80,8 @@ void IOPorts::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&memory_control_1), sizeof(unsigned char) * MEMORY_CONTROL_1_SIZE);
 	file.read(reinterpret_cast<char*>(&memory_control_2), sizeof(unsigned char) * MEMORY_CONTROL_2_SIZE);
 	file.read(reinterpret_cast<char*>(&peripheral_io), sizeof(unsigned char) * PERIPHERAL_IO_SIZE);
-	file.read(reinterpret_cast<char*>(&i_stat), sizeof(unsigned char) * I_STAT_SIZE);
-	file.read(reinterpret_cast<char*>(&i_mask), sizeof(unsigned char) * I_MASK_SIZE);
+	file.read(reinterpret_cast<char*>(interrupt_status_register.bytes), sizeof(unsigned char) * I_STAT_SIZE);
+	file.read(reinterpret_cast<char*>(interrupt_mask_register.bytes), sizeof(unsigned char) * I_MASK_SIZE);
 	file.read(reinterpret_cast<char*>(&timers), sizeof(unsigned char) * TIMER_SIZE);
 	file.read(reinterpret_cast<char*>(&post), sizeof(unsigned char));
 	file.read(reinterpret_cast<char*>(&joy_ctrl), sizeof(unsigned char) * 2);
@@ -117,12 +117,12 @@ unsigned char IOPorts::get(unsigned int address)
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
 	{
-		return i_stat[address - I_STAT_START];
+		return interrupt_status_register.bytes[address - I_STAT_START];
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)
 	{
-		return i_mask[address - I_MASK_START];
+		return interrupt_mask_register.bytes[address - I_MASK_START];
 	}
 	else if (address >= TIMER_START &&
 		address < TIMER_END)
@@ -190,12 +190,12 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
 	{
-		i_stat[address - I_STAT_START] = value;
+		interrupt_status_register.bytes[address - I_STAT_START] = value;
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)
 	{
-		i_mask[address - I_MASK_START] = value;
+		interrupt_mask_register.bytes[address - I_MASK_START] = value;
 	}
 	else if (address >= TIMER_START &&
 		address < TIMER_END)
