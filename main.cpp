@@ -266,7 +266,7 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, gpu->video_ram.data());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, gpu->video_ram);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);

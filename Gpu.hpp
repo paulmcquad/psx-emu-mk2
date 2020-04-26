@@ -3,11 +3,13 @@
 #include <deque>
 #include <unordered_map>
 #include <glm/fwd.hpp>
+#include "InstructionTypes.hpp"
 #include "Dma.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
 constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
+constexpr unsigned int GP0_FIFO_SIZE = 16;
 
 enum class gp0_commands : unsigned char;
 enum class gp1_commands : unsigned char;
@@ -16,6 +18,7 @@ class Gpu : public DMA_interface
 {
 public:
 
+	~Gpu();
 	void init();
 	void reset();
 	void tick();
@@ -82,22 +85,21 @@ public:
 		}
 	} gpu_status;
 
-	std::vector<unsigned short> video_ram;
 	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
 	// that I can ignore that
-	std::deque<unsigned int> gp0_command_queue;
+	std::deque<gp_command> gp0_fifo;
+	unsigned short * video_ram = nullptr;
+
 	unsigned int width = FRAME_WIDTH;
 	unsigned int height = FRAME_HEIGHT;
 
 	int x_offset = 0;
 	int y_offset = 0;
 
-	bool logging_enabled = false;
-
 private:
 	void execute_gp0_commands();
-	void add_gp0_command(unsigned int command, bool via_dma);
-	void execute_gp1_command(unsigned int command);
+	void add_gp0_command(gp_command command, bool via_dma);
+	void execute_gp1_command(gp_command command);
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
@@ -120,18 +122,4 @@ private:
 	unsigned int mono_4_pt_opaque();
 	unsigned int shaded_4_pt_opaque();
 	unsigned int tex_4_pt_opaque_blend();
-
-	// GP1 commands
-	void reset_gpu(unsigned int command);
-	void reset_command_buffer(unsigned int command);
-	void ack_gpu_interrupt(unsigned int command);
-	void display_enable(unsigned int command);
-	void dma_direction(unsigned int command);
-	void start_display_area(unsigned int command);
-	void horizontal_display_range(unsigned int command);
-	void vertical_display_range(unsigned int command);
-	void display_mode(unsigned int command);
-	void get_gpu_info(unsigned int command);
-	void new_texture_disable(unsigned int command);
-	void special_texture_disable(unsigned int command);
 };

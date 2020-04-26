@@ -54,11 +54,21 @@ void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char va
 	}
 }
 
+Gpu::~Gpu()
+{
+	if (video_ram)
+	{
+		delete video_ram;
+	}
+}
+
 void Gpu::init()
 {
 	// I have to allocate all the vram memory at runtime or
     // else I get a compiler out of heap space issue at compile time
-	video_ram.resize(VRAM_SIZE, 0x0);
+	video_ram = new unsigned short[VRAM_SIZE];
+	memset(video_ram, 0, VRAM_SIZE * sizeof(unsigned short));
+
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	gpu_status.ready_dma = true;
 	gpu_status.ready_cmd_word = true;	
@@ -76,10 +86,10 @@ void Gpu::tick()
 void Gpu::save_state(std::ofstream& file)
 {
 	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
-	file.write(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
+	file.write(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
 
-	std::vector<unsigned int> commands;
-	for (auto iter : gp0_command_queue)
+	std::vector<gp_command> commands;
+	for (auto iter : gp0_fifo)
 	{
 		commands.push_back(iter);
 	}
@@ -93,20 +103,20 @@ void Gpu::save_state(std::ofstream& file)
 void Gpu::load_state(std::ifstream& file)
 {
 	file.read(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
-	file.read(reinterpret_cast<char*>(video_ram.data()), sizeof(unsigned short)*video_ram.size());
+	file.read(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
 
 	unsigned int num_commands = 0;
 	file.read(reinterpret_cast<char*>(&num_commands), sizeof(unsigned int));
 
-	std::vector<unsigned int> commands;
+	std::vector<gp_command> commands;
 	commands.resize(num_commands);
 	file.read(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
 
-	gp0_command_queue.clear();
+	gp0_fifo.clear();
 
 	for (auto iter : commands)
 	{
-		gp0_command_queue.push_back(iter);
+		gp0_fifo.push_back(iter);
 	}
 }
 
@@ -157,14 +167,12 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 
 void Gpu::execute_gp0_commands()
 {
-	while (gp0_command_queue.empty() == false)
+	while (gp0_fifo.empty() == false)
 	{
-		color_command command(gp0_command_queue.front());
-		gp0_commands current_command = static_cast<gp0_commands>(command.op);
+		gp_command current_command = gp0_fifo.front();
 
 		unsigned int commands_to_remove = 0;
-
-		switch (current_command)
+		switch (static_cast<gp0_commands>(current_command.color.op))
 		{
 			case gp0_commands::NOP:
 			{
@@ -248,76 +256,74 @@ void Gpu::execute_gp0_commands()
 
 		while (commands_to_remove > 0)
 		{
-			if (gp0_command_queue.empty())
+			if (gp0_fifo.empty())
 			{
 				throw std::out_of_range("too many commands removed");
 			}
-			gp0_command_queue.pop_front();
+			gp0_fifo.pop_front();
 			commands_to_remove--;
 		}
 	}
 }
 
-void Gpu::add_gp0_command(unsigned int command, bool via_dma)
+void Gpu::add_gp0_command(gp_command command, bool via_dma)
 {
-	gp0_command_queue.push_back(command);
+	gp0_fifo.push_back(command);
 }
 
-void Gpu::execute_gp1_command(unsigned int command)
-{
-	color_command gp1_command(command);
-	gp1_commands current_command = static_cast<gp1_commands>(gp1_command.op);
-	
-	switch (current_command)
+void Gpu::execute_gp1_command(gp_command command)
+{	
+	switch (static_cast<gp1_commands>(command.color.op))
 	{
 		case gp1_commands::RESET_GPU:
 		{
-			reset_gpu(command);
+			// todo
 		} break;
 
 		case gp1_commands::RESET_COMMAND_BUFFER:
 		{
-			reset_command_buffer(command);
+			gp0_fifo.clear();
 		} break;
 
 		case gp1_commands::ACK_IRQ1:
 		{
-			ack_gpu_interrupt(command);
+			// todo
 		} break;
 
 		case gp1_commands::DISPLAY_ENABLE:
 		{
-			display_enable(command);
+			// 0 = on, 1 = off bizarrely
+			gpu_status.display_enable = 0x00000001 & command.raw;
 		} break;
 
 		case gp1_commands::DMA_DIR:
 		{
-			dma_direction(command);
+			gpu_status.dma_direction = 0x00000003 & command.raw;
 		} break;
 
 		case gp1_commands::START_OF_DISPLAY:
 		{
-			start_display_area(command);
+			// todo
 		} break;
 
 		case gp1_commands::HOR_DISPLAY_RANGE:
 		{
-			horizontal_display_range(command);
+			// todo
 		} break;
 
 		case gp1_commands::VERT_DISPLAY_RANGE:
 		{
-			vertical_display_range(command);
+			// todo
 		} break;
 
 		case gp1_commands::DISPLAY_MODE:
 		{
-			display_mode(command);
+			// todo
 		} break;
 
 		case gp1_commands::GET_GPU_INFO:
 		{
-			get_gpu_info(command);
+			// todo
 		} break;
 
 		default:
@@ -397,23 +403,17 @@ unsigned int Gpu::nop()
 
 unsigned int Gpu::mono_4_pt_opaque()
 {
-	if (gp0_command_queue.size() < 5)
+	if (gp0_fifo.size() < 5)
 	{
 		return 0;
 	}
 
-	color_command color(gp0_command_queue[0]);
-	vert_command vert0(gp0_command_queue[1]);
-	vert_command vert1(gp0_command_queue[2]);
-	vert_command vert2(gp0_command_queue[3]);
-	vert_command vert3(gp0_command_queue[4]);
+	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
+	glm::ivec2 v1(gp0_fifo[2].vert.x, gp0_fifo[2].vert.y);
+	glm::ivec2 v2(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
+	glm::ivec2 v3(gp0_fifo[4].vert.x, gp0_fifo[4].vert.y);
 
-	glm::ivec2 v0(vert0.x, vert0.y);
-	glm::ivec2 v1(vert1.x, vert1.y);
-	glm::ivec2 v2(vert2.x, vert2.y);
-	glm::ivec2 v3(vert3.x, vert3.y);
-
-	glm::u8vec3 rgb(color.r, color.g, color.b);
+	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
@@ -426,26 +426,18 @@ unsigned int Gpu::mono_4_pt_opaque()
 
 unsigned int Gpu::shaded_3_pt_opaque()
 {
-	if (gp0_command_queue.size() < 6)
+	if (gp0_fifo.size() < 6)
 	{
 		return 0;
 	}
 
-	color_command color0(gp0_command_queue[0]);
-	color_command color1(gp0_command_queue[2]);
-	color_command color2(gp0_command_queue[4]);
+	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
+	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
+	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
 
-	vert_command vert0(gp0_command_queue[1]);
-	vert_command vert1(gp0_command_queue[3]);
-	vert_command vert2(gp0_command_queue[5]);
-
-	glm::ivec2 v0(vert0.x, vert0.y);
-	glm::ivec2 v1(vert1.x, vert1.y);
-	glm::ivec2 v2(vert2.x, vert2.y);
-
-	glm::u8vec3 rgb0(color0.r, color0.g, color0.b);
-	glm::u8vec3 rgb1(color1.r, color1.g, color1.b);
-	glm::u8vec3 rgb2(color2.r, color2.g, color2.b);
+	glm::u8vec3 rgb0(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+	glm::u8vec3 rgb1(gp0_fifo[2].color.r, gp0_fifo[2].color.g, gp0_fifo[2].color.b);
+	glm::u8vec3 rgb2(gp0_fifo[4].color.r, gp0_fifo[4].color.g, gp0_fifo[4].color.b);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
@@ -455,30 +447,20 @@ unsigned int Gpu::shaded_3_pt_opaque()
 
 unsigned int Gpu::shaded_4_pt_opaque()
 {
-	if (gp0_command_queue.size() < 8)
+	if (gp0_fifo.size() < 8)
 	{
 		return 0;
 	}
 
-	color_command color0(gp0_command_queue[0]);
-	color_command color1(gp0_command_queue[2]);
-	color_command color2(gp0_command_queue[4]);
-	color_command color3(gp0_command_queue[6]);
+	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
+	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
+	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
+	glm::ivec2 v3(gp0_fifo[7].vert.x, gp0_fifo[7].vert.y);
 
-	vert_command vert0(gp0_command_queue[1]);
-	vert_command vert1(gp0_command_queue[3]);
-	vert_command vert2(gp0_command_queue[5]);
-	vert_command vert3(gp0_command_queue[7]);
-
-	glm::ivec2 v0(vert0.x, vert0.y);
-	glm::ivec2 v1(vert1.x, vert1.y);
-	glm::ivec2 v2(vert2.x, vert2.y);
-	glm::ivec2 v3(vert3.x, vert3.y);
-
-	glm::u8vec3 rgb0(color0.r, color0.g, color0.b);
-	glm::u8vec3 rgb1(color1.r, color1.g, color1.b);
-	glm::u8vec3 rgb2(color2.r, color2.g, color2.b);
-	glm::u8vec3 rgb3(color3.r, color3.g, color3.b);
+	glm::u8vec3 rgb0(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+	glm::u8vec3 rgb1(gp0_fifo[2].color.r, gp0_fifo[2].color.g, gp0_fifo[2].color.b);
+	glm::u8vec3 rgb2(gp0_fifo[4].color.r, gp0_fifo[4].color.g, gp0_fifo[4].color.b);
+	glm::u8vec3 rgb3(gp0_fifo[6].color.r, gp0_fifo[6].color.g, gp0_fifo[6].color.b);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
@@ -491,25 +473,19 @@ unsigned int Gpu::shaded_4_pt_opaque()
 
 unsigned int Gpu::tex_4_pt_opaque_blend()
 {
-	if (gp0_command_queue.size() < 9)
+	if (gp0_fifo.size() < 9)
 	{
 		return 0;
 	}
 
-	color_command color0(gp0_command_queue[0]);
 	// todo texture coords + palette
 
-	vert_command vert0(gp0_command_queue[1]);
-	vert_command vert1(gp0_command_queue[3]);
-	vert_command vert2(gp0_command_queue[5]);
-	vert_command vert3(gp0_command_queue[7]);
+	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
+	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
+	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
+	glm::ivec2 v3(gp0_fifo[7].vert.x, gp0_fifo[7].vert.y);
 
-	glm::ivec2 v0(vert0.x, vert0.y);
-	glm::ivec2 v1(vert1.x, vert1.y);
-	glm::ivec2 v2(vert2.x, vert2.y);
-	glm::ivec2 v3(vert3.x, vert3.y);
-
-	glm::u8vec3 rgb(color0.r, color0.g, color0.b);
+	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
@@ -534,10 +510,10 @@ unsigned int Gpu::set_draw_bottom_right()
 
 unsigned int Gpu::set_drawing_offset()
 {
-	draw_offset_command offset(gp0_command_queue.front());
+	gp_command offset(gp0_fifo.front());
 
-	x_offset = offset.x_offset;
-	y_offset = offset.y_offset;
+	x_offset = offset.draw_offset.x_offset;
+	y_offset = offset.draw_offset.y_offset;
 
 	return 1;
 }
@@ -547,14 +523,14 @@ unsigned int Gpu::set_draw_mode()
 	// the command only sets about half the gpu status values
 	// it conveniently follows the same bit pattern up until texture disable
 	// which I believe we can ignore according to the problemkaputt.de documentation
-	gpu_status_union new_status(gp0_command_queue.front());
+	/*gpu_status_union new_status(gp0_fifo.front());
 
 	gpu_status.tex_page_x_base = new_status.tex_page_x_base;
 	gpu_status.tex_page_y_base = new_status.tex_page_y_base;
 	gpu_status.semi_transparency = new_status.semi_transparency;
 	gpu_status.tex_page_colors = new_status.tex_page_colors;
 	gpu_status.dither = new_status.dither;
-	gpu_status.drawing_to_display_area = new_status.drawing_to_display_area;
+	gpu_status.drawing_to_display_area = new_status.drawing_to_display_area;*/
 
 	// ignoring all other values for the moment
 
@@ -581,29 +557,29 @@ unsigned int Gpu::clear_cache()
 
 unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 {
-	if (gp0_command_queue.size() >= 3)
+	if (gp0_fifo.size() >= 3)
 	{
-		dest_coord_command dest_coord(gp0_command_queue[1]);
-		width_height_command width_height(gp0_command_queue[2]);
-		unsigned int num_halfwords_to_copy = width_height.x_siz*width_height.y_siz;
+		gp_command dest_coord(gp0_fifo[1]);
+		unsigned int num_halfwords_to_copy = gp0_fifo[2].width_height.x_siz*gp0_fifo[2].width_height.y_siz;
+
 		// round up as there should be padding if the number of halfwords is odd
 		unsigned int num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
 
 		unsigned int expected_size = num_words_to_copy + 3;
-		if (gp0_command_queue.size() >=  expected_size)
+		if (gp0_fifo.size() >=  expected_size)
 		{
 			// we are just going to pop the data of the deque in this function to
-			// simply things
-			gp0_command_queue.pop_front();
-			gp0_command_queue.pop_front();
-			gp0_command_queue.pop_front();
+			// simplify things
+			gp0_fifo.pop_front();
+			gp0_fifo.pop_front();
+			gp0_fifo.pop_front();
 			
 			unsigned int x = 0;
 			unsigned int y = 0;
 			while (num_words_to_copy)
 			{
-				unsigned int data = gp0_command_queue.front();
-				gp0_command_queue.pop_front();
+				unsigned int data = gp0_fifo.front().raw;
+				gp0_fifo.pop_front();
 
 				// todo verify
 				/*for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
@@ -630,7 +606,7 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 
 unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
 {
-	if (gp0_command_queue.size() >= 3)
+	if (gp0_fifo.size() >= 3)
 	{
 		gpu_status.ready_vram_to_cpu = true;
 		// todo implement
@@ -638,65 +614,4 @@ unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
 	}
 
 	return 0;
-}
-
-void Gpu::reset_gpu(unsigned int command)
-{
-
-}
-
-void Gpu::reset_command_buffer(unsigned int command)
-{
-	gp0_command_queue.clear();
-}
-
-void Gpu::ack_gpu_interrupt(unsigned int command)
-{
-
-}
-
-void Gpu::display_enable(unsigned int command)
-{
-	// 0 = on, 1 = off bizarrely
-	gpu_status.display_enable = 0x00000001 & command;
-}
-
-void Gpu::dma_direction(unsigned int command)
-{
-	gpu_status.dma_direction = 0x00000003 & command;
-}
-
-void Gpu::start_display_area(unsigned int command)
-{
-
-}
-
-void Gpu::horizontal_display_range(unsigned int command)
-{
-
-}
-
-void Gpu::vertical_display_range(unsigned int command)
-{
-
-}
-
-void Gpu::display_mode(unsigned int command)
-{
-
-}
-
-void Gpu::get_gpu_info(unsigned int command)
-{
-
-}
-
-void Gpu::new_texture_disable(unsigned int command)
-{
-
-}
-
-void Gpu::special_texture_disable(unsigned int command)
-{
-
 }
