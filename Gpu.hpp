@@ -96,17 +96,22 @@ public:
 	int x_offset = 0;
 	int y_offset = 0;
 
+	unsigned int draw_area_min_x = 0;
+	unsigned int draw_area_min_y = 0;
+	unsigned int draw_area_max_x = 0;
+	unsigned int draw_area_max_y = 0;
+
 private:
 	void execute_gp0_commands();
 	void add_gp0_command(gp_command command, bool via_dma);
 	void execute_gp1_command(gp_command command);
 
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2);
-	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb);
+	void draw_rectangle(glm::ivec2 top_left, glm::ivec2 width_height, glm::u8vec3 rgb);
+	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offsets = false);
 	glm::vec3 calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2);
 
 	// GP0 commands
-	unsigned int nop();
 	unsigned int set_draw_top_left();
 	unsigned int set_draw_bottom_right();
 	unsigned int set_drawing_offset();
@@ -122,4 +127,6 @@ private:
 	unsigned int mono_4_pt_opaque();
 	unsigned int shaded_4_pt_opaque();
 	unsigned int tex_4_pt_opaque_blend();
+
+	unsigned int fill_rect();
 };

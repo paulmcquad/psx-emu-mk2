@@ -169,14 +169,13 @@ void Gpu::execute_gp0_commands()
 {
 	while (gp0_fifo.empty() == false)
 	{
-		gp_command current_command = gp0_fifo.front();
-
+		gp0_commands current_command = static_cast<gp0_commands>(gp0_fifo.front().color.op);
 		unsigned int commands_to_remove = 0;
-		switch (static_cast<gp0_commands>(current_command.color.op))
+		switch (current_command)
 		{
 			case gp0_commands::NOP:
 			{
-				commands_to_remove = nop();
+				commands_to_remove = 1;
 			} break;
 
 			case gp0_commands::DRAW_MODE:
@@ -242,6 +241,11 @@ void Gpu::execute_gp0_commands()
 			case gp0_commands::TEX_4_OPAQUE_TEX_BLEND:
 			{
 				commands_to_remove = tex_4_pt_opaque_blend();
+			} break;
+
+			case gp0_commands::FILL_RECT:
+			{
+				commands_to_remove = fill_rect();
 			} break;
 
 			default:
@@ -362,10 +366,35 @@ void Gpu::draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3
 	}
 }
 
-void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb)
+void Gpu::draw_rectangle(glm::ivec2 top_left, glm::ivec2 width_height, glm::u8vec3 rgb)
 {
-	unsigned int x = v.x;
-	unsigned int y = v.y;
+	for (int y = top_left.y; y <= (top_left.y + width_height.y); y++)
+	{
+		for (int x = top_left.x; x <= (top_left.x + width_height.x); x++)
+		{
+			glm::ivec2 cur_pos = glm::ivec2(x, y);
+			draw_pixel(cur_pos, rgb, true);
+		}
+	}
+}
+
+void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offset)
+{
+	int x = static_cast<int>(v.x) + x_offset;
+	int y = static_cast<int>(v.y) + y_offset;
+
+	if (ignore_draw_offset == false)
+	{
+		if (x < draw_area_min_x || x > draw_area_max_x)
+		{
+			return;
+		}
+
+		if (y < draw_area_min_y || y > draw_area_max_y)
+		{
+			return;
+		}
+	}
 
 	if (x >= 0 && x < width)
 	{
@@ -394,11 +423,6 @@ glm::vec3 Gpu::calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, gl
 	w[2] = 1 - w[0] - w[1];
 
 	return w;
-}
-
-unsigned int Gpu::nop()
-{
-	return 1;
 }
 
 unsigned int Gpu::mono_4_pt_opaque()
@@ -496,15 +520,39 @@ unsigned int Gpu::tex_4_pt_opaque_blend()
 	return 9;
 }
 
+unsigned int Gpu::fill_rect()
+{
+	if (gp0_fifo.size() < 3)
+	{
+		return 0;
+	}
+
+	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+	glm::ivec2 top_left(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
+	glm::ivec2 width_height(gp0_fifo[1].dims.x_siz, gp0_fifo[1].dims.y_siz);
+
+	draw_rectangle(top_left, width_height, rgb);
+
+	return 3;
+}
+
 unsigned int Gpu::set_draw_top_left()
 {
-	// todo
+	gp_command top_left(gp0_fifo.front());
+
+	draw_area_min_x = top_left.draw_area.x_coord;
+	draw_area_min_y = top_left.draw_area.y_coord;
+
 	return 1;
 }
 
 unsigned int Gpu::set_draw_bottom_right()
 {
-	// todo
+	gp_command bottom_right(gp0_fifo.front());
+
+	draw_area_max_x = bottom_right.draw_area.x_coord;
+	draw_area_max_y = bottom_right.draw_area.y_coord;
+
 	return 1;
 }
 
@@ -560,7 +608,7 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 	if (gp0_fifo.size() >= 3)
 	{
 		gp_command dest_coord(gp0_fifo[1]);
-		unsigned int num_halfwords_to_copy = gp0_fifo[2].width_height.x_siz*gp0_fifo[2].width_height.y_siz;
+		unsigned int num_halfwords_to_copy = gp0_fifo[2].dims.x_siz*gp0_fifo[2].dims.y_siz;
 
 		// round up as there should be padding if the number of halfwords is odd
 		unsigned int num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);

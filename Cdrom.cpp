@@ -4,11 +4,13 @@
 #include "Cdrom.hpp"
 
 // https://en.wikipedia.org/wiki/CD-ROM
+// http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
+// https://problemkaputt.de/psx-spx.htm#cdromdrive
 constexpr unsigned int SECTOR_SIZE = 2352;
-
 constexpr unsigned int CDROM_PORT_START = 0x1F801800;
-
 constexpr unsigned int STATUS_REGISTER = 0x1F801800 - CDROM_PORT_START;
+
+constexpr unsigned int CD_VERSION = 0xC0181194;
 
 // audio registers
 constexpr unsigned int VOL_LEFT_CD_TO_LEFT_SPU_REGISTER = 0x1F801802 - CDROM_PORT_START;

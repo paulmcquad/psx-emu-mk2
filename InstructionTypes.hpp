@@ -81,11 +81,22 @@ union gp_command
 
 	struct
 	{
+		unsigned int x_coord : 10;
+		unsigned int y_coord : 9;
+		unsigned int na1 : 5;
+		// only on newer GPUs
+		unsigned int y_coord2 : 10;
+		unsigned int na2 : 4;
+		unsigned int op : 8;
+	} draw_area;
+
+	struct
+	{
 		unsigned int x_siz : 10;
 		unsigned int na0 : 6;
 		unsigned int y_siz : 9;
 		unsigned int na1 : 7;
-	} width_height;
+	} dims;
 
 	struct
 	{
