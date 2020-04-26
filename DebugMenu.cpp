@@ -7,11 +7,12 @@
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "Ram.hpp"
+#include "IOPorts.hpp"
 
 #include <sstream>
 #include <iomanip>
 
-void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram)
+void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram, std::shared_ptr<IOPorts> _ioports)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -24,6 +25,7 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 	cpu = _cpu;
 	gpu = _gpu;
 	ram = _ram;
+	io_ports = _ioports;
 }
 
 void DebugMenu::uninit()
@@ -46,7 +48,7 @@ void DebugMenu::draw()
 
 	draw_controls_menu();
 
-	draw_ram_menu();
+	draw_interrupt_menu();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -201,41 +203,95 @@ void DebugMenu::draw_controls_menu()
 	ImGui::End();
 }
 
-void DebugMenu::draw_ram_menu()
+void DebugMenu::draw_interrupt_menu()
 {
-	ImGui::Begin("RAM");
-
-	static int address_of_interest = 0x00138d04;
-	ImGui::InputInt("Address (hex)", &address_of_interest , 4, 100, ImGuiInputTextFlags_CharsHexadecimal);
-
-	static bool pause_on_write = false;
-	ImGui::Checkbox("Pause on write (roughly)", &pause_on_write);
-	
-	{
-		static unsigned int prev_value = 0x0;
-		unsigned int value = ram->load_word(address_of_interest);
-
-		std::stringstream text;
-		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << value;
-		ImGui::Text(text.str().c_str());
-
-		if (prev_value != value && pause_on_write == true)
-		{
-			paused_requested = true;
-		}
-
-		prev_value = value;
-	}
+	ImGui::Begin("Interrupts");
 
 	{
 		std::stringstream text;
-		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << ram->load_halfword(address_of_interest);
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ0_VBLANK;
+		bool irq = io_ports->interrupt_status_register.values.IRQ0_VBLANK;
+		text << "IRQ0_VBLANK: " <<  (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)ram->load_byte(address_of_interest);
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ1_GPU;
+		bool irq = io_ports->interrupt_status_register.values.IRQ1_GPU;
+		text << "IRQ1_GPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ2_CDROM;
+		bool irq = io_ports->interrupt_status_register.values.IRQ2_CDROM;
+		text << "IRQ2_CDROM: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ3_DMA;
+		bool irq = io_ports->interrupt_status_register.values.IRQ3_DMA;
+		text << "IRQ3_DMA: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ4_TMR0;
+		bool irq = io_ports->interrupt_status_register.values.IRQ4_TMR0;
+		text << "IRQ4_TMR0: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ5_TMR1;
+		bool irq = io_ports->interrupt_status_register.values.IRQ5_TMR1;
+		text << "IRQ5_TMR1: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ6_TMR2;
+		bool irq = io_ports->interrupt_status_register.values.IRQ6_TMR2;
+		text << "IRQ6_TMR2: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ7_CTRL_MEM_CRD;
+		bool irq = io_ports->interrupt_status_register.values.IRQ7_CTRL_MEM_CRD;
+		text << "IRQ7_CTRL_MEM_CRD: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ8_SIO;
+		bool irq = io_ports->interrupt_status_register.values.IRQ8_SIO;
+		text << "IRQ8_SIO: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ9_SPU;
+		bool irq = io_ports->interrupt_status_register.values.IRQ9_SPU;
+		text << "IRQ9_SPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
+		ImGui::Text(text.str().c_str());
+	}
+
+	{
+		std::stringstream text;
+		bool enabled = io_ports->interrupt_mask_register.values.IRQ10_LIGHTPEN;
+		bool irq = io_ports->interrupt_status_register.values.IRQ10_LIGHTPEN;
+		text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 

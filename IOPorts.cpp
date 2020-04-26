@@ -190,7 +190,8 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
 	{
-		interrupt_status_register.bytes[address - I_STAT_START] = value;
+		// setting this register is more like an AND operation
+		interrupt_status_register.bytes[address - I_STAT_START] &= value;
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)

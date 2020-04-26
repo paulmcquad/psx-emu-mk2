@@ -32,7 +32,6 @@ public:
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);
 
-private:
 	std::shared_ptr<Gpu> gpu = nullptr;
 	std::shared_ptr<Dma> dma = nullptr;
 	std::shared_ptr<Spu> spu = nullptr;
