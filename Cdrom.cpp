@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
+#include "Exceptions.hpp"
 #include "Cdrom.hpp"
 
 // https://en.wikipedia.org/wiki/CD-ROM
@@ -50,6 +51,11 @@ void Cdrom::init()
 void Cdrom::tick()
 {
 
+}
+
+void Cdrom::trigger_pending_interrupts()
+{
+	
 }
 
 void Cdrom::save_state(std::ofstream& file)

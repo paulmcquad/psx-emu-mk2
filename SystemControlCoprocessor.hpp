@@ -192,6 +192,8 @@ public:
 	unsigned int get_control_register(register_names register_name);
 	void set_control_register(register_names register_name, unsigned int value);
 
+	void trigger_pending_interrupts();
+
 private:
 	unsigned int get_control_register(unsigned int index);
 	void set_control_register(unsigned int index, unsigned int value);

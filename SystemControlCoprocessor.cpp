@@ -5,6 +5,8 @@
 #include "InstructionEnums.hpp"
 #include "Ram.hpp"
 #include "Cpu.hpp"
+#include "IOPorts.hpp"
+#include "Cdrom.hpp"
 #include "Exceptions.hpp"
 
 SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
@@ -97,6 +99,11 @@ unsigned int SystemControlCoprocessor::get_control_register(unsigned int index)
 void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned int value)
 {
 	control_registers[index] = value;
+}
+
+void SystemControlCoprocessor::trigger_pending_interrupts()
+{
+	ram->io_ports->cdrom->trigger_pending_interrupts();
 }
 
 // LWCz rt, offset(base)

@@ -28,6 +28,8 @@ public:
 	unsigned short load_halfword(unsigned int address);
 	unsigned int load_word(unsigned int address);
 
+	std::shared_ptr<IOPorts> io_ports;
+
 private:
 	void set_byte(unsigned int address, unsigned char value);
 	unsigned char get_byte(unsigned int address);
@@ -38,5 +40,4 @@ private:
 	unsigned char scratch_pad[SCRATCH_PAD_SIZE] = { 0 };
 	unsigned char bios[BIOS_SIZE] = { 0 };
 	unsigned char cache_control[CACHE_CONTROL_SIZE] = { 0 };
-	std::shared_ptr<IOPorts> io_ports;
 };

@@ -52,6 +52,8 @@ public:
 
 	void tick();
 
+	void trigger_pending_interrupts();
+
 	unsigned char get_index0(unsigned int address);
 	unsigned char get_index1(unsigned int address);
 	unsigned char get_index2(unsigned int address);

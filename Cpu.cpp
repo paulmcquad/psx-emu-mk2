@@ -66,6 +66,7 @@ void Cpu::tick()
 	{
 		instruction_union instr(current_instruction);
 		execute(instr);
+		cop0->trigger_pending_interrupts();
 	}
 	catch(mips_sys_call& /*e*/)
 	{
