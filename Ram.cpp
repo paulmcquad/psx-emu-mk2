@@ -154,7 +154,7 @@ void Ram::set_byte(unsigned int address, unsigned char value)
 	{
 		if (address > KSEG2_START + 512)
 		{
-			throw bus_error();
+			throw mips_bus_error_DBE();
 		}
 		cache_control[address - KSEG2_START] = value;
 		return;
@@ -182,7 +182,7 @@ void Ram::set_byte(unsigned int address, unsigned char value)
 	}
 	else
 	{
-		throw bus_error();
+		throw mips_bus_error_DBE();
 	}
 }
 
@@ -209,7 +209,7 @@ unsigned char Ram::get_byte(unsigned int address)
 	{
 		if (address > KSEG2_START + 512)
 		{
-			throw bus_error();
+			throw mips_bus_error_DBE();
 		}
 		return cache_control[address - KSEG2_START];
 	} break;
@@ -235,5 +235,5 @@ unsigned char Ram::get_byte(unsigned int address)
 		return bios[address - BIOS_START];
 	}
 
-	throw bus_error();
+	throw mips_bus_error_DBE();
 }

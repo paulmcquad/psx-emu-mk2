@@ -156,7 +156,7 @@ unsigned char IOPorts::get(unsigned int address)
 	}
 	else
 	{
-		throw bus_error();
+		throw mips_bus_error_DBE();
 	}
 }
 
@@ -191,7 +191,7 @@ void IOPorts::set(unsigned int address, unsigned char value)
 		address < I_STAT_END)
 	{
 		// setting this register is more like an AND operation
-		interrupt_status_register.bytes[address - I_STAT_START] &= value;
+		interrupt_status_register.bytes[address - I_STAT_START] = value;
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)
@@ -230,6 +230,6 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	}
 	else
 	{
-		throw bus_error();
+		throw mips_bus_error_DBE();
 	}
 }

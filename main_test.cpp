@@ -56,13 +56,13 @@ TEST_CASE("Standard Opcodes")
 		{
 			cpu->register_file.set_register(1, std::numeric_limits<int>::max());
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::max());
-			REQUIRE_THROWS_AS(cpu->execute(instruction), overflow_exception);
+			REQUIRE_THROWS_AS(cpu->execute(instruction), mips_overflow);
 		}
 
 		{
 			cpu->register_file.set_register(1, std::numeric_limits<int>::min());
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::min());
-			REQUIRE_THROWS_AS(cpu->execute(instruction), overflow_exception);
+			REQUIRE_THROWS_AS(cpu->execute(instruction), mips_overflow);
 		}
 
 		{

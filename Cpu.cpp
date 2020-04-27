@@ -27,6 +27,33 @@ void Cpu::reset()
 	register_file.reset();
 }
 
+void Cpu::execute_mips_exception(unsigned int excode)
+{
+	SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
+	cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
+
+	if (in_delay_slot) {
+		cause.BD = true;
+		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc - 4);
+	}
+
+	SystemControlCoprocessor::status_register sr = cop0->get<SystemControlCoprocessor::status_register>();
+	next_pc = static_cast<unsigned int>(sr.BEV == 0 ? SystemControlCoprocessor::exception_vector::GENERAL_BEV0 : SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
+
+	unsigned int mode = sr.raw & 0x3f;
+	sr.raw &= ~0x3f;
+	sr.raw |= (mode << 2) & 0x3f;
+
+	cop0->set<SystemControlCoprocessor::status_register>(sr);
+
+	cause.Excode = excode;
+
+	cop0->set<SystemControlCoprocessor::cause_register>(cause);
+
+	// dump the next instruction
+	next_instruction = 0x0;
+}
+
 void Cpu::tick()
 {
 	current_pc = next_pc;
@@ -40,30 +67,21 @@ void Cpu::tick()
 		instruction_union instr(current_instruction);
 		execute(instr);
 	}
-	catch(sys_call& /*e*/)
+	catch(mips_sys_call& /*e*/)
 	{
-		SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
-		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
-
-		if (in_delay_slot) {
-			cause.BD = true;
-			cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc - 4);
-		}
-
-		SystemControlCoprocessor::status_register sr = cop0->get<SystemControlCoprocessor::status_register>();
-		next_pc = static_cast<unsigned int>(sr.BEV == 0 ? SystemControlCoprocessor::exception_vector::GENERAL_BEV0 : SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
-
-		unsigned int mode = sr.raw & 0x3f;
-		sr.raw &= ~0x3f;
-		sr.raw |= (mode << 2) & 0x3f;
-
-		cop0->set<SystemControlCoprocessor::status_register>(sr);
-		
-		cause.Excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall);
-		cop0->set<SystemControlCoprocessor::cause_register>(cause);
-
-		// dump the next instruction
-		next_instruction = 0x0;
+		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall));
+	}
+	catch (mips_overflow& /*e*/)
+	{
+		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov));
+	}
+	catch (mips_interrupt& /*e*/)
+	{
+		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::INT));
+	}
+	catch (mips_bus_error_DBE& /*e*/)
+	{
+		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::DBE));
 	}
 	catch (...)
 	{
@@ -128,14 +146,14 @@ void Cpu::execute(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 				else if (immediate < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 			}
@@ -454,14 +472,14 @@ void Cpu::execute_special(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 				else if (rt_value < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 			}
@@ -488,7 +506,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::BREAK:
 		{
-			throw breakpoint_exception();
+			throw mips_breakpoint();
 		} break;
 
 		case cpu_special_funcs::DIV:
@@ -680,14 +698,14 @@ void Cpu::execute_special(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 				else if (rt_value < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw overflow_exception();
+						throw mips_overflow();
 					}
 				}
 			}
@@ -705,7 +723,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::SYSCALL:
 		{
-			throw sys_call();
+			throw mips_sys_call();
 		} break;
 
 		case cpu_special_funcs::XOR:
