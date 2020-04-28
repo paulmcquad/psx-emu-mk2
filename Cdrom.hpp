@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <deque>
 
 enum class cdrom_command : unsigned char
 {
@@ -37,6 +38,26 @@ enum class cdrom_command : unsigned char
 	GetQ = 0x1D,
 	ReadTOC = 0x1E,
 	VideoCD = 0x1F,
+};
+
+enum class cdrom_response_interrupts : unsigned char
+{
+	// INT0
+	NO_RESPONSE = 0,
+	// INT1
+	SECOND_RESPONSE_READ = 1,
+	// INT2
+	SECOND_RESPONSE = 2,
+	// INT3
+	FIRST_RESPONSE = 3,
+	// INT4
+	DATA_END = 4,
+	// INT5
+	ERROR_CODE = 5,
+
+	// N/A
+	INT6 = 6,
+	INT7 = 7
 };
 
 class Cdrom
@@ -147,47 +168,14 @@ private:
 		} values;
 	} interrupt_enable_register;
 
-	struct
-	{
-		std::vector<unsigned char> data;
-		int index = 0;
+	std::deque<unsigned char> response_fifo;
+	std::deque<unsigned char> data_fifo;
+	std::deque<unsigned char> parameter_fifo;
 
-		void clear()
-		{
-			// todo
-		}
+	std::deque<cdrom_response_interrupts> response_interrupt_queue;
 
-		unsigned char get_next_byte()
-		{
-			// todo
-			return 0;
-		}
-	} response_fifo;
+	unsigned char get_next_response_byte();
+	unsigned char get_next_data_byte();
 
-	struct
-	{
-		std::vector<unsigned char> data;
-		int index = 0;
-
-		void clear()
-		{
-			// todo
-		}
-
-		unsigned char get_next_byte()
-		{
-			// todo
-			return 0;
-		}
-	} data_fifo;
-
-	struct
-	{
-		void set_next_byte(unsigned char value)
-		{
-			// todo
-		}
-	} parameter_fifo;
-
-	unsigned char command_register = 0x0;
+	void execute_command(unsigned char command);
 };

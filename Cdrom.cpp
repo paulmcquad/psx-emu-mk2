@@ -28,18 +28,14 @@ constexpr unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
 constexpr unsigned int REQUEST_REGISTER = 0x1F801803 - CDROM_PORT_START;
 
 constexpr unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803 - CDROM_PORT_START;
-constexpr unsigned int INTERRUPT_ENABLE_REGISTER = 0x1F801802 - CDROM_PORT_START;
+constexpr unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802 - CDROM_PORT_START;
+constexpr unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803 - CDROM_PORT_START;
 
 constexpr unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801 - CDROM_PORT_START;
-
-constexpr unsigned int DATA_FIFO_SIZE = 4096;
-constexpr unsigned int RESPONSE_FIFO_SIZE = 16;
+constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
 
 void Cdrom::init()
 {
-	data_fifo.data.resize(DATA_FIFO_SIZE);
-	response_fifo.data.resize(RESPONSE_FIFO_SIZE);
-
 	status_register.raw = 0x0;
 	status_register.values.PRMEMPT = 1;
 
@@ -145,14 +141,19 @@ unsigned char Cdrom::get_index0(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_ENABLE_REGISTER:
+		case INTERRUPT_ENABLE_REGISTER_READ:
 		{
 			return interrupt_enable_register.raw;
 		} break;
 
+		case DATA_FIFO_REGISTER:
+		{
+			return get_next_data_byte();
+		} break;
+
 		case RESPONSE_FIFO_REGISTER:
 		{
-			return response_fifo.get_next_byte();
+			return get_next_response_byte();
 		} break;
 
 		default:
@@ -169,9 +170,14 @@ unsigned char Cdrom::get_index1(unsigned int address)
 			return interrupt_flag_response_register.raw;
 		} break;
 
+		case DATA_FIFO_REGISTER:
+		{
+			return get_next_data_byte();
+		} break;
+
 		case RESPONSE_FIFO_REGISTER:
 		{
-			return response_fifo.get_next_byte();
+			return get_next_response_byte();
 		} break;
 
 		default:
@@ -183,14 +189,19 @@ unsigned char Cdrom::get_index2(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_ENABLE_REGISTER:
+		case INTERRUPT_ENABLE_REGISTER_READ:
 		{
 			return interrupt_enable_register.raw;
 		} break;
 
+		case DATA_FIFO_REGISTER:
+		{
+			return get_next_data_byte();
+		} break;
+
 		case RESPONSE_FIFO_REGISTER:
 		{
-			return response_fifo.get_next_byte();
+			return get_next_response_byte();
 		} break;
 
 		default:
@@ -207,9 +218,14 @@ unsigned char Cdrom::get_index3(unsigned int address)
 			return interrupt_flag_response_register.raw;
 		} break;
 
+		case DATA_FIFO_REGISTER:
+		{
+			return get_next_data_byte();
+		} break;
+
 		case RESPONSE_FIFO_REGISTER:
 		{
-			return response_fifo.get_next_byte();
+			return get_next_response_byte();
 		} break;
 
 	default:
@@ -223,12 +239,12 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 	{
 		case COMMAND_REGISTER:
 		{
-			command_register = value;
+			execute_command(value);
 		} break;
 
 		case PARAMETER_FIFO_REGISTER:
 		{
-			parameter_fifo.set_next_byte(value);
+			parameter_fifo.push_back(value);
 		} break;
 
 		case REQUEST_REGISTER:
@@ -250,7 +266,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 			sound_map_out = value;
 		} break;
 
-		case INTERRUPT_ENABLE_REGISTER:
+		case INTERRUPT_ENABLE_REGISTER_WRITE:
 		{
 			interrupt_enable_register.raw = value;
 		} break;
@@ -304,5 +320,35 @@ void Cdrom::set_index3(unsigned int address, unsigned char value)
 
 		default:
 			throw std::logic_error("not implemented");
+	}
+}
+
+unsigned char Cdrom::get_next_response_byte()
+{
+	unsigned char response_byte = 0x0;
+	if (response_fifo.empty() == false)
+	{
+		response_byte = response_fifo.front();
+		response_fifo.pop_front();
+
+		status_register.values.RSLRRDY = (response_fifo.empty() == false);
+	}
+	return response_byte;
+}
+
+unsigned char Cdrom::get_next_data_byte()
+{
+	// todo
+	return 0;
+}
+
+void Cdrom::execute_command(unsigned char command)
+{
+	cdrom_command command_enum = static_cast<cdrom_command>(command);
+
+	switch (command_enum)
+	{
+		/*default:
+			throw std::logic_error("not implemented");*/
 	}
 }
