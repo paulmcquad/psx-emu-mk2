@@ -408,6 +408,11 @@ void Cdrom::execute_getid_command()
 {
 	execute_getstat_command();
 
+	response_fifo.push_back(0x02);
+	response_fifo.push_back(0x00);
+	response_fifo.push_back(0x20);
+	response_fifo.push_back(0x00);
+
 	// report as licenced cd
 	response_fifo.push_back(0x53); // S
 	response_fifo.push_back(0x43); // C
