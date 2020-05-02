@@ -357,6 +357,16 @@ void Cdrom::execute_command(unsigned char command)
 			execute_test_command();
 		} break;
 
+		case cdrom_command::Getstat:
+		{
+			execute_getstat_command();
+		} break;
+
+		case cdrom_command::GetID:
+		{
+			execute_getid_command();
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -385,4 +395,23 @@ void Cdrom::execute_test_command()
 	{
 		throw std::logic_error("not implemented");
 	}
+}
+
+void Cdrom::execute_getstat_command()
+{
+	// treated like a nop
+	response_fifo.push_back(0x0);
+	response_interrupt_queue.push_back(cdrom_response_interrupts::FIRST_RESPONSE);
+}
+
+void Cdrom::execute_getid_command()
+{
+	execute_getstat_command();
+
+	// report as licenced cd
+	response_fifo.push_back(0x53); // S
+	response_fifo.push_back(0x43); // C
+	response_fifo.push_back(0x45); // E
+	response_fifo.push_back(0x41); // A
+	response_interrupt_queue.push_back(cdrom_response_interrupts::SECOND_RESPONSE);
 }

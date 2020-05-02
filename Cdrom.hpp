@@ -179,4 +179,6 @@ private:
 
 	void execute_command(unsigned char command);
 	void execute_test_command();
+	void execute_getstat_command();
+	void execute_getid_command();
 };
