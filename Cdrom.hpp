@@ -60,6 +60,12 @@ enum class cdrom_response_interrupts : unsigned char
 	INT7 = 7
 };
 
+enum class cdrom_response_timings : unsigned int
+{
+	FIRST_RESPONSE_DELAY = 0xC4E1,
+	SECOND_REPONSE_DELAY = 0x4a00
+};
+
 class Cdrom
 {
 public:
@@ -172,7 +178,7 @@ private:
 	std::deque<unsigned char> data_fifo;
 	std::deque<unsigned char> parameter_fifo;
 
-	std::deque<cdrom_response_interrupts> response_interrupt_queue;
+	std::deque<std::pair<unsigned int, cdrom_response_interrupts>> response_interrupt_queue;
 
 	unsigned char get_next_response_byte();
 	unsigned char get_next_data_byte();

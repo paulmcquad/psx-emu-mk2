@@ -45,13 +45,23 @@ void Cdrom::init()
 void Cdrom::tick()
 {
 	status_register.PRMEMPT = parameter_fifo.empty();
+
+	for (auto & pending_interrupt : response_interrupt_queue)
+	{
+		// count time delay before triggering interrupt
+		if (pending_interrupt.first > 0)
+		{
+			pending_interrupt.first--;
+		}
+	}
 }
 
 void Cdrom::trigger_pending_interrupts()
 {
-	if (response_interrupt_queue.empty() == false)
+	// if interrupt queued and delay time has passed
+	if (response_interrupt_queue.empty() == false && response_interrupt_queue.front().first == 0)
 	{
-		interrupt_flag_register.ack_1_7 = static_cast<unsigned char>(response_interrupt_queue.front());
+		interrupt_flag_register.ack_1_7 = static_cast<unsigned char>(response_interrupt_queue.front().second);
 		response_interrupt_queue.pop_front();
 
 		throw mips_interrupt();
@@ -394,7 +404,8 @@ void Cdrom::execute_test_command()
 		response_fifo.push_back(0x19);
 		response_fifo.push_back(0xC0);
 
-		response_interrupt_queue.push_back(cdrom_response_interrupts::FIRST_RESPONSE);
+		response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
+			cdrom_response_interrupts::FIRST_RESPONSE));
 	}
 	else
 	{
@@ -406,7 +417,8 @@ void Cdrom::execute_getstat_command()
 {
 	// treated like a nop
 	response_fifo.push_back(0x0);
-	response_interrupt_queue.push_back(cdrom_response_interrupts::FIRST_RESPONSE);
+	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
+		cdrom_response_interrupts::FIRST_RESPONSE));
 }
 
 void Cdrom::execute_getid_command()
@@ -423,5 +435,6 @@ void Cdrom::execute_getid_command()
 	response_fifo.push_back(0x43); // C
 	response_fifo.push_back(0x45); // E
 	response_fifo.push_back(0x41); // A
-	response_interrupt_queue.push_back(cdrom_response_interrupts::SECOND_RESPONSE);
+	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
+		cdrom_response_interrupts::SECOND_RESPONSE));
 }
