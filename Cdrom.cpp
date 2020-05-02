@@ -11,8 +11,6 @@ constexpr unsigned int SECTOR_SIZE = 2352;
 constexpr unsigned int CDROM_PORT_START = 0x1F801800;
 constexpr unsigned int STATUS_REGISTER = 0x1F801800 - CDROM_PORT_START;
 
-constexpr unsigned int CD_VERSION = 0xC0181194;
-
 // audio registers
 constexpr unsigned int VOL_LEFT_CD_TO_LEFT_SPU_REGISTER = 0x1F801802 - CDROM_PORT_START;
 constexpr unsigned int VOL_LEFT_CD_TO_RIGHT_SPU_REGISTER = 0x1F801803 - CDROM_PORT_START;
@@ -37,11 +35,11 @@ constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
 void Cdrom::init()
 {
 	status_register.raw = 0x0;
-	status_register.values.PRMEMPT = 1;
+	status_register.PRMEMPT = 1;
 
 	interrupt_enable_register.raw = 0x0;
 	interrupt_flag_response_register.raw = 0x0;
-	interrupt_flag_response_register.values.response = 3;
+	interrupt_flag_response_register.response = 3;
 }
 
 void Cdrom::tick()
@@ -51,7 +49,13 @@ void Cdrom::tick()
 
 void Cdrom::trigger_pending_interrupts()
 {
-	
+	if (response_interrupt_queue.empty() == false)
+	{
+		interrupt_flag_register.ack_1_7 = static_cast<unsigned char>(response_interrupt_queue.front());
+		response_interrupt_queue.pop_front();
+
+		throw mips_interrupt();
+	}
 }
 
 void Cdrom::save_state(std::ofstream& file)
@@ -98,7 +102,7 @@ unsigned char Cdrom::get(unsigned int address)
 	}
 	else
 	{
-		switch (status_register.values.INDEX)
+		switch (status_register.INDEX)
 		{
 			case 0:
 				return get_index0(address);
@@ -119,11 +123,11 @@ void Cdrom::set(unsigned int address, unsigned char value)
 	if (address == STATUS_REGISTER)
 	{
 		// only the index value is writable
-		status_register.values.INDEX = 0x03 & value;
+		status_register.INDEX = 0x03 & value;
 	}
 	else
 	{
-		switch (status_register.values.INDEX)
+		switch (status_register.INDEX)
 		{
 			case 0:
 				return set_index0(address, value);
@@ -331,7 +335,7 @@ unsigned char Cdrom::get_next_response_byte()
 		response_byte = response_fifo.front();
 		response_fifo.pop_front();
 
-		status_register.values.RSLRRDY = (response_fifo.empty() == false);
+		status_register.RSLRRDY = (response_fifo.empty() == false);
 	}
 	return response_byte;
 }
@@ -348,7 +352,37 @@ void Cdrom::execute_command(unsigned char command)
 
 	switch (command_enum)
 	{
-		/*default:
-			throw std::logic_error("not implemented");*/
+		case cdrom_command::Test:
+		{
+			execute_test_command();
+		} break;
+
+		default:
+			throw std::logic_error("not implemented");
+	}
+}
+
+void Cdrom::execute_test_command()
+{
+	// the test to run is determined by the subfunction on the parameter fifo
+	// however, the ps1 only uses 0x20 which returns the cd rom bios version
+	// so no need to implement anything but that
+	unsigned char sub_function = parameter_fifo.front();
+	if (sub_function == 0x20)
+	{
+		// discard parameters from the fifo
+		parameter_fifo.pop_front();
+
+		// push the cd rom bios version onto the response fifo
+		response_fifo.push_back(0x94);
+		response_fifo.push_back(0x09);
+		response_fifo.push_back(0x19);
+		response_fifo.push_back(0xC0);
+
+		response_interrupt_queue.push_back(cdrom_response_interrupts::FIRST_RESPONSE);
+	}
+	else
+	{
+		throw std::logic_error("not implemented");
 	}
 }

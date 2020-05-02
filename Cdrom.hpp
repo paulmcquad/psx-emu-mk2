@@ -108,7 +108,7 @@ private:
 			// Command/parameter transimission busy
 			unsigned int BUSYSTS : 1;
 			
-		} values;
+		};
 		
 	} status_register;
 
@@ -143,7 +143,7 @@ private:
 			unsigned int na1 : 1;
 			unsigned int na2 : 1;
 			unsigned int na3 : 1;
-		} values;
+		};
 	} interrupt_flag_response_register;
 
 	union {
@@ -156,7 +156,7 @@ private:
 			unsigned int na1 : 1;
 			unsigned int reset_param_fifo : 1;
 			unsigned int na2 : 1;
-		} values;
+		};
 	} interrupt_flag_register;
 
 	union {
@@ -165,7 +165,7 @@ private:
 		{
 			unsigned int unknown : 3;
 			unsigned int int_enable : 5;
-		} values;
+		};
 	} interrupt_enable_register;
 
 	std::deque<unsigned char> response_fifo;
@@ -178,4 +178,5 @@ private:
 	unsigned char get_next_data_byte();
 
 	void execute_command(unsigned char command);
+	void execute_test_command();
 };

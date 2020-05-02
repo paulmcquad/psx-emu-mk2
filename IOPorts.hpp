@@ -60,7 +60,7 @@ public:
 			unsigned int IRQ9_SPU : 1;
 			unsigned int IRQ10_LIGHTPEN : 1;
 			unsigned int NA : 21;
-		} values;
+		};
 	} interrupt_status_register, interrupt_mask_register;
 
 	unsigned char timers[TIMER_SIZE] = { 0 };
@@ -84,7 +84,7 @@ public:
 			unsigned int ack_interrupt_enable : 1;
 			unsigned int desired_slot_number : 1;
 			unsigned int na2 : 2;
-		} values;
+		};
 	} joy_ctrl;
 
 	union
@@ -103,6 +103,6 @@ public:
 			unsigned int unknown1 : 2;
 			unsigned int clk_output_polarity : 1;
 			unsigned int unknown2 : 7;
-		} values;
+		};
 	} joy_mode;
 };

@@ -103,7 +103,20 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
-	ram->io_ports->cdrom->trigger_pending_interrupts();
+	std::shared_ptr<IOPorts> io_ports = ram->io_ports;
+
+	if (io_ports->interrupt_mask_register.IRQ2_CDROM)
+	{
+		try
+		{
+			io_ports->cdrom->trigger_pending_interrupts();
+		}
+		catch (mips_interrupt &e)
+		{
+			io_ports->interrupt_status_register.IRQ2_CDROM = true;
+			throw e;
+		}
+	}
 }
 
 // LWCz rt, offset(base)
