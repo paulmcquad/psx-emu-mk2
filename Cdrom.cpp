@@ -44,7 +44,7 @@ void Cdrom::init()
 
 void Cdrom::tick()
 {
-
+	status_register.PRMEMPT = parameter_fifo.empty();
 }
 
 void Cdrom::trigger_pending_interrupts()
@@ -249,6 +249,7 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 		case PARAMETER_FIFO_REGISTER:
 		{
 			parameter_fifo.push_back(value);
+			status_register.PRMWRDY = (parameter_fifo.size() != 16);
 		} break;
 
 		case REQUEST_REGISTER:
@@ -337,6 +338,8 @@ unsigned char Cdrom::get_next_response_byte()
 
 		status_register.RSLRRDY = (response_fifo.empty() == false);
 	}
+
+	status_register.RSLRRDY = (response_fifo.empty() == false);
 	return response_byte;
 }
 
@@ -370,6 +373,8 @@ void Cdrom::execute_command(unsigned char command)
 		default:
 			throw std::logic_error("not implemented");
 	}
+
+	status_register.PRMWRDY = (parameter_fifo.size() != 16);
 }
 
 void Cdrom::execute_test_command()
