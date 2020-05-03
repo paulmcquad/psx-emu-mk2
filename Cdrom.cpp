@@ -38,8 +38,8 @@ void Cdrom::init()
 	status_register.PRMEMPT = 1;
 
 	interrupt_enable_register.raw = 0x0;
-	interrupt_flag_response_register.raw = 0x0;
-	interrupt_flag_response_register.response = 3;
+	interrupt_flag_register.raw = 0x0;
+	interrupt_flag_register.response = 3;
 }
 
 void Cdrom::tick()
@@ -61,7 +61,7 @@ void Cdrom::trigger_pending_interrupts()
 	// if interrupt queued and delay time has passed
 	if (response_interrupt_queue.empty() == false && response_interrupt_queue.front().first == 0)
 	{
-		interrupt_flag_register.ack_1_7 = static_cast<unsigned char>(response_interrupt_queue.front().second);
+		interrupt_flag_register.response = static_cast<unsigned char>(response_interrupt_queue.front().second);
 		response_interrupt_queue.pop_front();
 
 		throw mips_interrupt();
@@ -181,7 +181,7 @@ unsigned char Cdrom::get_index1(unsigned int address)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			return interrupt_flag_response_register.raw;
+			return interrupt_flag_register.raw;
 		} break;
 
 		case DATA_FIFO_REGISTER:
@@ -229,7 +229,7 @@ unsigned char Cdrom::get_index3(unsigned int address)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			return interrupt_flag_response_register.raw;
+			return interrupt_flag_register.raw;
 		} break;
 
 		case DATA_FIFO_REGISTER:
@@ -278,7 +278,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 	{
 		case SOUND_MAP_DATA_OUT_REGISTER:
 		{
-			sound_map_out = value;
+			// TODO sound not implemented yet
 		} break;
 
 		case INTERRUPT_ENABLE_REGISTER_WRITE:
@@ -288,7 +288,10 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			interrupt_flag_register.raw = value;
+			interrupt_response response;
+			response.raw = value;
+
+			interrupt_flag_register.response = 0x0;
 		} break;
 
 		default:
@@ -300,16 +303,10 @@ void Cdrom::set_index2(unsigned int address, unsigned char value)
 {
 	switch (address)
 	{
-		case VOL_LEFT_CD_TO_LEFT_SPU_REGISTER: {
-			volume_left_cd_to_left_spu = value;
-		}	break;
-
-		case VOL_LEFT_CD_TO_RIGHT_SPU_REGISTER: {
-			volume_left_cd_to_right_spu = value;
-		} break;
-
+		case VOL_LEFT_CD_TO_LEFT_SPU_REGISTER:
+		case VOL_LEFT_CD_TO_RIGHT_SPU_REGISTER:
 		case SOUND_MAP_CODING_INFO_REGISTER: {
-			sound_map_coding_info = value;
+			// TODO sound not implemented yet
 		} break;
 
 		default:
@@ -321,16 +318,10 @@ void Cdrom::set_index3(unsigned int address, unsigned char value)
 {
 	switch (address)
 	{
-		case VOL_RIGHT_CD_TO_RIGHT_SPU_REGISTER: {
-			volume_right_cd_to_right_spu = value;
-		}	break;
-
-		case VOL_RIGHT_CD_TO_LEFT_SPU_REGISTER: {
-			volume_right_cd_to_left_spu = value;
-		} break;
-
+		case VOL_RIGHT_CD_TO_RIGHT_SPU_REGISTER:
+		case VOL_RIGHT_CD_TO_LEFT_SPU_REGISTER:
 		case VOL_APPLY_CHANGES_REGISTER: {
-			volume_apply_changes = value;
+			// TODO sound not implemented yet
 		} break;
 
 		default:
@@ -416,7 +407,8 @@ void Cdrom::execute_test_command()
 void Cdrom::execute_getstat_command()
 {
 	// treated like a nop
-	response_fifo.push_back(0x0);
+	// 0x2 means the motor is on
+	response_fifo.push_back(0x2);
 	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
 		cdrom_response_interrupts::FIRST_RESPONSE));
 }

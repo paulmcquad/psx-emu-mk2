@@ -121,22 +121,6 @@ private:
 	unsigned int num_sectors = 0;
 	std::vector<unsigned char> rom_data;
 
-	// Audio controls
-	// 1F801802h.Index2
-	unsigned char volume_left_cd_to_left_spu = 0x0;
-	// 1F801803h.Index2
-	unsigned char volume_left_cd_to_right_spu = 0x0;
-	// 1F801801h.Index3
-	unsigned char volume_right_cd_to_right_spu = 0x0;
-	// 1F801802h.Index3
-	unsigned char volume_right_cd_to_left_spu = 0x0;
-	// 1F801803h.Index3
-	unsigned char volume_apply_changes = 0x0;
-	// 1F801801h.Index1
-	unsigned char sound_map_out = 0x0;
-	// 1F801801h.Index2
-	unsigned char sound_map_coding_info = 0x0;
-
 	// 1F801802h.Index1 
 	// 1F801803h.Index3
 	union {
@@ -150,9 +134,9 @@ private:
 			unsigned int na2 : 1;
 			unsigned int na3 : 1;
 		};
-	} interrupt_flag_response_register;
+	} interrupt_flag_register;
 
-	union {
+	union interrupt_response {
 		unsigned char raw;
 		struct
 		{
@@ -163,7 +147,7 @@ private:
 			unsigned int reset_param_fifo : 1;
 			unsigned int na2 : 1;
 		};
-	} interrupt_flag_register;
+	};
 
 	union {
 		unsigned char raw;
