@@ -276,6 +276,8 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 		case INTERRUPT_FLAG_REGISTER:
 		{
 			interrupt_flag_register_write write = value;
+			// reset response
+			current_response_received &= ~value;
 			
 			if (write.reset_param_fifo)
 			{
