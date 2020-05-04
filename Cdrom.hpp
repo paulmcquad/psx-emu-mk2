@@ -1,6 +1,8 @@
+#pragma once
 #include <string>
 #include <vector>
 #include <deque>
+#include <Fifo.hpp>
 
 enum class cdrom_command : unsigned char
 {
@@ -70,6 +72,7 @@ class Cdrom
 {
 public:
 	void init();
+	~Cdrom();
 
 	void save_state(std::ofstream& file);
 	void load_state(std::ifstream& file);
@@ -91,8 +94,50 @@ public:
 
 	bool load(std::string bin_path, std::string cue_path);
 private:
+
+	unsigned int register_index = 0;
+	unsigned int current_response_received;
+
+	unsigned char interrupt_enable_register = 0x0;
+
+	union interrupt_flag_register_write
+	{
+		unsigned char raw;
+		struct
+		{
+			unsigned int ack_int1_7 : 3;
+			unsigned int ack_int8 : 1;
+			unsigned int ack_int10 : 1;
+			unsigned int na1 : 1;
+			unsigned int reset_param_fifo : 1;
+			unsigned int na2 : 1;
+		};
+
+		interrupt_flag_register_write(unsigned char value)
+		{
+			raw = value;
+		}
+	};
+
+	union interrupt_flag_register_read
+	{
+		unsigned char raw;
+		struct
+		{
+			unsigned int response_received : 3;
+			unsigned int na1 : 1;
+			unsigned int command_start : 1;
+			unsigned int na2 : 3;
+		};
+
+		interrupt_flag_register_read(unsigned char value)
+		{
+			raw = value;
+		}
+	};
+
 	// https://problemkaputt.de/psx-spx.htm#cdromcontrollerioports
-	union
+	union status_register_read
 	{
 		unsigned char raw;
 		struct
@@ -112,15 +157,15 @@ private:
 			// Command/parameter transmission busy
 			unsigned int BUSYSTS : 1;
 		};
-		
-	} status_register;
+
+	};
 
 	unsigned int num_sectors = 0;
 	std::vector<unsigned char> rom_data;
 
-	std::deque<unsigned char> response_fifo;
-	std::deque<unsigned char> data_fifo;
-	std::deque<unsigned char> parameter_fifo;
+	Fifo<unsigned char> * response_fifo = nullptr;
+	Fifo<unsigned char> * data_fifo = nullptr;
+	Fifo<unsigned char> * parameter_fifo = nullptr;
 
 	std::deque<std::pair<unsigned int, cdrom_response_interrupts>> response_interrupt_queue;
 
