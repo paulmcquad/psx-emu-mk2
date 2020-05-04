@@ -18,7 +18,7 @@ public:
 
 	T peek(unsigned int offset = 0)
 	{
-		int index = top_index + offset;
+		unsigned int index = top_index + offset;
 
 		if (index >= max_size)
 		{
