@@ -11,15 +11,6 @@ constexpr unsigned int SECTOR_SIZE = 2352;
 constexpr unsigned int CDROM_PORT_START = 0x1F801800;
 constexpr unsigned int STATUS_REGISTER = 0x1F801800 - CDROM_PORT_START;
 
-// audio registers
-constexpr unsigned int VOL_LEFT_CD_TO_LEFT_SPU_REGISTER = 0x1F801802 - CDROM_PORT_START;
-constexpr unsigned int VOL_LEFT_CD_TO_RIGHT_SPU_REGISTER = 0x1F801803 - CDROM_PORT_START;
-constexpr unsigned int VOL_RIGHT_CD_TO_RIGHT_SPU_REGISTER = 0x1F801801 - CDROM_PORT_START;
-constexpr unsigned int VOL_RIGHT_CD_TO_LEFT_SPU_REGISTER = 0x1F801802 - CDROM_PORT_START;
-constexpr unsigned int VOL_APPLY_CHANGES_REGISTER = 0x1F801803 - CDROM_PORT_START;
-constexpr unsigned int SOUND_MAP_DATA_OUT_REGISTER = 0x1F801801 - CDROM_PORT_START;
-constexpr unsigned int SOUND_MAP_CODING_INFO_REGISTER = 0x1F801801 - CDROM_PORT_START;
-
 // command registers
 constexpr unsigned int COMMAND_REGISTER = 0x1F801801 - CDROM_PORT_START;
 constexpr unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
@@ -36,10 +27,6 @@ void Cdrom::init()
 {
 	status_register.raw = 0x0;
 	status_register.PRMEMPT = 1;
-
-	interrupt_enable_register.raw = 0x0;
-	interrupt_flag_register.raw = 0x0;
-	interrupt_flag_register.response = 3;
 }
 
 void Cdrom::tick()
@@ -61,7 +48,7 @@ void Cdrom::trigger_pending_interrupts()
 	// if interrupt queued and delay time has passed
 	if (response_interrupt_queue.empty() == false && response_interrupt_queue.front().first == 0)
 	{
-		interrupt_flag_register.response = static_cast<unsigned char>(response_interrupt_queue.front().second);
+		//interrupt_flag_register.response = static_cast<unsigned char>(response_interrupt_queue.front().second);
 		response_interrupt_queue.pop_front();
 
 		throw mips_interrupt();
@@ -143,10 +130,8 @@ void Cdrom::set(unsigned int address, unsigned char value)
 				return set_index0(address, value);
 			case 1:
 				return set_index1(address, value);
-			case 2:
-				return set_index2(address, value);
-			case 3:
-				return set_index3(address, value);
+			default:
+				throw std::logic_error("not implemented");
 			}
 	}
 }
@@ -155,11 +140,6 @@ unsigned char Cdrom::get_index0(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_ENABLE_REGISTER_READ:
-		{
-			return interrupt_enable_register.raw;
-		} break;
-
 		case DATA_FIFO_REGISTER:
 		{
 			return get_next_data_byte();
@@ -181,7 +161,7 @@ unsigned char Cdrom::get_index1(unsigned int address)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			return interrupt_flag_register.raw;
+			//throw std::logic_error("not implemented");
 		} break;
 
 		case DATA_FIFO_REGISTER:
@@ -203,11 +183,6 @@ unsigned char Cdrom::get_index2(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_ENABLE_REGISTER_READ:
-		{
-			return interrupt_enable_register.raw;
-		} break;
-
 		case DATA_FIFO_REGISTER:
 		{
 			return get_next_data_byte();
@@ -227,11 +202,6 @@ unsigned char Cdrom::get_index3(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_FLAG_REGISTER:
-		{
-			return interrupt_flag_register.raw;
-		} break;
-
 		case DATA_FIFO_REGISTER:
 		{
 			return get_next_data_byte();
@@ -262,11 +232,6 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 			status_register.PRMWRDY = (parameter_fifo.size() != 16);
 		} break;
 
-		case REQUEST_REGISTER:
-		{
-			throw std::logic_error("not implemented");
-		} break;
-
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -276,54 +241,6 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 {
 	switch (address)
 	{
-		case SOUND_MAP_DATA_OUT_REGISTER:
-		{
-			// TODO sound not implemented yet
-		} break;
-
-		case INTERRUPT_ENABLE_REGISTER_WRITE:
-		{
-			interrupt_enable_register.raw = value;
-		} break;
-
-		case INTERRUPT_FLAG_REGISTER:
-		{
-			interrupt_response response;
-			response.raw = value;
-
-			interrupt_flag_register.response = 0x0;
-		} break;
-
-		default:
-			throw std::logic_error("not implemented");
-	}
-}
-
-void Cdrom::set_index2(unsigned int address, unsigned char value)
-{
-	switch (address)
-	{
-		case VOL_LEFT_CD_TO_LEFT_SPU_REGISTER:
-		case VOL_LEFT_CD_TO_RIGHT_SPU_REGISTER:
-		case SOUND_MAP_CODING_INFO_REGISTER: {
-			// TODO sound not implemented yet
-		} break;
-
-		default:
-			throw std::logic_error("not implemented");
-	}
-}
-
-void Cdrom::set_index3(unsigned int address, unsigned char value)
-{
-	switch (address)
-	{
-		case VOL_RIGHT_CD_TO_RIGHT_SPU_REGISTER:
-		case VOL_RIGHT_CD_TO_LEFT_SPU_REGISTER:
-		case VOL_APPLY_CHANGES_REGISTER: {
-			// TODO sound not implemented yet
-		} break;
-
 		default:
 			throw std::logic_error("not implemented");
 	}

@@ -386,12 +386,12 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offset)
 
 	if (ignore_draw_offset == false)
 	{
-		if (x < draw_area_min_x || x > draw_area_max_x)
+		if (x < static_cast<int>(draw_area_min_x) || x > static_cast<int>(draw_area_max_x))
 		{
 			return;
 		}
 
-		if (y < draw_area_min_y || y > draw_area_max_y)
+		if (y < static_cast<int>(draw_area_min_y) || y > static_cast<int>(draw_area_max_y))
 		{
 			return;
 		}
@@ -503,14 +503,18 @@ unsigned int Gpu::tex_4_pt_opaque_blend()
 		return 0;
 	}
 
-	// todo texture coords + palette
-
 	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
 	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
 	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
 	glm::ivec2 v3(gp0_fifo[7].vert.x, gp0_fifo[7].vert.y);
-
 	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+
+	gp_command texcoord1_palette = gp0_fifo[2];
+	gp_command texcoord2_page = gp0_fifo[4];
+	gp_command texcoord3 = gp0_fifo[6];
+	gp_command texcorrd5 = gp0_fifo[8];
+
+
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
@@ -572,14 +576,14 @@ unsigned int Gpu::set_draw_mode()
 	// the command only sets about half the gpu status values
 	// it conveniently follows the same bit pattern up until texture disable
 	// which I believe we can ignore according to the problemkaputt.de documentation
-	/*gpu_status_union new_status(gp0_fifo.front());
+	gpu_status_union new_status(gp0_fifo.front().raw);
 
 	gpu_status.tex_page_x_base = new_status.tex_page_x_base;
 	gpu_status.tex_page_y_base = new_status.tex_page_y_base;
 	gpu_status.semi_transparency = new_status.semi_transparency;
 	gpu_status.tex_page_colors = new_status.tex_page_colors;
 	gpu_status.dither = new_status.dither;
-	gpu_status.drawing_to_display_area = new_status.drawing_to_display_area;*/
+	gpu_status.drawing_to_display_area = new_status.drawing_to_display_area;
 
 	// ignoring all other values for the moment
 
@@ -608,8 +612,9 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 {
 	if (gp0_fifo.size() >= 3)
 	{
-		gp_command dest_coord(gp0_fifo[1]);
-		unsigned int num_halfwords_to_copy = gp0_fifo[2].dims.x_siz*gp0_fifo[2].dims.y_siz;
+		gp_command dest_coord = gp0_fifo[1];
+		gp_command width_height = gp0_fifo[2];
+		unsigned int num_halfwords_to_copy = width_height.dims.x_siz*width_height.dims.y_siz;
 
 		// round up as there should be padding if the number of halfwords is odd
 		unsigned int num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
@@ -630,20 +635,19 @@ unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
 				unsigned int data = gp0_fifo.front().raw;
 				gp0_fifo.pop_front();
 
-				// todo verify
-				/*for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
+				for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
 				{
 					unsigned short colour_16 = data >> (16 * halfword_offset);
 					unsigned int index = ((y*FRAME_WIDTH) + x);
 					video_ram[index] = colour_16;
 
 					x++;
-					if (x >= width_height.x_siz)
+					if (x >= width_height.dims.x_siz)
 					{
 						x = 0;
 						y++;
 					}
-				}*/
+				}
 
 				num_words_to_copy--;
 			}

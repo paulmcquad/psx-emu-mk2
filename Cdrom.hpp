@@ -88,8 +88,6 @@ public:
 
 	void set_index0(unsigned int address, unsigned char value);
 	void set_index1(unsigned int address, unsigned char value);
-	void set_index2(unsigned int address, unsigned char value);
-	void set_index3(unsigned int address, unsigned char value);
 
 	bool load(std::string bin_path, std::string cue_path);
 private:
@@ -111,52 +109,14 @@ private:
 			unsigned int RSLRRDY : 1;
 			// Data fifo empty
 			unsigned int DRQSTS : 1;
-			// Command/parameter transimission busy
+			// Command/parameter transmission busy
 			unsigned int BUSYSTS : 1;
-			
 		};
 		
 	} status_register;
 
 	unsigned int num_sectors = 0;
 	std::vector<unsigned char> rom_data;
-
-	// 1F801802h.Index1 
-	// 1F801803h.Index3
-	union {
-		unsigned char raw;
-		struct
-		{
-			unsigned int response : 3;
-			unsigned int unknown : 1;
-			unsigned int command_start : 1;
-			unsigned int na1 : 1;
-			unsigned int na2 : 1;
-			unsigned int na3 : 1;
-		};
-	} interrupt_flag_register;
-
-	union interrupt_response {
-		unsigned char raw;
-		struct
-		{
-			unsigned int ack_1_7 : 3;
-			unsigned int ack_8 : 1;
-			unsigned int ack_10 : 1;
-			unsigned int na1 : 1;
-			unsigned int reset_param_fifo : 1;
-			unsigned int na2 : 1;
-		};
-	};
-
-	union {
-		unsigned char raw;
-		struct
-		{
-			unsigned int unknown : 3;
-			unsigned int int_enable : 5;
-		};
-	} interrupt_enable_register;
 
 	std::deque<unsigned char> response_fifo;
 	std::deque<unsigned char> data_fifo;

@@ -71,6 +71,29 @@ union gp_command
 		signed short y;
 	} vert;
 
+
+	struct
+	{
+		unsigned int tex_x : 8;
+		unsigned int tex_y : 8;
+		unsigned int clut_x : 6;
+		unsigned int clut_y : 9;
+		unsigned int na : 1;
+	} tex_palette;
+
+	struct
+	{
+		unsigned int tex_x : 8;
+		unsigned int tex_y : 8;
+		unsigned int tex_page_base_x : 4;
+		unsigned int tex_page_base_y : 1;
+		unsigned int semi_transparency : 2;
+		unsigned int tex_page_colors : 2;
+		unsigned int na1 : 2;
+		unsigned int tex_disable : 1;
+		unsigned int na2 : 4;
+	} tex_page;
+
 	struct
 	{
 		unsigned int x_pos : 10;
