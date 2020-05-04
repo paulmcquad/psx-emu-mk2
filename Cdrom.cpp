@@ -349,8 +349,8 @@ void Cdrom::execute_test_command()
 	{
 		// push the cd rom bios version onto the response fifo
 		response_fifo->push(0x94);
-		response_fifo->push(0x09);
-		response_fifo->push(0x19);
+		response_fifo->push(0x11);
+		response_fifo->push(0x18);
 		response_fifo->push(0xC0);
 
 		response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
