@@ -12,6 +12,7 @@ add_subdirectory(glm/)
 
 include_directories(imgui/)
 include_directories(glad/)
+include_directories(utils/)
 
 include_directories(catch/)
 include_directories(SDL2/include/)
@@ -24,6 +25,8 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # 32 bits
     link_directories(SDL2/lib/x86/)
 endif()
+
+
 
 set(imgui_files
 		imgui/khrplatform.h
@@ -49,8 +52,6 @@ set(glad_files
 )
 
 set(source_files
-		DebugMenu.hpp
-		DebugMenu.cpp
 		Dma.hpp
 		Dma.cpp
 		Cpu.hpp
@@ -77,7 +78,7 @@ set(source_files
 		Exceptions.hpp
 )
 
-add_executable(${PROJECT_NAME} main.cpp ${source_files} ${imgui_files} ${glad_files})
+add_executable(${PROJECT_NAME} main.cpp ${source_files} ${imgui_files} ${glad_files} DebugMenu.hpp DebugMenu.cpp)
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} glm)
 target_link_libraries(${PROJECT_NAME} SDL2)

@@ -179,7 +179,8 @@ int main(int num_args, char ** args )
 	std::cout << "Creating Ram\n";
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
 	std::string bios_file(args[1]);
-	if (false == ram->init(bios_file, io_ports))
+	ram->init(io_ports);
+	if (false == ram->load_bios(bios_file))
 	{
 		return -1;
 	}

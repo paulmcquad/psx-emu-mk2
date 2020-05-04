@@ -15,7 +15,8 @@ class IOPorts;
 
 class Ram {
 public:
-	bool init(std::string bios_filepath, std::shared_ptr<IOPorts> _io_ports);
+	bool load_bios(std::string bios_filepath);
+	void init(std::shared_ptr<IOPorts> _io_ports);
 	void reset();
 	void save_state(std::ofstream& file);
 	void load_state(std::ifstream& file);

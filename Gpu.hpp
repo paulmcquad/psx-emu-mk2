@@ -3,6 +3,7 @@
 #include <deque>
 #include <unordered_map>
 #include <glm/fwd.hpp>
+#include <Fifo.hpp>
 #include "InstructionTypes.hpp"
 #include "Dma.hpp"
 
