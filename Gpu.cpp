@@ -661,10 +661,15 @@ bool Gpu::copy_rectangle_from_cpu_to_vram()
 		gp0_fifo->pop();
 		copy_dest_coord = gp0_fifo->pop();
 		copy_width_height = gp0_fifo->pop();
-		unsigned int num_halfwords_to_copy = copy_width_height.dims.x_siz*copy_width_height.dims.y_siz;
 
-		// round up as there should be padding if the number of halfwords is odd
-		num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
+		unsigned int num_halfwords_to_copy = copy_width_height.dims.x_siz*copy_width_height.dims.y_siz;
+		num_words_to_copy = num_halfwords_to_copy / 2;
+
+		// if an odd number of halfwords, an extra padding halfword will be added
+		if (num_halfwords_to_copy % 2)
+		{
+			num_words_to_copy += 1;
+		}
 
 		return true;
 	}
