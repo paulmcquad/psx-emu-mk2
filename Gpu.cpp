@@ -60,6 +60,11 @@ Gpu::~Gpu()
 	{
 		delete video_ram;
 	}
+
+	if (gp0_fifo)
+	{
+		delete gp0_fifo;
+	}
 }
 
 void Gpu::init()
@@ -68,6 +73,8 @@ void Gpu::init()
     // else I get a compiler out of heap space issue at compile time
 	video_ram = new unsigned short[VRAM_SIZE];
 	memset(video_ram, 0, VRAM_SIZE * sizeof(unsigned short));
+
+	gp0_fifo = new Fifo<unsigned int>(16);
 
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	gpu_status.ready_dma = true;
@@ -80,7 +87,6 @@ void Gpu::reset()
 
 void Gpu::tick()
 {
-	execute_gp0_commands();
 }
 
 void Gpu::save_state(std::ofstream& file)
@@ -88,10 +94,10 @@ void Gpu::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
 	file.write(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
 
-	std::vector<gp_command> commands;
-	for (auto iter : gp0_fifo)
+	std::vector<unsigned int> commands;
+	while (gp0_fifo->get_current_size() > 0)
 	{
-		commands.push_back(iter);
+		commands.push_back(gp0_fifo->pop());
 	}
 
 	unsigned int num_commands = commands.size();
@@ -108,15 +114,15 @@ void Gpu::load_state(std::ifstream& file)
 	unsigned int num_commands = 0;
 	file.read(reinterpret_cast<char*>(&num_commands), sizeof(unsigned int));
 
-	std::vector<gp_command> commands;
+	std::vector<unsigned int> commands;
 	commands.resize(num_commands);
 	file.read(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
 
-	gp0_fifo.clear();
+	gp0_fifo->clear();
 
 	for (auto iter : commands)
 	{
-		gp0_fifo.push_back(iter);
+		gp0_fifo->push(iter);
 	}
 }
 
@@ -167,112 +173,113 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base
 
 void Gpu::execute_gp0_commands()
 {
-	while (gp0_fifo.empty() == false)
+	gp_command top_command = gp0_fifo->peek();
+	gp0_commands current_command = static_cast<gp0_commands>(top_command.color.op);
+	bool command_executed = false;
+	while (gp0_fifo->is_empty() == false)
 	{
-		gp0_commands current_command = static_cast<gp0_commands>(gp0_fifo.front().color.op);
-		unsigned int commands_to_remove = 0;
 		switch (current_command)
 		{
-			case gp0_commands::NOP:
-			{
-				commands_to_remove = 1;
-			} break;
+		case gp0_commands::NOP:
+		{
+			gp0_fifo->pop();
+			command_executed = true;
+		} break;
 
-			case gp0_commands::DRAW_MODE:
-			{
-				commands_to_remove = set_draw_mode();
-			} break;
+		case gp0_commands::DRAW_MODE:
+		{
+			command_executed = set_draw_mode();
+		} break;
 
-			case gp0_commands::SET_DRAW_TOP_LEFT:
-			{
-				commands_to_remove = set_draw_top_left();
-			} break;
+		case gp0_commands::SET_DRAW_TOP_LEFT:
+		{
+			command_executed = set_draw_top_left();
+		} break;
 
-			case gp0_commands::SET_DRAW_BOTTOM_RIGHT:
-			{
-				commands_to_remove = set_draw_bottom_right();
-			} break;
+		case gp0_commands::SET_DRAW_BOTTOM_RIGHT:
+		{
+			command_executed = set_draw_bottom_right();
+		} break;
 
-			case gp0_commands::SET_DRAWING_OFFSET:
-			{
-				commands_to_remove = set_drawing_offset();
-			} break;
+		case gp0_commands::SET_DRAWING_OFFSET:
+		{
+			command_executed = set_drawing_offset();
+		} break;
 
-			case gp0_commands::TEX_WINDOW:
-			{
-				commands_to_remove = set_texture_window();
-			} break;
+		case gp0_commands::TEX_WINDOW:
+		{
+			command_executed = set_texture_window();
+		} break;
 
-			case gp0_commands::MASK_BIT:
-			{
-				commands_to_remove = set_mask_bit();
-			} break;
+		case gp0_commands::MASK_BIT:
+		{
+			command_executed = set_mask_bit();
+		} break;
 
-			case gp0_commands::MONO_4_PT_OPAQUE:
-			{
-				commands_to_remove = mono_4_pt_opaque();
-			} break;
+		case gp0_commands::MONO_4_PT_OPAQUE:
+		{
+			command_executed = mono_4_pt_opaque();
+		} break;
 
-			case gp0_commands::CLEAR_CACHE:
-			{
-				commands_to_remove = clear_cache();
-			} break;
+		case gp0_commands::CLEAR_CACHE:
+		{
+			command_executed = clear_cache();
+		} break;
 
-			case gp0_commands::COPY_RECT_CPU_VRAM:
-			{
-				commands_to_remove = copy_rectangle_from_cpu_to_vram();
-			} break;
+		case gp0_commands::COPY_RECT_CPU_VRAM:
+		{
+			command_executed = copy_rectangle_from_cpu_to_vram();
+		} break;
 
-			case gp0_commands::COPY_RECT_VRAM_CPU:
-			{
-				commands_to_remove = copy_rectangle_from_vram_to_cpu();
-			} break;
+		case gp0_commands::COPY_RECT_VRAM_CPU:
+		{
+			command_executed = copy_rectangle_from_vram_to_cpu();
+		} break;
 
-			case gp0_commands::SHADED_3_PT_OPAQUE:
-			{
-				commands_to_remove = shaded_3_pt_opaque();
-			} break;
+		case gp0_commands::SHADED_3_PT_OPAQUE:
+		{
+			command_executed = shaded_3_pt_opaque();
+		} break;
 
-			case gp0_commands::SHADED_4_PT_OPAQUE:
-			{
-				commands_to_remove = shaded_4_pt_opaque();
-			} break;
+		case gp0_commands::SHADED_4_PT_OPAQUE:
+		{
+			command_executed = shaded_4_pt_opaque();
+		} break;
 
-			case gp0_commands::TEX_4_OPAQUE_TEX_BLEND:
-			{
-				commands_to_remove = tex_4_pt_opaque_blend();
-			} break;
+		case gp0_commands::TEX_4_OPAQUE_TEX_BLEND:
+		{
+			command_executed = tex_4_pt_opaque_blend();
+		} break;
 
-			case gp0_commands::FILL_RECT:
-			{
-				commands_to_remove = fill_rect();
-			} break;
+		case gp0_commands::FILL_RECT:
+		{
+			command_executed = fill_rect();
+		} break;
 
-			default:
-				throw std::logic_error("not implemented");
+		default:
+			throw std::logic_error("not implemented");
 		}
 
-		if (commands_to_remove == 0)
+		if (false == command_executed)
 		{
-			// waiting for more words
 			break;
-		}
-
-		while (commands_to_remove > 0)
-		{
-			if (gp0_fifo.empty())
-			{
-				throw std::out_of_range("too many commands removed");
-			}
-			gp0_fifo.pop_front();
-			commands_to_remove--;
 		}
 	}
 }
 
 void Gpu::add_gp0_command(gp_command command, bool via_dma)
 {
-	gp0_fifo.push_back(command);
+	if (num_words_to_copy == 0)
+	{
+		gp0_fifo->push(command.raw);
+		execute_gp0_commands();
+	}
+	else
+	{
+		// todo copy from cpu to vram
+		num_words_to_copy--;
+	}
+	
 }
 
 void Gpu::execute_gp1_command(gp_command command)
@@ -286,7 +293,7 @@ void Gpu::execute_gp1_command(gp_command command)
 
 		case gp1_commands::RESET_COMMAND_BUFFER:
 		{
-			gp0_fifo.clear();
+			gp0_fifo->clear();
 		} break;
 
 		case gp1_commands::ACK_IRQ1:
@@ -426,19 +433,27 @@ glm::vec3 Gpu::calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, gl
 	return w;
 }
 
-unsigned int Gpu::mono_4_pt_opaque()
+bool Gpu::mono_4_pt_opaque()
 {
-	if (gp0_fifo.size() < 5)
+	if (gp0_fifo->get_current_size() < 5)
 	{
-		return 0;
+		return false;
 	}
 
-	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
-	glm::ivec2 v1(gp0_fifo[2].vert.x, gp0_fifo[2].vert.y);
-	glm::ivec2 v2(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
-	glm::ivec2 v3(gp0_fifo[4].vert.x, gp0_fifo[4].vert.y);
+	gp_command color_command = gp0_fifo->pop();
+	glm::u8vec3 rgb(color_command.color.r, color_command.color.g, color_command.color.b);
 
-	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+	gp_command vert0_command = gp0_fifo->pop();
+	glm::ivec2 v0(vert0_command.vert.x, vert0_command.vert.y);
+
+	gp_command vert1_command = gp0_fifo->pop();
+	glm::ivec2 v1(vert1_command.vert.x, vert1_command.vert.y);
+
+	gp_command vert2_command = gp0_fifo->pop();
+	glm::ivec2 v2(vert2_command.vert.x, vert2_command.vert.y);
+
+	gp_command vert3_command = gp0_fifo->pop();
+	glm::ivec2 v3(vert3_command.vert.x, vert3_command.vert.y);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
@@ -449,43 +464,60 @@ unsigned int Gpu::mono_4_pt_opaque()
 	return 5;
 }
 
-unsigned int Gpu::shaded_3_pt_opaque()
+bool Gpu::shaded_3_pt_opaque()
 {
-	if (gp0_fifo.size() < 6)
+	if (gp0_fifo->get_current_size() < 6)
 	{
-		return 0;
+		return false;
 	}
 
-	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
-	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
-	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
+	gp_command color0_command = gp0_fifo->pop();
+	gp_command vert0_command = gp0_fifo->pop();
+	glm::u8vec3 rgb0(color0_command.color.r, color0_command.color.g, color0_command.color.b);
+	glm::ivec2 v0(vert0_command.vert.x, vert0_command.vert.y);
 
-	glm::u8vec3 rgb0(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
-	glm::u8vec3 rgb1(gp0_fifo[2].color.r, gp0_fifo[2].color.g, gp0_fifo[2].color.b);
-	glm::u8vec3 rgb2(gp0_fifo[4].color.r, gp0_fifo[4].color.g, gp0_fifo[4].color.b);
+	gp_command color1_command = gp0_fifo->pop();
+	gp_command vert1_command = gp0_fifo->pop();
+	glm::u8vec3 rgb1(color1_command.color.r, color1_command.color.g, color1_command.color.b);
+	glm::ivec2 v1(vert1_command.vert.x, vert1_command.vert.y);
+
+	gp_command color2_command = gp0_fifo->pop();
+	gp_command vert2_command = gp0_fifo->pop();
+	glm::u8vec3 rgb2(color2_command.color.r, color2_command.color.g, color2_command.color.b);
+	glm::ivec2 v2(vert2_command.vert.x, vert2_command.vert.y);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
 
-	return 6;
+	return true;
 }
 
-unsigned int Gpu::shaded_4_pt_opaque()
+bool Gpu::shaded_4_pt_opaque()
 {
-	if (gp0_fifo.size() < 8)
+	if (gp0_fifo->get_current_size() < 8)
 	{
-		return 0;
+		return false;
 	}
 
-	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
-	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
-	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
-	glm::ivec2 v3(gp0_fifo[7].vert.x, gp0_fifo[7].vert.y);
+	gp_command color0_command = gp0_fifo->pop();
+	gp_command vert0_command = gp0_fifo->pop();
+	glm::u8vec3 rgb0(color0_command.color.r, color0_command.color.g, color0_command.color.b);
+	glm::ivec2 v0(vert0_command.vert.x, vert0_command.vert.y);
 
-	glm::u8vec3 rgb0(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
-	glm::u8vec3 rgb1(gp0_fifo[2].color.r, gp0_fifo[2].color.g, gp0_fifo[2].color.b);
-	glm::u8vec3 rgb2(gp0_fifo[4].color.r, gp0_fifo[4].color.g, gp0_fifo[4].color.b);
-	glm::u8vec3 rgb3(gp0_fifo[6].color.r, gp0_fifo[6].color.g, gp0_fifo[6].color.b);
+	gp_command color1_command = gp0_fifo->pop();
+	gp_command vert1_command = gp0_fifo->pop();
+	glm::u8vec3 rgb1(color1_command.color.r, color1_command.color.g, color1_command.color.b);
+	glm::ivec2 v1(vert1_command.vert.x, vert1_command.vert.y);
+
+	gp_command color2_command = gp0_fifo->pop();
+	gp_command vert2_command = gp0_fifo->pop();
+	glm::u8vec3 rgb2(color2_command.color.r, color2_command.color.g, color2_command.color.b);
+	glm::ivec2 v2(vert2_command.vert.x, vert2_command.vert.y);
+
+	gp_command color3_command = gp0_fifo->pop();
+	gp_command vert3_command = gp0_fifo->pop();
+	glm::u8vec3 rgb3(color3_command.color.r, color3_command.color.g, color3_command.color.b);
+	glm::ivec2 v3(vert3_command.vert.x, vert3_command.vert.y);
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb0, rgb1, rgb2);
@@ -493,28 +525,34 @@ unsigned int Gpu::shaded_4_pt_opaque()
 	// triangle 2
 	draw_triangle(v1, v2, v3, rgb1, rgb2, rgb3);
 
-	return 8;
+	return true;
 }
 
-unsigned int Gpu::tex_4_pt_opaque_blend()
+bool Gpu::tex_4_pt_opaque_blend()
 {
-	if (gp0_fifo.size() < 9)
+	if (gp0_fifo->get_current_size() < 9)
 	{
-		return 0;
+		return false;
 	}
 
-	glm::ivec2 v0(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
-	glm::ivec2 v1(gp0_fifo[3].vert.x, gp0_fifo[3].vert.y);
-	glm::ivec2 v2(gp0_fifo[5].vert.x, gp0_fifo[5].vert.y);
-	glm::ivec2 v3(gp0_fifo[7].vert.x, gp0_fifo[7].vert.y);
-	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
+	gp_command color_command = gp0_fifo->pop();
+	glm::u8vec3 rgb(color_command.color.r, color_command.color.g, color_command.color.b);
 
-	gp_command texcoord1_palette = gp0_fifo[2];
-	gp_command texcoord2_page = gp0_fifo[4];
-	gp_command texcoord3 = gp0_fifo[6];
-	gp_command texcorrd5 = gp0_fifo[8];
+	gp_command vert0_command = gp0_fifo->pop();
+	glm::ivec2 v0(vert0_command.vert.x, vert0_command.vert.y);
+	gp_command texcoord0_palette = gp0_fifo->pop();
 
+	gp_command vert1_command = gp0_fifo->pop();
+	glm::ivec2 v1(vert1_command.vert.x, vert1_command.vert.y);
+	gp_command texcoord1_page = gp0_fifo->pop();
 
+	gp_command vert2_command = gp0_fifo->pop();
+	glm::ivec2 v2(vert2_command.vert.x, vert2_command.vert.y);
+	gp_command texcoord2 = gp0_fifo->pop();
+
+	gp_command vert3_command = gp0_fifo->pop();
+	glm::ivec2 v3(vert3_command.vert.x, vert3_command.vert.y);
+	gp_command texcoord3 = gp0_fifo->pop();
 
 	// triangle 1
 	draw_triangle(v0, v1, v2, rgb, rgb, rgb);
@@ -522,61 +560,66 @@ unsigned int Gpu::tex_4_pt_opaque_blend()
 	// triangle 2
 	draw_triangle(v1, v2, v3, rgb, rgb, rgb);
 
-	return 9;
+	return true;
 }
 
-unsigned int Gpu::fill_rect()
+bool Gpu::fill_rect()
 {
-	if (gp0_fifo.size() < 3)
+	if (gp0_fifo->get_current_size() < 3)
 	{
-		return 0;
+		return false;
 	}
 
-	glm::u8vec3 rgb(gp0_fifo[0].color.r, gp0_fifo[0].color.g, gp0_fifo[0].color.b);
-	glm::ivec2 top_left(gp0_fifo[1].vert.x, gp0_fifo[1].vert.y);
-	glm::ivec2 width_height(gp0_fifo[1].dims.x_siz, gp0_fifo[1].dims.y_siz);
+	gp_command color_command = gp0_fifo->pop();
+	glm::u8vec3 rgb(color_command.color.r, color_command.color.g, color_command.color.b);
+
+	gp_command vert_command = gp0_fifo->pop();
+	glm::ivec2 top_left(vert_command.vert.x, vert_command.vert.y);
+
+	gp_command dim_command = gp0_fifo->pop();
+	glm::ivec2 width_height(dim_command.dims.x_siz, dim_command.dims.y_siz);
 
 	draw_rectangle(top_left, width_height, rgb);
 
-	return 3;
+	return true;
 }
 
-unsigned int Gpu::set_draw_top_left()
+bool Gpu::set_draw_top_left()
 {
-	gp_command top_left(gp0_fifo.front());
+	gp_command top_left(gp0_fifo->pop());
 
 	draw_area_min_x = top_left.draw_area.x_coord;
 	draw_area_min_y = top_left.draw_area.y_coord;
 
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::set_draw_bottom_right()
+bool Gpu::set_draw_bottom_right()
 {
-	gp_command bottom_right(gp0_fifo.front());
+	gp_command bottom_right(gp0_fifo->pop());
 
 	draw_area_max_x = bottom_right.draw_area.x_coord;
 	draw_area_max_y = bottom_right.draw_area.y_coord;
 
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::set_drawing_offset()
+bool Gpu::set_drawing_offset()
 {
-	gp_command offset(gp0_fifo.front());
+	gp_command offset(gp0_fifo->pop());
 
 	x_offset = offset.draw_offset.x_offset;
 	y_offset = offset.draw_offset.y_offset;
 
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::set_draw_mode()
+bool Gpu::set_draw_mode()
 {
 	// the command only sets about half the gpu status values
 	// it conveniently follows the same bit pattern up until texture disable
 	// which I believe we can ignore according to the problemkaputt.de documentation
-	gpu_status_union new_status(gp0_fifo.front().raw);
+	gpu_status_union new_status(gp0_fifo->pop());
 
 	gpu_status.tex_page_x_base = new_status.tex_page_x_base;
 	gpu_status.tex_page_y_base = new_status.tex_page_y_base;
@@ -587,84 +630,60 @@ unsigned int Gpu::set_draw_mode()
 
 	// ignoring all other values for the moment
 
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::set_texture_window()
+bool Gpu::set_texture_window()
 {
+	gp0_fifo->pop();
 	// todo
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::set_mask_bit()
+bool Gpu::set_mask_bit()
 {
+	gp0_fifo->pop();
 	// todo
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::clear_cache()
+bool Gpu::clear_cache()
 {
+	gp0_fifo->pop();
 	// todo
-	return 1;
+	return true;
 }
 
-unsigned int Gpu::copy_rectangle_from_cpu_to_vram()
+bool Gpu::copy_rectangle_from_cpu_to_vram()
 {
-	if (gp0_fifo.size() >= 3)
+	if (gp0_fifo->get_current_size() >= 3)
 	{
-		gp_command dest_coord = gp0_fifo[1];
-		gp_command width_height = gp0_fifo[2];
-		unsigned int num_halfwords_to_copy = width_height.dims.x_siz*width_height.dims.y_siz;
+		gp0_fifo->pop();
+		copy_dest_coord = gp0_fifo->pop();
+		copy_width_height = gp0_fifo->pop();
+		unsigned int num_halfwords_to_copy = copy_width_height.dims.x_siz*copy_width_height.dims.y_siz;
 
 		// round up as there should be padding if the number of halfwords is odd
-		unsigned int num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
+		num_words_to_copy = ceil(num_halfwords_to_copy / 2.0);
 
-		unsigned int expected_size = num_words_to_copy + 3;
-		if (gp0_fifo.size() >=  expected_size)
-		{
-			// we are just going to pop the data of the deque in this function to
-			// simplify things
-			gp0_fifo.pop_front();
-			gp0_fifo.pop_front();
-			gp0_fifo.pop_front();
-			
-			unsigned int x = 0;
-			unsigned int y = 0;
-			while (num_words_to_copy)
-			{
-				unsigned int data = gp0_fifo.front().raw;
-				gp0_fifo.pop_front();
-
-				for (int halfword_offset = 0; halfword_offset < 2; halfword_offset++)
-				{
-					unsigned short colour_16 = data >> (16 * halfword_offset);
-					unsigned int index = ((y*FRAME_WIDTH) + x);
-					video_ram[index] = colour_16;
-
-					x++;
-					if (x >= width_height.dims.x_siz)
-					{
-						x = 0;
-						y++;
-					}
-				}
-
-				num_words_to_copy--;
-			}
-		}
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
-unsigned int Gpu::copy_rectangle_from_vram_to_cpu()
+bool Gpu::copy_rectangle_from_vram_to_cpu()
 {
-	if (gp0_fifo.size() >= 3)
+	if (gp0_fifo->get_current_size() >= 3)
 	{
+		gp0_fifo->pop();
+		gp0_fifo->pop();
+		gp0_fifo->pop();
+
 		gpu_status.ready_vram_to_cpu = true;
 		// todo implement
-		return 3;
+		return true;
 	}
 
-	return 0;
+	return false;
 }

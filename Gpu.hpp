@@ -86,9 +86,7 @@ public:
 		}
 	} gpu_status;
 
-	// apparently the psx has a 16 word FIFO queue, i'm going to work under the assumption
-	// that I can ignore that
-	std::deque<gp_command> gp0_fifo;
+	Fifo<unsigned int> * gp0_fifo = nullptr;
 	unsigned short * video_ram = nullptr;
 
 	unsigned int width = FRAME_WIDTH;
@@ -103,6 +101,12 @@ public:
 	unsigned int draw_area_max_y = 0;
 
 private:
+
+	// copying variables
+	gp_command copy_dest_coord = 0x0;
+	gp_command copy_width_height = 0x0;
+	unsigned int num_words_to_copy = 0;
+
 	void execute_gp0_commands();
 	void add_gp0_command(gp_command command, bool via_dma);
 	void execute_gp1_command(gp_command command);
@@ -114,21 +118,21 @@ private:
 	glm::vec3 calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2);
 
 	// GP0 commands
-	unsigned int set_draw_top_left();
-	unsigned int set_draw_bottom_right();
-	unsigned int set_drawing_offset();
-	unsigned int set_draw_mode();
-	unsigned int set_texture_window();
-	unsigned int set_mask_bit();
-	unsigned int clear_cache();
+	bool set_draw_top_left();
+	bool set_draw_bottom_right();
+	bool set_drawing_offset();
+	bool set_draw_mode();
+	bool set_texture_window();
+	bool set_mask_bit();
+	bool clear_cache();
 
-	unsigned int copy_rectangle_from_cpu_to_vram();
-	unsigned int copy_rectangle_from_vram_to_cpu();
+	bool copy_rectangle_from_cpu_to_vram();
+	bool copy_rectangle_from_vram_to_cpu();
 
-	unsigned int shaded_3_pt_opaque();
-	unsigned int mono_4_pt_opaque();
-	unsigned int shaded_4_pt_opaque();
-	unsigned int tex_4_pt_opaque_blend();
+	bool shaded_3_pt_opaque();
+	bool mono_4_pt_opaque();
+	bool shaded_4_pt_opaque();
+	bool tex_4_pt_opaque_blend();
 
-	unsigned int fill_rect();
+	bool fill_rect();
 };

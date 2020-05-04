@@ -42,6 +42,9 @@ TEST_CASE("Fifo test")
 		REQUIRE(fifo.is_empty() == false);
 		REQUIRE(fifo.is_full() == true);
 
+		REQUIRE(fifo.peek() == 1);
+		REQUIRE(fifo.peek(1) == 2);
+
 		REQUIRE_THROWS_AS(fifo.push(11), std::out_of_range);
 
 		REQUIRE(fifo.pop() == 1);

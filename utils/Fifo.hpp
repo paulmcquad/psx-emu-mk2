@@ -16,6 +16,18 @@ public:
 		delete[] buffer;
 	}
 
+	T peek(unsigned int offset = 0)
+	{
+		int index = top_index + offset;
+
+		if (index >= max_size)
+		{
+			throw std::out_of_range("Offset out of bounds");
+		}
+
+		return buffer[index];
+	}
+
 	void push(T value)
 	{
 		if (current_size == max_size)
