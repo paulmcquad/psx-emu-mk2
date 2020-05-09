@@ -52,7 +52,6 @@ TEST_CASE("Cdrom commands")
 			cdrom->set(status_address, 1);
 			Cdrom::interrupt_flag_register_read response = cdrom->get(interrupt_flag_address);
 			REQUIRE(response.response_received == static_cast<unsigned int>(Cdrom::cdrom_response_interrupts::FIRST_RESPONSE));
-			REQUIRE(cdrom->response_fifo->get_current_size() == 1);
 		}
 
 		// trigger the interrupt
@@ -68,7 +67,6 @@ TEST_CASE("Cdrom commands")
 
 		// check result
 		{
-			REQUIRE(cdrom->response_fifo->get_current_size() == 1);
 			cdrom->set(status_address, 1);
 			unsigned char response = cdrom->get(response_address);
 			REQUIRE(response == 0x2);
@@ -110,14 +108,81 @@ TEST_CASE("Cdrom commands")
 		}
 
 		// make sure second interrupt doesn't happen till we acknowledge the first one
-		/*{
+		{
 			for (unsigned int idx = 0; idx < static_cast<unsigned int>(Cdrom::cdrom_response_timings::SECOND_REPONSE_DELAY); idx++)
 			{
 				cdrom->tick();
 			}
 
 			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
-		}*/
+		}
+
+		// check result
+		{
+			cdrom->set(status_address, 1);
+			unsigned char response = cdrom->get(response_address);
+			REQUIRE(response == 0x2);
+		}
+
+		// acknowledge
+		{
+			Cdrom::interrupt_flag_register_write ack;
+			ack.ack_int1_7 = static_cast<unsigned int>(Cdrom::cdrom_response_interrupts::FIRST_RESPONSE);
+			cdrom->set(interrupt_flag_address, ack.raw);
+		}
+
+		// still need to wait for the delay to pass on the next response
+		{
+			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
+
+			for (unsigned int idx = 0; idx < static_cast<unsigned int>(Cdrom::cdrom_response_timings::SECOND_REPONSE_DELAY); idx++)
+			{
+				cdrom->tick();
+			}
+
+			REQUIRE_THROWS_AS(cdrom->trigger_pending_interrupts(), mips_interrupt);
+		}
+
+		// check the result
+		{
+			{
+				Cdrom::interrupt_flag_register_read response = cdrom->get(interrupt_flag_address);
+				REQUIRE(response.response_received == static_cast<unsigned int>(Cdrom::cdrom_response_interrupts::SECOND_RESPONSE));
+			}
+			
+			{
+				unsigned char response = cdrom->get(response_address);
+				REQUIRE(response == 0x02);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x00);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x20);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x00);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x53);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x43);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x45);
+
+				response = cdrom->get(response_address);
+				REQUIRE(response == 0x41);
+			}
+		}
+
+		// acknowledge
+		{
+			Cdrom::interrupt_flag_register_write ack;
+			ack.ack_int1_7 = static_cast<unsigned int>(Cdrom::cdrom_response_interrupts::SECOND_RESPONSE);
+			cdrom->set(interrupt_flag_address, ack.raw);
+		}
 	}
 
 	SECTION("Setloc")

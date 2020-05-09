@@ -57,7 +57,7 @@ void Cdrom::tick()
 	if (response_interrupt_queue.empty() == false)
 	{
 		auto & top_response = response_interrupt_queue.front();
-		if (top_response.first > 0)
+		if (top_response.first > 0 && top_response.second == current_response_received)
 		{
 			top_response.first--;
 		}
@@ -67,12 +67,15 @@ void Cdrom::tick()
 void Cdrom::trigger_pending_interrupts()
 {
 	// if interrupt queued and delay time has passed
-	if (response_interrupt_queue.empty() == false && response_interrupt_queue.front().first == 0)
+	if (response_interrupt_queue.empty() == false)
 	{
-		current_response_received = static_cast<unsigned int>(response_interrupt_queue.front().second);
-		response_interrupt_queue.pop_front();
-
-		throw mips_interrupt();
+		auto & top_response = response_interrupt_queue.front();
+		// delay passed and current response matches
+		if (top_response.first == 0 && current_response_received == top_response.second)
+		{
+			response_interrupt_queue.pop_front();
+			throw mips_interrupt();
+		}
 	}
 }
 
@@ -288,6 +291,12 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 				if (type == ack.ack_int1_7)
 				{
 					response_interrupt_queue.pop_front();
+				}
+
+				// if we have any more interrupts in the queue, set the next one as the current response
+				if (response_interrupt_queue.empty() == false)
+				{
+					current_response_received = static_cast<unsigned int>(response_interrupt_queue.front().second);
 				}
 			}
 			
