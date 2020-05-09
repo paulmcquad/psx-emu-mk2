@@ -8,7 +8,6 @@
 // http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
 // https://problemkaputt.de/psx-spx.htm#cdromdrive
 constexpr unsigned int SECTOR_SIZE = 2352;
-constexpr unsigned int CDROM_PORT_START = 0x1F801800;
 constexpr unsigned int STATUS_REGISTER = 0x1F801800 - CDROM_PORT_START;
 
 // command registers
@@ -25,10 +24,13 @@ constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
 
 constexpr unsigned int RESPONSE_FIFO_SIZE = 16;
 constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
+// double check
+constexpr unsigned int DATA_FIFO_SIZE = 4096;
 
 void Cdrom::init()
 {
 	response_fifo = new Fifo<unsigned char>(RESPONSE_FIFO_SIZE);
+	data_fifo = new Fifo<unsigned char>(DATA_FIFO_SIZE);
 	parameter_fifo = new Fifo<unsigned char>(PARAMETER_FIFO_SIZE);
 }
 
@@ -309,8 +311,13 @@ unsigned char Cdrom::get_next_response_byte()
 
 unsigned char Cdrom::get_next_data_byte()
 {
-	// todo
-	return 0;
+	unsigned char data_byte = 0x0;
+	if (data_fifo->is_empty() == false)
+	{
+		data_byte = data_fifo->pop();
+	}
+
+	return data_byte;
 }
 
 void Cdrom::execute_command(unsigned char command)

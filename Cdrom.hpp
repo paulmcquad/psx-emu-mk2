@@ -4,6 +4,8 @@
 #include <deque>
 #include <Fifo.hpp>
 
+constexpr unsigned int CDROM_PORT_START = 0x1F801800;
+
 enum class cdrom_command : unsigned char
 {
 	Sync = 0x00,
@@ -84,6 +86,8 @@ public:
 
 	void trigger_pending_interrupts();
 
+	bool load(std::string bin_path, std::string cue_path);
+
 	unsigned char get_index0(unsigned int address);
 	unsigned char get_index1(unsigned int address);
 	unsigned char get_index2(unsigned int address);
@@ -91,9 +95,6 @@ public:
 
 	void set_index0(unsigned int address, unsigned char value);
 	void set_index1(unsigned int address, unsigned char value);
-
-	bool load(std::string bin_path, std::string cue_path);
-private:
 
 	unsigned int register_index = 0;
 	unsigned int current_response_received;
@@ -158,6 +159,15 @@ private:
 			unsigned int BUSYSTS : 1;
 		};
 
+		status_register_read()
+		{
+			raw = 0x0;
+		}
+
+		status_register_read(unsigned int value)
+		{
+			raw = value;
+		}
 	};
 
 	unsigned int num_sectors = 0;

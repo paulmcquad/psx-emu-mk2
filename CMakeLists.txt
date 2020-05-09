@@ -78,12 +78,19 @@ set(source_files
 		Exceptions.hpp
 )
 
+set (test_files
+	tests/main_test.cpp
+	tests/util_test.cpp
+	tests/cpu_test.cpp
+	tests/cdrom_test.cpp
+)
+
 add_executable(${PROJECT_NAME} main.cpp ${source_files} ${imgui_files} ${glad_files} DebugMenu.hpp DebugMenu.cpp)
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} glm)
 target_link_libraries(${PROJECT_NAME} SDL2)
 
-add_executable(${PROJECT_NAME}-test main_test.cpp ${source_files})
+add_executable(${PROJECT_NAME}-test ${test_files} ${source_files})
 target_link_libraries(${PROJECT_NAME}-test glfw)
 target_link_libraries(${PROJECT_NAME}-test glm)
 target_link_libraries(${PROJECT_NAME}-test SDL2)
