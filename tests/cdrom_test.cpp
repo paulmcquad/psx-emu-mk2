@@ -130,7 +130,7 @@ TEST_CASE("Cdrom commands")
 		}
 	}
 
-	SECTION("Getloc")
+	SECTION("Setloc")
 	{
 
 	}
