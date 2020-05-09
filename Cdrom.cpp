@@ -54,12 +54,12 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
-	for (auto & pending_interrupt : response_interrupt_queue)
+	if (response_interrupt_queue.empty() == false)
 	{
-		// count time delay before triggering interrupt
-		if (pending_interrupt.first > 0)
+		auto & top_response = response_interrupt_queue.front();
+		if (top_response.first > 0)
 		{
-			pending_interrupt.first--;
+			top_response.first--;
 		}
 	}
 }
