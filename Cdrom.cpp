@@ -126,7 +126,7 @@ unsigned char Cdrom::get(unsigned int address)
 		response.PRMEMPT = parameter_fifo->is_empty();
 		response.PRMWRDY = parameter_fifo->is_full() == false;
 		response.RSLRRDY = response_fifo->is_empty() == false;
-		response.DRQSTS = false;
+		response.DRQSTS = data_fifo->is_empty() == false;
 		response.BUSYSTS = response_interrupt_queue.empty() == false;
 
 		return response.raw;
