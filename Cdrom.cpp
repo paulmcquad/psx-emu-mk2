@@ -277,11 +277,21 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			interrupt_flag_register_write write = value;
+			interrupt_flag_register_write ack = value;
+
 			// reset response
-			current_response_received &= ~value;
+			current_response_received = 0;
+
+			if (response_interrupt_queue.empty() == false)
+			{
+				unsigned int type = response_interrupt_queue.front().second;
+				if (type == ack.ack_int1_7)
+				{
+					response_interrupt_queue.pop_front();
+				}
+			}
 			
-			if (write.reset_param_fifo)
+			if (ack.reset_param_fifo)
 			{
 				parameter_fifo->clear();
 			}
@@ -360,8 +370,10 @@ void Cdrom::execute_test_command()
 		response_fifo->push(0x18);
 		response_fifo->push(0xC0);
 
-		response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
-			cdrom_response_interrupts::FIRST_RESPONSE));
+		current_response_received = static_cast<unsigned int>(cdrom_response_interrupts::FIRST_RESPONSE);
+		unsigned int delay = static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY);
+
+		response_interrupt_queue.push_back(std::make_pair(delay, current_response_received));
 
 		
 	}
@@ -376,8 +388,10 @@ void Cdrom::execute_getstat_command()
 	// treated like a nop
 	// 0x2 means the motor is on
 	response_fifo->push(0x2);
-	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY),
-		cdrom_response_interrupts::FIRST_RESPONSE));
+	current_response_received = static_cast<unsigned int>(cdrom_response_interrupts::FIRST_RESPONSE);
+	unsigned int delay = static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY);
+
+	response_interrupt_queue.push_back(std::make_pair(delay, current_response_received));
 }
 
 void Cdrom::execute_getid_command()
@@ -394,6 +408,7 @@ void Cdrom::execute_getid_command()
 	response_fifo->push(0x43); // C
 	response_fifo->push(0x45); // E
 	response_fifo->push(0x41); // A
+
 	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
-		cdrom_response_interrupts::SECOND_RESPONSE));
+		static_cast<unsigned int>(cdrom_response_interrupts::SECOND_RESPONSE)));
 }
