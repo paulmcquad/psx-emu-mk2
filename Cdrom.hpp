@@ -192,4 +192,5 @@ public:
 	void execute_test_command();
 	void execute_getstat_command();
 	void execute_getid_command();
+	void execute_read_toc_command();
 };

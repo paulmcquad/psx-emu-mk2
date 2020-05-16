@@ -5,6 +5,8 @@
 #include <sstream>
 #include <thread>
 
+#include "Psx.hpp"
+
 #include "Ram.hpp"
 #include "Dma.hpp"
 #include "Cpu.hpp"
@@ -140,63 +142,28 @@ int main(int num_args, char ** args )
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	// Device I/O
-	std::shared_ptr<Dma> dma = std::make_shared<Dma>();
-
-	std::cout << "Creating GPU\n";
-	std::shared_ptr<Gpu> gpu = std::make_shared<Gpu>();
-	gpu->init();
-
-	std::cout << "Creating SPU\n";
-	std::shared_ptr<Spu> spu = std::make_shared<Spu>();
-	if (spu->init() == false)
-	{
-		std::cerr << "Failed to initialise SPU\n";
-		return -1;
-	}
-
-	std::cout << "Creating CDROM\n";
+	std::cout << "Create PSX\n";
+	std::string bios_file(args[1]);
 	std::string bin_file(args[2]);
 	std::string cue_file(args[3]);
 
-	std::shared_ptr<Cdrom> cdrom = std::make_shared<Cdrom>();
-	cdrom->init();
-	if (cdrom->load(bin_file, cue_file))
+	std::unique_ptr<Psx> psx = std::make_unique<Psx>();
+	if (psx->init(bios_file) == false)
 	{
-		glfwSetWindowTitle(window, bin_file.c_str());
-	}
-	else
-	{
-		std::cerr << "Unable to load ROM\n";
+		std::cerr << "Unable to initialise PSX\n";
 		return -1;
 	}
 
-	std::cout << "Creating IO ports\n";
-	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-	io_ports->init(gpu, dma, spu, cdrom);
-
-	// RAM
-	std::cout << "Creating Ram\n";
-	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
-	std::string bios_file(args[1]);
-	ram->init(io_ports);
-	if (false == ram->load_bios(bios_file))
+	if (psx->load(bin_file, cue_file) == false)
 	{
+		std::cerr << "Unable to load game\n";
 		return -1;
 	}
-
-	// CPU
-	std::cout << "Creating CPU\n";
-	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
-	cpu->init(ram);
-
-	std::cout << "Hooking up all peripherals to the DMA\n";
-	dma->init(ram, gpu, spu);
 
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
 	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
-	debug_menu->init(window, cpu, gpu, ram, io_ports);
+	debug_menu->init(window, psx->cpu, psx->gpu, psx->ram, psx->io_ports);
 
 	std::cout << "Running!\n";
 	double current_frame_time = 0.0;
@@ -206,60 +173,18 @@ int main(int num_args, char ** args )
 
 		if (debug_menu->is_paused() == false || debug_menu->is_step_requested() == true)
 		{
-			cpu->tick();
-			dma->tick();
-			gpu->tick();
-			cdrom->tick();
-			io_ports->tick();
+			psx->tick();
 
 			debug_menu->ticks_per_frame++;
 		}
 
 		if (debug_menu->is_save_state_requested())
 		{
-			std::cout << "Saving state!\n";
-
-			std::ofstream state_file;
-			state_file.open("save_state.bin", std::ios::out | std::ios::binary);
-
-			if (state_file.is_open())
-			{
-				cpu->save_state(state_file);
-				gpu->save_state(state_file);
-				dma->save_state(state_file);
-				ram->save_state(state_file);
-				cdrom->save_state(state_file);
-				io_ports->save_state(state_file);
-
-				state_file.close();
-				std::cout << "State saved!\n";
-			}
-			else
-			{
-				std::cout << "Failed to save state!\n";
-			}
+			psx->save_state("save_state.bin");
 		}
 		if (debug_menu->is_load_state_requested())
 		{
-			std::ifstream state_file;
-			state_file.open("save_state.bin", std::ios::in | std::ios::binary);
-
-			if (state_file.is_open())
-			{
-				cpu->load_state(state_file);
-				gpu->load_state(state_file);
-				dma->load_state(state_file);
-				ram->load_state(state_file);
-				cdrom->load_state(state_file);
-				io_ports->load_state(state_file);
-
-				state_file.close();
-				std::cout << "State restored!\n";
-			}
-			else
-			{
-				std::cout << "Failed to load state!\n";
-			}
+			psx->load_state("save_state.bin");
 		}
 
 		auto end_time = glfwGetTime();
@@ -267,7 +192,7 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gpu->width, gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, gpu->video_ram);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, psx->gpu->width, psx->gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, psx->gpu->video_ram);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);

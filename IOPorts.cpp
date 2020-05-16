@@ -187,10 +187,11 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	{
 		spu->set(address - SPU_START, value);
 	}
+	// 0 = clear bit, 1 = leave it unchanged
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
 	{
-		interrupt_status_register.bytes[address - I_STAT_START] = value;
+		interrupt_status_register.bytes[address - I_STAT_START] &= ~value;
 	}
 	else if (address >= I_MASK_START &&
 		address < I_MASK_END)

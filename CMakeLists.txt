@@ -52,6 +52,8 @@ set(glad_files
 )
 
 set(source_files
+		Psx.hpp
+		Psx.cpp
 		Dma.hpp
 		Dma.cpp
 		Cpu.hpp
@@ -75,6 +77,8 @@ set(source_files
 		Spu.cpp
 		Cdrom.hpp
 		Cdrom.cpp
+		Bus.hpp
+		Bus.cpp
 		Exceptions.hpp
 )
 

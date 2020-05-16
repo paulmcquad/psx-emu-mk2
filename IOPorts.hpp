@@ -48,6 +48,11 @@ public:
 		unsigned bytes[4];
 		struct
 		{
+			unsigned int IRQ_BITS : 11;
+			unsigned int NA : 21;
+		};
+		struct
+		{
 			unsigned int IRQ0_VBLANK : 1;
 			unsigned int IRQ1_GPU : 1;
 			unsigned int IRQ2_CDROM : 1;

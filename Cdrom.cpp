@@ -288,10 +288,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 			if (response_interrupt_queue.empty() == false)
 			{
 				unsigned int type = response_interrupt_queue.front().second;
-				if (type == ack.ack_int1_7)
-				{
-					response_interrupt_queue.pop_front();
-				}
+				response_interrupt_queue.pop_front();
 
 				// if we have any more interrupts in the queue, set the next one as the current response
 				if (response_interrupt_queue.empty() == false)
@@ -360,6 +357,11 @@ void Cdrom::execute_command(unsigned char command)
 			execute_getid_command();
 		} break;
 
+		case cdrom_command::ReadTOC:
+		{
+			execute_read_toc_command();
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -383,8 +385,6 @@ void Cdrom::execute_test_command()
 		unsigned int delay = static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY);
 
 		response_interrupt_queue.push_back(std::make_pair(delay, current_response_received));
-
-		
 	}
 	else
 	{
@@ -418,6 +418,15 @@ void Cdrom::execute_getid_command()
 	response_fifo->push(0x45); // E
 	response_fifo->push(0x41); // A
 
+	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
+		static_cast<unsigned int>(cdrom_response_interrupts::SECOND_RESPONSE)));
+}
+
+// this command seems a bit pointless
+void Cdrom::execute_read_toc_command()
+{
+	execute_getstat_command();
+	response_fifo->push(0x02);
 	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
 		static_cast<unsigned int>(cdrom_response_interrupts::SECOND_RESPONSE)));
 }

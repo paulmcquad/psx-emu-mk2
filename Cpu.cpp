@@ -30,19 +30,34 @@ void Cpu::reset()
 void Cpu::execute_mips_exception(unsigned int excode)
 {
 	SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
-	cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
-
+	
 	if (in_delay_slot) {
 		cause.BD = true;
 		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc - 4);
 	}
+	else
+	{
+		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
+	}
 
 	SystemControlCoprocessor::status_register sr = cop0->get<SystemControlCoprocessor::status_register>();
-	next_pc = static_cast<unsigned int>(sr.BEV == 0 ? SystemControlCoprocessor::exception_vector::GENERAL_BEV0 : SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
+	if (sr.BEV == 0)
+	{
+		next_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::GENERAL_BEV0);
+	}
+	else
+	{
+		next_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
+	}
 
-	unsigned int mode = sr.raw & 0x3f;
-	sr.raw &= ~0x3f;
-	sr.raw |= (mode << 2) & 0x3f;
+	// push mode
+	sr.IEo = sr.IEp;
+	sr.KUo = sr.KUp;
+
+	sr.IEp = sr.IEc;
+	sr.KUp = sr.KUc;
+
+	sr.IEc = sr.KUc = 0;
 
 	cop0->set<SystemControlCoprocessor::status_register>(sr);
 

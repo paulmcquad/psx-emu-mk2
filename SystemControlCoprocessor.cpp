@@ -105,7 +105,9 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 {
 	std::shared_ptr<IOPorts> io_ports = ram->io_ports;
 
-	if (io_ports->interrupt_mask_register.IRQ2_CDROM)
+	// interrupt active and no unacknowledged interrupts
+	if (io_ports->interrupt_mask_register.IRQ2_CDROM == true &&
+		io_ports->interrupt_status_register.IRQ2_CDROM == false)
 	{
 		try
 		{
@@ -113,6 +115,7 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 		}
 		catch (mips_interrupt &e)
 		{
+			// indicate interrupt active
 			io_ports->interrupt_status_register.IRQ2_CDROM = true;
 			throw e;
 		}
