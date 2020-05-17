@@ -3,14 +3,55 @@
 #include "SystemControlCoprocessor.hpp"
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
-#include "Ram.hpp"
+#include "Bus.hpp"
 #include "Cpu.hpp"
 #include "IOPorts.hpp"
 #include "Cdrom.hpp"
 #include "Exceptions.hpp"
 
-SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
-	Cop(_ram, _cpu)
+// I_STAT_SIZE and I_MASK_SIZE only use the first 2 bytes
+// and the next 2 in both are considered garbage areas
+constexpr unsigned int I_STAT_START = 0x1F801070;
+constexpr unsigned int I_STAT_END = I_STAT_START + 4;
+
+constexpr unsigned int I_MASK_START = 0x1F801074;
+constexpr unsigned int I_MASK_END = I_MASK_START + 4;
+
+bool SystemControlCoprocessor::is_address_for_device(unsigned int address)
+{
+	if (address >= I_STAT_START && address <= I_MASK_END)
+	{
+		return true;
+	}
+	return false;
+}
+
+unsigned char SystemControlCoprocessor::get_byte(unsigned int address)
+{
+	if (address >= I_STAT_START && address <= I_STAT_END)
+	{ 
+		return interrupt_status_register.bytes[address - I_STAT_START];
+	}
+	else if (address >= I_MASK_START && address <= I_MASK_END)
+	{
+		return interrupt_mask_register.bytes[address - I_STAT_START];
+	}
+}
+
+void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char value)
+{
+	if (address >= I_STAT_START && address <= I_STAT_END)
+	{
+		interrupt_status_register.bytes[address - I_STAT_START] = value;
+	}
+	else if (address >= I_MASK_START && address <= I_MASK_END)
+	{
+		interrupt_mask_register.bytes[address - I_STAT_START] = value;
+	}
+}
+
+SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
+	Cop(_bus, _cpu)
 {
 }
 
@@ -103,30 +144,30 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
-	std::shared_ptr<IOPorts> io_ports = ram->io_ports;
+	//std::shared_ptr<IOPorts> io_ports = ram->io_ports;
 
-	// interrupt active and no unacknowledged interrupts
-	if (io_ports->interrupt_mask_register.IRQ2_CDROM == true &&
-		io_ports->interrupt_status_register.IRQ2_CDROM == false)
-	{
-		try
-		{
-			io_ports->cdrom->trigger_pending_interrupts();
-		}
-		catch (mips_interrupt &e)
-		{
-			// indicate interrupt active
-			io_ports->interrupt_status_register.IRQ2_CDROM = true;
-			throw e;
-		}
-	}
+	//// interrupt active and no unacknowledged interrupts
+	//if (io_ports->interrupt_mask_register.IRQ2_CDROM == true &&
+	//	io_ports->interrupt_status_register.IRQ2_CDROM == false)
+	//{
+	//	try
+	//	{
+	//		io_ports->cdrom->trigger_pending_interrupts();
+	//	}
+	//	catch (mips_interrupt &e)
+	//	{
+	//		// indicate interrupt active
+	//		io_ports->interrupt_status_register.IRQ2_CDROM = true;
+	//		throw e;
+	//	}
+	//}
 }
 
 // LWCz rt, offset(base)
 void SystemControlCoprocessor::load_word_to_cop(const instruction_union& instr) 
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	unsigned int word = ram->load_word(addr);
+	unsigned int word = bus->get_word(addr);
 	set_control_register(instr.immediate_instruction.rt, word);
 }
 
@@ -135,7 +176,7 @@ void SystemControlCoprocessor::store_word_from_cop(const instruction_union& inst
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int control_value = get_control_register(instr.immediate_instruction.rt);
-	ram->store_word(addr, control_value);
+	bus->set_word(addr, control_value);
 }
 
 // MTCz rt, rd

@@ -163,7 +163,7 @@ int main(int num_args, char ** args )
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
 	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
-	debug_menu->init(window, psx->cpu, psx->gpu, psx->ram, psx->io_ports);
+	debug_menu->init(window, psx->cpu, psx->gpu);
 
 	std::cout << "Running!\n";
 	double current_frame_time = 0.0;

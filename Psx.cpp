@@ -3,9 +3,14 @@
 #include "Gpu.hpp"
 #include "Spu.hpp"
 #include "Cdrom.hpp"
-#include "IOPorts.hpp"
-#include "Ram.hpp"
 #include "Cpu.hpp"
+#include "SystemControlCoprocessor.hpp"
+#include "Bus.hpp"
+#include "Ram.hpp"
+#include "Rom.hpp"
+#include "MemoryControl.hpp"
+#include "CacheControl.hpp"
+#include "ParallelPort.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -27,21 +32,36 @@ bool Psx::init(std::string bios_path)
 	cdrom = std::make_shared<Cdrom>();
 	cdrom->init();
 
-	io_ports = std::make_shared<IOPorts>();
-	io_ports->init(gpu, dma, spu, cdrom);
-
 	ram = std::make_shared<Ram>();
-	ram->init(io_ports);
-	if (false == ram->load_bios(bios_path))
+	
+	rom = std::make_shared<Rom>();
+	if (false == rom->load_bios(bios_path))
 	{
 		std::cerr << "Failed to load bios\n";
 		return false;
 	}
 
-	cpu = std::make_shared<Cpu>();
-	cpu->init(ram);
+	memory_control = std::make_shared<MemoryControl>();
 
-	dma->init(ram, gpu, spu);
+	cache_control = std::make_shared<CacheControl>();
+
+	parallel_port = std::make_shared<ParallelPort>();
+
+	// hook up the bus
+	bus = std::make_shared<Bus>();
+	bus->register_device(cdrom.get());
+	bus->register_device(ram.get());
+	bus->register_device(rom.get());
+	bus->register_device(memory_control.get());
+	bus->register_device(cache_control.get());
+	bus->register_device(spu.get());
+	bus->register_device(parallel_port.get());
+
+	cpu = std::make_shared<Cpu>();
+	cpu->init(bus);
+	bus->register_device(cpu->cop0.get());
+
+	dma->init(bus, gpu, spu);
 
 	return true;
 }
@@ -53,7 +73,6 @@ void Psx::tick()
 	dma->tick();
 	gpu->tick();
 	cdrom->tick();
-	io_ports->tick();
 }
 
 void Psx::save_state(std::string state_file_path)
@@ -70,7 +89,6 @@ void Psx::save_state(std::string state_file_path)
 		dma->save_state(state_file);
 		ram->save_state(state_file);
 		cdrom->save_state(state_file);
-		io_ports->save_state(state_file);
 
 		state_file.close();
 		std::cout << "State saved!\n";
@@ -93,7 +111,6 @@ void Psx::load_state(std::string state_file_path)
 		dma->load_state(state_file);
 		ram->load_state(state_file);
 		cdrom->load_state(state_file);
-		io_ports->load_state(state_file);
 
 		state_file.close();
 		std::cout << "State restored!\n";

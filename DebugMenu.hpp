@@ -11,7 +11,7 @@ class IOPorts;
 class DebugMenu
 {
 public:
-	void init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram, std::shared_ptr<IOPorts> _ioports);
+	void init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu);
 	void uninit();
 	void draw();
 
@@ -47,7 +47,6 @@ private:
 
 	std::shared_ptr<Cpu> cpu = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;
-	std::shared_ptr<Ram> ram = nullptr;
 	std::shared_ptr<IOPorts> io_ports = nullptr;
 
 	bool paused_requested = false;

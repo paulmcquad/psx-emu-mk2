@@ -2,14 +2,14 @@
 #include <memory>
 #include "InstructionTypes.hpp"
 
-class Ram;
+class Bus;
 class Cpu;
 
 class Cop
 {
 public:
-	Cop(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) { 
-		ram = _ram;
+	Cop(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) { 
+		bus = _bus;
 		cpu = _cpu;
 	};
 
@@ -28,6 +28,6 @@ public:
 
 	virtual void reset() {};
 
-	std::shared_ptr<Ram> ram = nullptr;
+	std::shared_ptr<Bus> bus = nullptr;
 	std::shared_ptr<Cpu> cpu = nullptr;
 };

@@ -60,6 +60,16 @@ set(source_files
 		Cpu.cpp
 		Ram.hpp
 		Ram.cpp
+		Rom.hpp
+		Rom.cpp
+		MemoryControl.hpp
+		MemoryControl.cpp
+		CacheControl.hpp
+		CacheControl.cpp
+		ParallelPort.hpp
+		ParallelPort.cpp
+		Timers.hpp
+		Timers.cpp
 		RegisterFile.hpp
 		RegisterFile.cpp
 		Coprocessor.hpp

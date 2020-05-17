@@ -126,7 +126,7 @@ void Gpu::load_state(std::ifstream& file)
 	}
 }
 
-void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Gpu::sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	unsigned int num_words = block_control.BS * block_control.BC;
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
@@ -136,25 +136,25 @@ void Gpu::sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_add
 	{
 		num_words--;
 
-		unsigned int word = ram->load_word(addr);
+		unsigned int word = bus->get_word(addr);
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
 }
 
-void Gpu::sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Gpu::sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
-		unsigned int header = ram->load_word(addr);
+		unsigned int header = bus->get_word(addr);
 		unsigned int num_words = header >> 24;
 
 		while (num_words > 0)
 		{
 			addr = (addr + 4) & 0x1ffffc;
 
-			unsigned int command = ram->load_word(addr);
+			unsigned int command = bus->get_word(addr);
 			add_gp0_command(command, true);
 
 			num_words--;
@@ -461,7 +461,7 @@ bool Gpu::mono_4_pt_opaque()
 	// triangle 2
 	draw_triangle(v1, v2, v3, rgb, rgb, rgb);
 
-	return 5;
+	return true;
 }
 
 bool Gpu::shaded_3_pt_opaque()

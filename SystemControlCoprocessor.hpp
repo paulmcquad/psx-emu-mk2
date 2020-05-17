@@ -1,10 +1,45 @@
+#pragma once
+
 #include "Coprocessor.hpp"
+#include "Bus.hpp"
 
 class Ram;
 class Cpu;
 
-class SystemControlCoprocessor : public Cop {
+class SystemControlCoprocessor : public Cop, public Bus::BusDevice {
 public:
+
+	bool is_address_for_device(unsigned int address) final;
+
+	unsigned char get_byte(unsigned int address) final;
+
+	void set_byte(unsigned int address, unsigned char value) final;
+
+	union
+	{
+		unsigned bytes[4];
+		struct
+		{
+			unsigned int IRQ_BITS : 11;
+			unsigned int NA : 21;
+		};
+		struct
+		{
+			unsigned int IRQ0_VBLANK : 1;
+			unsigned int IRQ1_GPU : 1;
+			unsigned int IRQ2_CDROM : 1;
+			unsigned int IRQ3_DMA : 1;
+			unsigned int IRQ4_TMR0 : 1;
+			unsigned int IRQ5_TMR1 : 1;
+			unsigned int IRQ6_TMR2 : 1;
+			unsigned int IRQ7_CTRL_MEM_CRD : 1;
+			unsigned int IRQ8_SIO : 1;
+			unsigned int IRQ9_SPU : 1;
+			unsigned int IRQ10_LIGHTPEN : 1;
+			unsigned int NA : 21;
+		};
+	} interrupt_status_register, interrupt_mask_register;
+
 	enum class register_names : unsigned int
 	{
 		BPC = 3,
@@ -182,7 +217,7 @@ public:
 		UTLB_MISS_BEV1 = 0xBFC00100
 	};
 
-	SystemControlCoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu);
 
 	void save_state(std::ofstream& file) override;
 	void load_state(std::ifstream& file) override;

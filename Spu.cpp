@@ -2,6 +2,9 @@
 #include "Spu.hpp"
 #include "SDL.h"
 
+constexpr unsigned int SPU_START = 0x1F801C00;
+constexpr unsigned int SPU_END = SPU_START + SPU_VOICE_SIZE + SPU_CONTROL_SIZE;
+
 static SDL_AudioDeviceID device_id;
 
 //https://gigi.nullneuron.net/gigilabs/playing-a-wav-file-using-sdl2/
@@ -46,13 +49,22 @@ Spu::~Spu()
 	}
 }
 
-unsigned char Spu::get(unsigned int address)
+bool Spu::is_address_for_device(unsigned int address)
+{
+	if (address >= SPU_START && address <= SPU_END)
+	{
+		return true;
+	}
+	return false;
+}
+
+unsigned char Spu::get_byte(unsigned int address)
 {
 	//throw std::logic_error("not implemented");
 	return 0;
 }
 
-void Spu::set(unsigned int address, unsigned char value)
+void Spu::set_byte(unsigned int address, unsigned char value)
 {
 	//throw std::logic_error("not implemented");
 }

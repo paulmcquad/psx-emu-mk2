@@ -2,8 +2,9 @@
 #include <memory>
 #include <stdexcept>
 
+#include "Bus.hpp"
+
 class Gpu;
-class Ram;
 class Spu;
 
 union DMA_base_address
@@ -131,15 +132,15 @@ enum class DMA_channel_type
 class DMA_interface
 {
 public:
-	virtual void sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
-	virtual void sync_mode_request(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
-	virtual void sync_mode_linked_list(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
 };
 
 class Dma : public DMA_interface
 {
 public:
-	void init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
+	void init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
 	void reset();
 	void tick();
 	void save_state(std::ofstream& file);
@@ -149,12 +150,12 @@ public:
 	void set(unsigned int address, unsigned char value);
 
 	// for OTC channel - since its basically DMA to ram
-	virtual void sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
+	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
 	DMA_interface* devices[7] = { nullptr };
 private:
 
-	std::shared_ptr<Ram> ram = nullptr;
+	std::shared_ptr<Bus> bus = nullptr;
 
 	unsigned char dma_registers[128] = { 0 };
 	unsigned int * base_address_registers[7] = { nullptr };

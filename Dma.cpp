@@ -1,5 +1,4 @@
 #include "Dma.hpp"
-#include "Ram.hpp"
 #include "Gpu.hpp"
 #include "Spu.hpp"
 #include <iostream>
@@ -15,9 +14,9 @@ constexpr unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
 constexpr unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
 constexpr unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
 
-void Dma::init(std::shared_ptr<Ram> _ram, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu)
+void Dma::init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu)
 {
-	ram = _ram;
+	bus = _bus;
 
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
@@ -75,7 +74,7 @@ void Dma::tick()
 					if (channel_control.start_trigger == 1)
 					{
 						channel_control.start_trigger = 0;
-						device->sync_mode_manual(ram, base_address, block_control, channel_control);
+						device->sync_mode_manual(bus, base_address, block_control, channel_control);
 						channel_control.start_busy = 0;
 					}
 				} break;
@@ -83,14 +82,14 @@ void Dma::tick()
 				case DMA_sync_mode::request:
 				{
 					channel_control.start_trigger = 0;
-					device->sync_mode_request(ram, base_address, block_control, channel_control);
+					device->sync_mode_request(bus, base_address, block_control, channel_control);
 					channel_control.start_busy = 0;
 				} break;
 
 				case DMA_sync_mode::linked_list:
 				{
 					channel_control.start_trigger = 0;
-					device->sync_mode_linked_list(ram, base_address, block_control, channel_control);
+					device->sync_mode_linked_list(bus, base_address, block_control, channel_control);
 					channel_control.start_busy = 0;
 				} break;
 			}
@@ -112,7 +111,7 @@ void Dma::load_state(std::ifstream& file)
 	file.read(reinterpret_cast<char*>(&dma_registers[0]), sizeof(unsigned char) * 128);
 }
 
-void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Dma::sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	//std::cout << "Starting OTC manual DMA\n";
 	unsigned int num_words = block_control.BC;
@@ -126,16 +125,15 @@ void Dma::sync_mode_manual(std::shared_ptr<Ram> ram, DMA_base_address& base_addr
 		num_words--;
 		if (num_words == 0)
 		{
-			ram->store_word(addr, 0xffffffff);
+			bus->set_word(addr, 0xffffffff);
 		}
 		else
 		{
-			ram->store_word(addr, (addr - 4) & 0x1fffff);
+			bus->set_word(addr, (addr - 4) & 0x1fffff);
 		}
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-	//std::cout << "Finished OTC manual DMA\n";
 }
 
 unsigned char Dma::get(unsigned int address)

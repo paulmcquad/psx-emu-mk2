@@ -5,10 +5,10 @@
 #include "InstructionTypes.hpp"
 #include "InstructionEnums.hpp"
 #include "Cpu.hpp"
-#include "Ram.hpp"
+#include "Bus.hpp"
 
-GTECoprocessor::GTECoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu) :
-	Cop(_ram, _cpu)
+GTECoprocessor::GTECoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
+	Cop(_bus, _cpu)
 {
 
 }
@@ -87,14 +87,14 @@ void GTECoprocessor::set_control_register(unsigned int index, unsigned int value
 void GTECoprocessor::load_word_to_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	unsigned int word = ram->load_word(addr);
+	unsigned int word = bus->get_word(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
 void GTECoprocessor::store_word_from_cop(const instruction_union& instr)
 {
 	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	ram->store_word(addr,get_data_register(instr.immediate_instruction.rt));
+	bus->set_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
 void GTECoprocessor::move_to_cop(const instruction_union& instr)

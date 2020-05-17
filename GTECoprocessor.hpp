@@ -2,7 +2,7 @@
 
 class GTECoprocessor : public Cop {
 public:
-	GTECoprocessor(std::shared_ptr<Ram> _ram, std::shared_ptr<Cpu> _cpu);
+	GTECoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu);
 
 	void save_state(std::ofstream& file) override;
 	void load_state(std::ifstream& file) override;

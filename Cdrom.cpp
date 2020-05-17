@@ -27,6 +27,21 @@ constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
 // double check
 constexpr unsigned int DATA_FIFO_SIZE = 4096;
 
+bool Cdrom::is_address_for_device(unsigned int address)
+{
+	return false;
+}
+
+unsigned char Cdrom::get_byte(unsigned int address)
+{
+	return get(address);
+}
+
+void Cdrom::set_byte(unsigned int address, unsigned char value)
+{
+	set(address, value);
+}
+
 void Cdrom::init()
 {
 	response_fifo = new Fifo<unsigned char>(RESPONSE_FIFO_SIZE);

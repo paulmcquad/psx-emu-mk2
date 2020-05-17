@@ -12,7 +12,7 @@
 #include <sstream>
 #include <iomanip>
 
-void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Ram> _ram, std::shared_ptr<IOPorts> _ioports)
+void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -24,8 +24,6 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 
 	cpu = _cpu;
 	gpu = _gpu;
-	ram = _ram;
-	io_ports = _ioports;
 }
 
 void DebugMenu::uninit()
@@ -205,7 +203,7 @@ void DebugMenu::draw_controls_menu()
 
 void DebugMenu::draw_interrupt_menu()
 {
-	ImGui::Begin("Interrupts");
+	/*ImGui::Begin("Interrupts");
 
 	{
 		std::stringstream text;
@@ -295,5 +293,5 @@ void DebugMenu::draw_interrupt_menu()
 		ImGui::Text(text.str().c_str());
 	}
 
-	ImGui::End();
+	ImGui::End();*/
 }

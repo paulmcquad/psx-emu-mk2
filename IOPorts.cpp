@@ -112,7 +112,7 @@ unsigned char IOPorts::get(unsigned int address)
 	else if (address >= SPU_START &&
 		address < SPU_END)
 	{
-		return spu->get(address - SPU_START);
+		return spu->get_byte(address - SPU_START);
 	}
 	else if (address >= I_STAT_START &&
 		address < I_STAT_END)
@@ -185,7 +185,7 @@ void IOPorts::set(unsigned int address, unsigned char value)
 	else if (address >= SPU_START &&
 		address < SPU_END)
 	{
-		spu->set(address - SPU_START, value);
+		spu->set_byte(address - SPU_START, value);
 	}
 	// 0 = clear bit, 1 = leave it unchanged
 	else if (address >= I_STAT_START &&

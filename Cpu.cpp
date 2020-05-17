@@ -1,18 +1,18 @@
 #include <assert.h>
 #include <iostream>
 #include <fstream>
-#include "Ram.hpp"
+#include "Bus.hpp"
 #include "Cpu.hpp"
 #include "SystemControlCoprocessor.hpp"
 #include "GTECoprocessor.hpp"
 #include "InstructionEnums.hpp"
 #include "Exceptions.hpp"
 
-void Cpu::init(std::shared_ptr<Ram> _ram)
+void Cpu::init(std::shared_ptr<Bus> _bus)
 {
-	ram = _ram;
-	cop0 = std::make_shared<SystemControlCoprocessor>(ram, shared_from_this());
-	cop2 = std::make_shared<GTECoprocessor>(ram, shared_from_this());
+	bus = _bus;
+	cop0 = std::make_shared<SystemControlCoprocessor>(bus, shared_from_this());
+	cop2 = std::make_shared<GTECoprocessor>(bus, shared_from_this());
 	reset();
 }
 
@@ -74,7 +74,7 @@ void Cpu::tick()
 	current_pc = next_pc;
 	current_instruction = next_instruction;
 
-	next_instruction = ram->load_word(current_pc);
+	next_instruction = bus->get_word(current_pc);
 	next_pc = current_pc + 4;
 
 	try
@@ -280,7 +280,7 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::LB:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned char value = ram->load_byte(addr);
+			unsigned char value = bus->get_byte(addr);
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
@@ -291,7 +291,7 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::LBU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			int value = (char)ram->load_byte(addr);
+			int value = (char)bus->get_byte(addr);
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
@@ -302,7 +302,7 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::LH:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			int value = (short)ram->load_halfword(addr);
+			int value = (short)bus->get_halfword(addr);
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
@@ -313,7 +313,7 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::LHU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned short value = ram->load_halfword(addr);
+			unsigned short value = bus->get_halfword(addr);
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
@@ -330,7 +330,7 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::LW:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
-			unsigned int value = ram->load_word(addr);
+			unsigned int value = bus->get_word(addr);
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
@@ -343,7 +343,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load_word(addr_aligned);
+			unsigned int aligned_value = bus->get_word(addr_aligned);
 			unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt);
 
 			unsigned int alignment = addr & 3;
@@ -356,7 +356,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load_word(addr_aligned);
+			unsigned int aligned_value = bus->get_word(addr_aligned);
 
 			// we assume that LWR is always called after LWL, so we ignore the load delay
 			unsigned int current_value = register_file.get_register(instr.immediate_instruction.rt, true);
@@ -371,7 +371,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load_word(addr_aligned);
+			unsigned int aligned_value = bus->get_word(addr_aligned);
 			unsigned int value_to_set = register_file.get_register(instr.immediate_instruction.rt);
 
 			unsigned int alignment = addr & 3;
@@ -379,7 +379,7 @@ void Cpu::execute(const instruction_union& instr)
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
-				ram->store_word(addr_aligned, new_value);
+				bus->set_word(addr_aligned, new_value);
 			}
 		} break;
 
@@ -388,7 +388,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int addr_aligned = addr & ~3;
-			unsigned int aligned_value = ram->load_word(addr_aligned);
+			unsigned int aligned_value = bus->get_word(addr_aligned);
 			unsigned int value_to_set = register_file.get_register(instr.immediate_instruction.rt);
 
 			unsigned int alignment = addr & 3;
@@ -396,7 +396,7 @@ void Cpu::execute(const instruction_union& instr)
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
-				ram->store_word(addr_aligned, new_value);
+				bus->set_word(addr_aligned, new_value);
 			}
 		} break;
 
@@ -414,7 +414,7 @@ void Cpu::execute(const instruction_union& instr)
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
-				ram->store_byte(addr, value);
+				bus->set_byte(addr, value);
 			}
 		} break;
 
@@ -425,7 +425,7 @@ void Cpu::execute(const instruction_union& instr)
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
-				ram->store_halfword(addr, value);
+				bus->set_halfword(addr, value);
 			}
 		} break;
 
@@ -457,7 +457,7 @@ void Cpu::execute(const instruction_union& instr)
 
 			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
 			{
-				ram->store_word(addr, value);
+				bus->set_word(addr, value);
 			}
 		} break;
 

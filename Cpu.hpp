@@ -6,7 +6,7 @@
 
 class SystemControlCoprocessor;
 class GTECoprocessor;
-class Ram;
+class Bus;
 
 enum class cpu_instructions : unsigned char;
 enum class cpu_special_funcs : unsigned char;
@@ -21,12 +21,11 @@ class Cpu : public std::enable_shared_from_this<Cpu>
 public:
 	std::shared_ptr<SystemControlCoprocessor> cop0 = nullptr;
 	std::shared_ptr<GTECoprocessor> cop2 = nullptr;
-
-	std::shared_ptr<Ram> ram = nullptr;
+	std::shared_ptr<Bus> bus = nullptr;
 
 	RegisterFile register_file;
 
-	void init(std::shared_ptr<Ram> _ram);
+	void init(std::shared_ptr<Bus> _bus);
 	void reset();
 	void tick();
 
