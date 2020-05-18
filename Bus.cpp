@@ -1,5 +1,6 @@
 #include "Bus.hpp"
 #include <stdexcept>
+#include <iostream>
 
 void Bus::register_device(Bus::BusDevice * device)
 {
@@ -14,11 +15,6 @@ unsigned char Bus::get_byte(unsigned int address)
 	{
 		return device->get_byte(address);
 	}
-
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
-	}
 	
 	return 0;
 }
@@ -29,11 +25,6 @@ unsigned short Bus::get_halfword(unsigned int address)
 	if (device)
 	{
 		return device->get_halfword(address);
-	}
-
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
 	}
 
 	return 0;
@@ -47,11 +38,6 @@ unsigned int Bus::get_word(unsigned int address)
 		return device->get_word(address);
 	}
 
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
-	}
-
 	return 0;
 }
 
@@ -63,11 +49,6 @@ void Bus::set_byte(unsigned int address, unsigned char value)
 		device->set_byte(address, value);
 		return;
 	}
-
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
-	}
 }
 
 void Bus::set_halfword(unsigned int address, unsigned short value)
@@ -77,11 +58,6 @@ void Bus::set_halfword(unsigned int address, unsigned short value)
 	{
 		device->set_halfword(address, value);
 		return;
-	}
-
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
 	}
 }
 
@@ -93,11 +69,6 @@ void Bus::set_word(unsigned int address, unsigned int value)
 		device->set_word(address, value);
 		return;
 	}
-
-	if (is_address_to_ignore(address) == false)
-	{
-		throw std::logic_error("bus device not implemented!");
-	}
 }
 
 bool Bus::is_address_to_ignore(unsigned int address)
@@ -106,7 +77,14 @@ bool Bus::is_address_to_ignore(unsigned int address)
 	{
 		// POST
 		case 0x1F802041:
+		// JOY_CTRL
+		case 0x1F80104A:
+		// JOY_BAUD
+		case 0x1F80104E:
+		// JOY_MODE
+		case 0x1F801048:
 			return true;
+		
 	}
 	return false;
 }
@@ -121,5 +99,12 @@ Bus::BusDevice * Bus::get_bus_device_for_address(unsigned int address)
 			return device;
 		}
 	}
+
+	if (is_address_to_ignore(address) == false)
+	{
+		std::cerr << std::hex << "Bus address error: " << address << std::endl;
+		throw std::logic_error("bus device not implemented!");
+	}
+
 	return nullptr;
 }

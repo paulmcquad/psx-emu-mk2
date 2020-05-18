@@ -3,7 +3,6 @@
 #include <fstream>
 #include <assert.h>
 #include "Ram.hpp"
-#include "IOPorts.hpp"
 #include "Exceptions.hpp"
 
 constexpr unsigned int KUSEG_START    = 0x00000000;

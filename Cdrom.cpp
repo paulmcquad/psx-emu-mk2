@@ -4,23 +4,27 @@
 #include "Exceptions.hpp"
 #include "Cdrom.hpp"
 
+constexpr unsigned int CDROM_SIZE = 4;
+constexpr unsigned int CDROM_START = 0x1F801800;
+constexpr unsigned int CDROM_END = CDROM_START + CDROM_SIZE;
+
 // https://en.wikipedia.org/wiki/CD-ROM
 // http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
 // https://problemkaputt.de/psx-spx.htm#cdromdrive
 constexpr unsigned int SECTOR_SIZE = 2352;
-constexpr unsigned int STATUS_REGISTER = 0x1F801800 - CDROM_PORT_START;
+constexpr unsigned int STATUS_REGISTER = 0x1F801800;
 
 // command registers
-constexpr unsigned int COMMAND_REGISTER = 0x1F801801 - CDROM_PORT_START;
-constexpr unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
-constexpr unsigned int REQUEST_REGISTER = 0x1F801803 - CDROM_PORT_START;
+constexpr unsigned int COMMAND_REGISTER = 0x1F801801;
+constexpr unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802;
+constexpr unsigned int REQUEST_REGISTER = 0x1F801803;
 
-constexpr unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803 - CDROM_PORT_START;
-constexpr unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802 - CDROM_PORT_START;
-constexpr unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803 - CDROM_PORT_START;
+constexpr unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803;
+constexpr unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802;
+constexpr unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803;
 
-constexpr unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801 - CDROM_PORT_START;
-constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802 - CDROM_PORT_START;
+constexpr unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801;
+constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802;
 
 constexpr unsigned int RESPONSE_FIFO_SIZE = 16;
 constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
@@ -29,6 +33,10 @@ constexpr unsigned int DATA_FIFO_SIZE = 4096;
 
 bool Cdrom::is_address_for_device(unsigned int address)
 {
+	if (address >= CDROM_START && address <= CDROM_END)
+	{
+		return true;
+	}
 	return false;
 }
 

@@ -6,8 +6,6 @@
 #include "Fifo.hpp"
 #include "Bus.hpp"
 
-constexpr unsigned int CDROM_PORT_START = 0x1F801800;
-
 class Cdrom : public Bus::BusDevice
 {
 public:
