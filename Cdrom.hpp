@@ -5,10 +5,13 @@
 
 #include "Fifo.hpp"
 #include "Bus.hpp"
+#include "SystemControlCoprocessor.hpp"
 
-class Cdrom : public Bus::BusDevice
+class Cdrom : public Bus::BusDevice, public SystemControlCoprocessor::SystemControlInterface
 {
 public:
+	void trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor) final;
+
 	bool is_address_for_device(unsigned int address) final;
 
 	unsigned char get_byte(unsigned int address) final;
@@ -88,8 +91,6 @@ public:
 	void set(unsigned int address, unsigned char value);
 
 	void tick();
-
-	void trigger_pending_interrupts();
 
 	bool load(std::string bin_path, std::string cue_path);
 

@@ -65,6 +65,9 @@ bool Psx::init(std::string bios_path)
 
 	cpu = std::make_shared<Cpu>();
 	cpu->init(bus);
+
+	cpu->cop0->register_system_control_device(cdrom.get());
+
 	bus->register_device(cpu->cop0.get());
 
 	dma->init(bus, gpu, spu);

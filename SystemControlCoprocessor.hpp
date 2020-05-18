@@ -9,6 +9,12 @@ class Cpu;
 class SystemControlCoprocessor : public Cop, public Bus::BusDevice {
 public:
 
+	class SystemControlInterface
+	{
+	public:
+		virtual void trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor) = 0;
+	};
+
 	bool is_address_for_device(unsigned int address) final;
 
 	unsigned char get_byte(unsigned int address) final;
@@ -229,6 +235,12 @@ public:
 
 	void trigger_pending_interrupts();
 
+	void register_system_control_device(SystemControlInterface * interface)
+	{
+		system_control_devices[num_system_control_devices] = interface;
+		num_system_control_devices++;
+	}
+
 private:
 	unsigned int get_control_register(unsigned int index);
 	void set_control_register(unsigned int index, unsigned int value);
@@ -245,4 +257,7 @@ private:
 	void restore_from_exception(const instruction_union& instr);
 	
 	unsigned int control_registers[32] = { 0 };
+
+	unsigned int num_system_control_devices = 0;
+	SystemControlInterface * system_control_devices[7] = { nullptr };
 };

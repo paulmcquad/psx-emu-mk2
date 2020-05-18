@@ -143,19 +143,9 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
-	// interrupt active and no unacknowledged interrupts
-	if (interrupt_mask_register.IRQ2_CDROM == true && interrupt_status_register.IRQ2_CDROM == false)
+	for (int idx = 0; idx < num_system_control_devices; idx++)
 	{
-		try
-		{
-			//cdrom->trigger_pending_interrupts();
-		}
-		catch (mips_interrupt &e)
-		{
-			// indicate interrupt active
-			interrupt_status_register.IRQ2_CDROM = true;
-			throw e;
-		}
+		system_control_devices[idx]->trigger_pending_interrupts(this);
 	}
 }
 

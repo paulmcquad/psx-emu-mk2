@@ -31,6 +31,37 @@ constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
 // double check
 constexpr unsigned int DATA_FIFO_SIZE = 4096;
 
+void Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor)
+{
+	// interrupt active and no unacknowledged interrupts
+	if (system_control_processor->interrupt_mask_register.IRQ2_CDROM == true &&
+		system_control_processor->interrupt_mask_register.IRQ2_CDROM == false)
+	{
+		try
+		{
+			// if interrupt queued and delay time has passed
+			if (response_interrupt_queue.empty() == false)
+			{
+				auto & top_response = response_interrupt_queue.front();
+				// delay passed and current response matches
+				if (top_response.first == 0 && current_response_received == top_response.second)
+				{
+					response_interrupt_queue.pop_front();
+					throw mips_interrupt();
+				}
+			}
+		}
+		catch (mips_interrupt &e)
+		{
+			// indicate interrupt active
+			system_control_processor->interrupt_mask_register.IRQ2_CDROM = true;
+			throw e;
+		}
+	}
+
+	
+}
+
 bool Cdrom::is_address_for_device(unsigned int address)
 {
 	if (address >= CDROM_START && address <= CDROM_END)
@@ -83,21 +114,6 @@ void Cdrom::tick()
 		if (top_response.first > 0 && top_response.second == current_response_received)
 		{
 			top_response.first--;
-		}
-	}
-}
-
-void Cdrom::trigger_pending_interrupts()
-{
-	// if interrupt queued and delay time has passed
-	if (response_interrupt_queue.empty() == false)
-	{
-		auto & top_response = response_interrupt_queue.front();
-		// delay passed and current response matches
-		if (top_response.first == 0 && current_response_received == top_response.second)
-		{
-			response_interrupt_queue.pop_front();
-			throw mips_interrupt();
 		}
 	}
 }
