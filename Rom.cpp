@@ -3,21 +3,17 @@
 #include <iostream>
 #include <string>
 
-constexpr unsigned int KUSEG_START = 0x1FC00000;
-constexpr unsigned int KSEG0_START = 0x9FC00000;
-constexpr unsigned int KSEG1_START = 0xBFC00000;
-
 bool Rom::is_address_for_device(unsigned int address)
 {
-	if (address >= KUSEG_START && address <= KUSEG_START + BIOS_SIZE)
+	if (address >= 0x1FC00000 && address <= 0x1FC00000 + BIOS_SIZE)
 	{
 		return true;
 	}
-	else if (address >= KSEG0_START && address <= KSEG0_START + BIOS_SIZE)
+	else if (address >= 0x9FC00000 && address <= 0x9FC00000 + BIOS_SIZE)
 	{
 		return true;
 	}
-	else if (address >= KSEG1_START && address <= KSEG1_START + BIOS_SIZE)
+	else if (address >= 0xBFC00000 && address <= 0xBFC00000 + BIOS_SIZE)
 	{
 		return true;
 	}

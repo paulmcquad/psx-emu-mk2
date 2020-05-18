@@ -5,21 +5,17 @@
 #include "Ram.hpp"
 #include "Exceptions.hpp"
 
-constexpr unsigned int KUSEG_START    = 0x00000000;
-constexpr unsigned int KSEG0_START    = 0x80000000;
-constexpr unsigned int KSEG1_START    = 0xa0000000;
-
 bool Ram::is_address_for_device(unsigned int address)
 {
-	if (address >= KUSEG_START && address <= KUSEG_START + MAIN_MEMORY_SIZE)
+	if (address >= 0x0 && address <= MAIN_MEMORY_SIZE)
 	{
 		return true;
 	}
-	else if (address >= KSEG0_START && address <= KSEG0_START + MAIN_MEMORY_SIZE)
+	else if (address >= 0x80000000 && address <= 0x80000000 + MAIN_MEMORY_SIZE)
 	{
 		return true;
 	}
-	else if (address >= KSEG1_START && address <= KSEG1_START + MAIN_MEMORY_SIZE)
+	else if (address >= 0xa0000000 && address <= 0xa0000000 + MAIN_MEMORY_SIZE)
 	{
 		return true;
 	}

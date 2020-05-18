@@ -18,13 +18,15 @@ public:
 	bool is_address_for_device(unsigned int address) final;
 
 	unsigned char get_byte(unsigned int address) final;
-
 	void set_byte(unsigned int address, unsigned char value) final;
+
+	unsigned int get_word(unsigned int address) final;
+	void set_word(unsigned int address, unsigned int value) final;
 
 	union
 	{
 		unsigned int value;
-		unsigned bytes[4];
+		unsigned char bytes[4];
 		struct
 		{
 			unsigned int IRQ_BITS : 11;

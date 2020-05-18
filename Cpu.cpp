@@ -150,10 +150,10 @@ void Cpu::execute(const instruction_union& instr)
 	{
 		case cpu_instructions::ADDI:
 		{
-			int immediate = (short)instr.immediate_instruction.immediate;
+			unsigned short immediate = instr.immediate_instruction.immediate;
 			int rs_value = register_file.get_register(instr.immediate_instruction.rs);
 
-			unsigned int value = rs_value + immediate;
+			unsigned int value = rs_value + (short)immediate;
 
 			// check for overflow
 			{
@@ -179,10 +179,10 @@ void Cpu::execute(const instruction_union& instr)
 
 		case cpu_instructions::ADDIU:
 		{
-			int immediate = (short)instr.immediate_instruction.immediate;
-			int rs_value = register_file.get_register(instr.immediate_instruction.rs);
+			unsigned short immediate = instr.immediate_instruction.immediate;
+			unsigned int rs_value = register_file.get_register(instr.immediate_instruction.rs);
 
-			unsigned int value = rs_value + immediate;
+			unsigned int value = rs_value + (short)immediate;
 
 			register_file.set_register(instr.immediate_instruction.rt, value);
 		} break;
