@@ -4,6 +4,3 @@
 [submodule "glm"]
 	path = glm
 	url = https://github.com/g-truc/glm.git
-[submodule "sdl2-cmake-modules"]
-	path = sdl2-cmake-modules
-	url = https://github.com/aminosbh/sdl2-cmake-modules.git
