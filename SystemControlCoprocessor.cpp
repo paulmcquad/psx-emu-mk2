@@ -5,7 +5,6 @@
 #include "InstructionEnums.hpp"
 #include "Bus.hpp"
 #include "Cpu.hpp"
-#include "IOPorts.hpp"
 #include "Cdrom.hpp"
 #include "Exceptions.hpp"
 
@@ -144,23 +143,20 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
-	//std::shared_ptr<IOPorts> io_ports = ram->io_ports;
-
-	//// interrupt active and no unacknowledged interrupts
-	//if (io_ports->interrupt_mask_register.IRQ2_CDROM == true &&
-	//	io_ports->interrupt_status_register.IRQ2_CDROM == false)
-	//{
-	//	try
-	//	{
-	//		io_ports->cdrom->trigger_pending_interrupts();
-	//	}
-	//	catch (mips_interrupt &e)
-	//	{
-	//		// indicate interrupt active
-	//		io_ports->interrupt_status_register.IRQ2_CDROM = true;
-	//		throw e;
-	//	}
-	//}
+	// interrupt active and no unacknowledged interrupts
+	if (interrupt_mask_register.IRQ2_CDROM == true && interrupt_status_register.IRQ2_CDROM == false)
+	{
+		try
+		{
+			//cdrom->trigger_pending_interrupts();
+		}
+		catch (mips_interrupt &e)
+		{
+			// indicate interrupt active
+			interrupt_status_register.IRQ2_CDROM = true;
+			throw e;
+		}
+	}
 }
 
 // LWCz rt, offset(base)

@@ -9,48 +9,49 @@
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
 
-unsigned char Gpu::get(gpu_registers reg_name, unsigned int byte_offset)
+constexpr unsigned int GPU_SIZE = 8;
+constexpr unsigned int GPU_START = 0x1F801810;
+constexpr unsigned int GPU_END = GPU_START + GPU_SIZE;
+
+constexpr unsigned int GP0_Send_GPUREAD = 0x1F801810;
+constexpr unsigned int GP1_Send_GPUSTAT = 0x1f801814;
+
+bool Gpu::is_address_for_device(unsigned int address)
 {
-	switch (reg_name)
+	if (address >= GPU_START && address <= GPU_END)
 	{
-		case GPUSTAT:
-		{
-			return gpu_status.byte_value[byte_offset];
-		} break;
-		case GPUREAD:
-		{
-			return gpu_read.byte_value[byte_offset];
-		} break;
-		default:
-			throw std::logic_error("can't read this gpu");
+		return true;
 	}
+	return false;
 }
 
-void Gpu::set(gpu_registers reg_name, unsigned int byte_offset, unsigned char value)
+unsigned int Gpu::get_word(unsigned int address)
 {
-	// command is set byte by byte but expected to be added to the command
-	// queue as a word value, so we store it in a static variable and put it
-	// in the list when its finished 
-	static unsigned char command_bytes[4] = { 0 };
-	command_bytes[byte_offset] = value;
-
-	if (byte_offset == 3)
+	if (address == GP0_Send_GPUREAD)
 	{
-		unsigned int command = 0;
-		memcpy(&command, &command_bytes, sizeof(unsigned int));
-		switch (reg_name)
-		{
-			case GP0_SEND:
-			{
-				add_gp0_command(command, false);
-			} break;
-			case GP1_SEND:
-			{
-				execute_gp1_command(command);
-			} break;
-			default:
-				throw std::logic_error("can't write to this gpu register");
-		}
+		return gpu_read.int_value;
+	}
+	else if (address == GP1_Send_GPUSTAT)
+	{
+		return gpu_status.int_value;
+	}
+
+	throw std::out_of_range("address out of range");
+}
+
+void Gpu::set_word(unsigned int address, unsigned int value)
+{
+	if (address == GP0_Send_GPUREAD)
+	{
+		add_gp0_command(value, false);
+	}
+	else if (address == GP1_Send_GPUSTAT)
+	{
+		execute_gp1_command(value);
+	}
+	else
+	{
+		throw std::out_of_range("address out of range");
 	}
 }
 

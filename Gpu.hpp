@@ -3,9 +3,10 @@
 #include <deque>
 #include <unordered_map>
 #include <glm/fwd.hpp>
-#include <Fifo.hpp>
+#include "Fifo.hpp"
 #include "InstructionTypes.hpp"
 #include "Dma.hpp"
+#include "Bus.hpp"
 
 constexpr unsigned int FRAME_WIDTH = 1024;
 constexpr unsigned int FRAME_HEIGHT = 512;
@@ -15,9 +16,15 @@ constexpr unsigned int GP0_FIFO_SIZE = 16;
 enum class gp0_commands : unsigned char;
 enum class gp1_commands : unsigned char;
 
-class Gpu : public DMA_interface
+class Gpu : public DMA_interface, public Bus::BusDevice
 {
 public:
+	
+	bool is_address_for_device(unsigned int address) final;
+
+	// AFAIK the GPU is only accessed with full word accesses
+	unsigned int get_word(unsigned int address) final;
+	void set_word(unsigned int address, unsigned int value) final;
 
 	~Gpu();
 	void init();
@@ -28,17 +35,6 @@ public:
 
 	virtual void sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
-
-	enum gpu_registers
-	{
-		GP0_SEND,
-		GP1_SEND,
-		GPUREAD,
-		GPUSTAT
-	};
-
-	unsigned char get(gpu_registers reg_name, unsigned int byte_offset);
-	void set(gpu_registers reg_name, unsigned int byte_offset, unsigned char value);
 
 	union
 	{

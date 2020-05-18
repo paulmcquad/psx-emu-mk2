@@ -7,7 +7,6 @@
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "Ram.hpp"
-#include "IOPorts.hpp"
 
 #include <sstream>
 #include <iomanip>

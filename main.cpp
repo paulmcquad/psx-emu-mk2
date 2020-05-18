@@ -13,7 +13,6 @@
 #include "Gpu.hpp"
 #include "Spu.hpp"
 #include "Cdrom.hpp"
-#include "IOPorts.hpp"
 #include "glad.h"
 
 #include "DebugMenu.hpp"

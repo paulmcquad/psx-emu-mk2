@@ -11,6 +11,7 @@
 #include "MemoryControl.hpp"
 #include "CacheControl.hpp"
 #include "ParallelPort.hpp"
+#include "Timers.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -47,6 +48,8 @@ bool Psx::init(std::string bios_path)
 
 	parallel_port = std::make_shared<ParallelPort>();
 
+	timers = std::make_shared<Timers>();
+
 	// hook up the bus
 	bus = std::make_shared<Bus>();
 	bus->register_device(cdrom.get());
@@ -56,6 +59,9 @@ bool Psx::init(std::string bios_path)
 	bus->register_device(cache_control.get());
 	bus->register_device(spu.get());
 	bus->register_device(parallel_port.get());
+	bus->register_device(timers.get());
+	bus->register_device(dma.get());
+	bus->register_device(gpu.get());
 
 	cpu = std::make_shared<Cpu>();
 	cpu->init(bus);

@@ -14,6 +14,7 @@ class Ram;
 class MemoryControl;
 class CacheControl;
 class ParallelPort;
+class Timers;
 
 class Psx
 {
@@ -36,4 +37,5 @@ public:
 	std::shared_ptr <MemoryControl> memory_control = nullptr;
 	std::shared_ptr <CacheControl> cache_control = nullptr;
 	std::shared_ptr <ParallelPort> parallel_port = nullptr;
+	std::shared_ptr <Timers> timers = nullptr;
 };

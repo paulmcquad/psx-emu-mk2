@@ -79,8 +79,6 @@ set(source_files
 		GTECoprocessor.cpp
 		InstructionTypes.hpp
 		InstructionEnums.hpp
-		IOPorts.hpp
-		IOPorts.cpp
 		Gpu.hpp
 		Gpu.cpp
 		Spu.hpp

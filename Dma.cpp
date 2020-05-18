@@ -6,13 +6,34 @@
 
 constexpr unsigned int NUM_CHANNELS = 7;
 
+constexpr unsigned int DMA_SIZE = 128;
 constexpr unsigned int DMA_START = 0x1F801080;
+constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
 constexpr unsigned int DMA_BASE_ADDRESS_START = 0x1F801080 - DMA_START;
 constexpr unsigned int DMA_BLOCK_CONTROL_START = 0x1F801084 - DMA_START;
 constexpr unsigned int DMA_CHANNEL_CONTROL_START = 0x1F801088 - DMA_START;
 constexpr unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
 constexpr unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
 constexpr unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
+
+bool Dma::is_address_for_device(unsigned int address)
+{
+	if (address >= DMA_START && address <= DMA_END)
+	{
+		return true;
+	}
+	return false;
+}
+
+unsigned char Dma::get_byte(unsigned int address)
+{
+	return dma_registers[address - DMA_START];
+}
+
+void Dma::set_byte(unsigned int address, unsigned char value)
+{
+	dma_registers[address - DMA_START] = value;
+}
 
 void Dma::init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu)
 {
@@ -134,14 +155,4 @@ void Dma::sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_addr
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-}
-
-unsigned char Dma::get(unsigned int address)
-{
-	return dma_registers[address];
-}
-
-void Dma::set(unsigned int address, unsigned char value)
-{
-	dma_registers[address] = value;
 }

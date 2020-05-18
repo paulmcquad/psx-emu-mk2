@@ -137,17 +137,18 @@ public:
 	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
 };
 
-class Dma : public DMA_interface
+class Dma : public DMA_interface, public Bus::BusDevice
 {
 public:
+	bool is_address_for_device(unsigned int address) final;
+	unsigned char get_byte(unsigned int address) final;
+	void set_byte(unsigned int address, unsigned char value) final;
+
 	void init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
 	void reset();
 	void tick();
 	void save_state(std::ofstream& file);
 	void load_state(std::ifstream& file);
-
-	unsigned char get(unsigned int address);
-	void set(unsigned int address, unsigned char value);
 
 	// for OTC channel - since its basically DMA to ram
 	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
