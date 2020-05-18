@@ -35,7 +35,7 @@ void Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_
 {
 	// interrupt active and no unacknowledged interrupts
 	if (system_control_processor->interrupt_mask_register.IRQ2_CDROM == true &&
-		system_control_processor->interrupt_mask_register.IRQ2_CDROM == false)
+		system_control_processor->interrupt_status_register.IRQ2_CDROM == false)
 	{
 		// if interrupt queued and delay time has passed
 		if (response_interrupt_queue.empty() == false)
