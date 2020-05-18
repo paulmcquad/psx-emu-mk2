@@ -12,7 +12,7 @@ public:
 	class SystemControlInterface
 	{
 	public:
-		virtual void trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor) = 0;
+		virtual bool trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode) = 0;
 	};
 
 	bool is_address_for_device(unsigned int address) final;
@@ -236,7 +236,7 @@ public:
 	unsigned int get_control_register(register_names register_name);
 	void set_control_register(register_names register_name, unsigned int value);
 
-	void trigger_pending_interrupts();
+	bool trigger_pending_interrupts(unsigned int & excode);
 
 	void register_system_control_device(SystemControlInterface * interface)
 	{

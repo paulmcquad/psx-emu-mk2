@@ -6,7 +6,6 @@
 #include "SystemControlCoprocessor.hpp"
 #include "GTECoprocessor.hpp"
 #include "InstructionEnums.hpp"
-#include "Exceptions.hpp"
 
 void Cpu::init(std::shared_ptr<Bus> _bus)
 {
@@ -81,27 +80,20 @@ void Cpu::tick()
 	{
 		instruction_union instr(current_instruction);
 		execute(instr);
-		cop0->trigger_pending_interrupts();
-	}
-	catch(mips_sys_call& /*e*/)
-	{
-		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall));
-	}
-	catch (mips_overflow& /*e*/)
-	{
-		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov));
-	}
-	catch (mips_interrupt& /*e*/)
-	{
-		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::INT));
-	}
-	catch (mips_bus_error_DBE& /*e*/)
-	{
-		execute_mips_exception(static_cast<unsigned int>(SystemControlCoprocessor::excode::DBE));
+		if (pending_exception == false)
+		{
+			pending_exception = cop0->trigger_pending_interrupts(pending_exception_excode);
+		}
+
+		if (pending_exception)
+		{
+			execute_mips_exception(pending_exception_excode);
+			pending_exception = false;
+		}
 	}
 	catch (...)
 	{
-		throw std::logic_error("not implemented yet");
+		std::cerr << "Exception encountered!\n";
 	}
 
 	register_file.tick();
@@ -162,14 +154,16 @@ void Cpu::execute(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 				else if (immediate < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 			}
@@ -488,14 +482,16 @@ void Cpu::execute_special(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 				else if (rt_value < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 			}
@@ -522,7 +518,8 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::BREAK:
 		{
-			throw mips_breakpoint();
+			pending_exception = true;
+			pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::BP);
 		} break;
 
 		case cpu_special_funcs::DIV:
@@ -714,14 +711,16 @@ void Cpu::execute_special(const instruction_union& instr)
 				{
 					if (signed_value < 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 				else if (rt_value < 0 && rs_value < 0)
 				{
 					if (signed_value >= 0)
 					{
-						throw mips_overflow();
+						pending_exception = true;
+						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
 					}
 				}
 			}
@@ -739,7 +738,8 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::SYSCALL:
 		{
-			throw mips_sys_call();
+			pending_exception = true;
+			pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall);
 		} break;
 
 		case cpu_special_funcs::XOR:

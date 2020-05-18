@@ -6,7 +6,6 @@
 #include "Bus.hpp"
 #include "Cpu.hpp"
 #include "Cdrom.hpp"
-#include "Exceptions.hpp"
 
 // I_STAT_SIZE and I_MASK_SIZE only use the first 2 bytes
 // and the next 2 in both are considered garbage areas
@@ -176,7 +175,7 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 	control_registers[index] = value;
 }
 
-void SystemControlCoprocessor::trigger_pending_interrupts()
+bool SystemControlCoprocessor::trigger_pending_interrupts(unsigned int & excode)
 {
 	unsigned int cause_register = get_control_register(SystemControlCoprocessor::register_names::CAUSE);
 
@@ -195,8 +194,13 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 
 	for (unsigned int idx = 0; idx < num_system_control_devices; idx++)
 	{
-		system_control_devices[idx]->trigger_pending_interrupts(this);
+		if (system_control_devices[idx]->trigger_pending_interrupts(this, excode))
+		{
+			return true;
+		}
 	}
+
+	return false;
 }
 
 // LWCz rt, offset(base)

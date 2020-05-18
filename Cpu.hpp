@@ -51,4 +51,7 @@ public:
 	unsigned int next_instruction = 0;
 
 	bool in_delay_slot = false;
+
+	bool pending_exception = false;
+	unsigned int pending_exception_excode = 0;
 };

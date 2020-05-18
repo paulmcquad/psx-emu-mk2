@@ -1,7 +1,6 @@
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
-#include "Exceptions.hpp"
 #include "Cdrom.hpp"
 
 constexpr unsigned int CDROM_SIZE = 4;
@@ -31,7 +30,7 @@ constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
 // double check
 constexpr unsigned int DATA_FIFO_SIZE = 4096;
 
-void Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor)
+bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode)
 {
 	// interrupt active and no unacknowledged interrupts
 	if (system_control_processor->interrupt_mask_register.IRQ2_CDROM == true &&
@@ -46,10 +45,12 @@ void Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_
 			{
 				response_interrupt_queue.pop_front();
 				system_control_processor->interrupt_mask_register.IRQ2_CDROM = true;
-				throw mips_interrupt();
+				excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::INT);
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
 bool Cdrom::is_address_for_device(unsigned int address)

@@ -10,7 +10,7 @@
 class Cdrom : public Bus::BusDevice, public SystemControlCoprocessor::SystemControlInterface
 {
 public:
-	void trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor) final;
+	bool trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode) final;
 
 	bool is_address_for_device(unsigned int address) final;
 

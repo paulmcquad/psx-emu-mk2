@@ -75,7 +75,6 @@ set(source_files
 		Cdrom.cpp
 		Bus.hpp
 		Bus.cpp
-		Exceptions.hpp
 )
 
 set (test_files
