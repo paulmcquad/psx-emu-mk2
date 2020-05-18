@@ -35,6 +35,9 @@ unsigned char SystemControlCoprocessor::get_byte(unsigned int address)
 	{
 		return interrupt_mask_register.bytes[address - I_STAT_START];
 	}
+
+	throw std::logic_error("out of bounds");
+	return 0;
 }
 
 void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char value)
@@ -143,7 +146,7 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
-	for (int idx = 0; idx < num_system_control_devices; idx++)
+	for (unsigned int idx = 0; idx < num_system_control_devices; idx++)
 	{
 		system_control_devices[idx]->trigger_pending_interrupts(this);
 	}
