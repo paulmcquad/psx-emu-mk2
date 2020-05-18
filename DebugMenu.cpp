@@ -7,6 +7,7 @@
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "Ram.hpp"
+#include "SystemControlCoprocessor.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -202,95 +203,95 @@ void DebugMenu::draw_controls_menu()
 
 void DebugMenu::draw_interrupt_menu()
 {
-	/*ImGui::Begin("Interrupts");
+	ImGui::Begin("Interrupts");
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ0_VBLANK;
-		bool irq = io_ports->interrupt_status_register.IRQ0_VBLANK;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ0_VBLANK;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ0_VBLANK;
 		text << "IRQ0_VBLANK: " <<  (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ1_GPU;
-		bool irq = io_ports->interrupt_status_register.IRQ1_GPU;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ1_GPU;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ1_GPU;
 		text << "IRQ1_GPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ2_CDROM;
-		bool irq = io_ports->interrupt_status_register.IRQ2_CDROM;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ2_CDROM;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ2_CDROM;
 		text << "IRQ2_CDROM: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ3_DMA;
-		bool irq = io_ports->interrupt_status_register.IRQ3_DMA;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ3_DMA;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ3_DMA;
 		text << "IRQ3_DMA: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ4_TMR0;
-		bool irq = io_ports->interrupt_status_register.IRQ4_TMR0;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ4_TMR0;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ4_TMR0;
 		text << "IRQ4_TMR0: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ5_TMR1;
-		bool irq = io_ports->interrupt_status_register.IRQ5_TMR1;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ5_TMR1;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ5_TMR1;
 		text << "IRQ5_TMR1: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ6_TMR2;
-		bool irq = io_ports->interrupt_status_register.IRQ6_TMR2;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ6_TMR2;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ6_TMR2;
 		text << "IRQ6_TMR2: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
-		bool irq = io_ports->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
 		text << "IRQ7_CTRL_MEM_CRD: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ8_SIO;
-		bool irq = io_ports->interrupt_status_register.IRQ8_SIO;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ8_SIO;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ8_SIO;
 		text << "IRQ8_SIO: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ9_SPU;
-		bool irq = io_ports->interrupt_status_register.IRQ9_SPU;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ9_SPU;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ9_SPU;
 		text << "IRQ9_SPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = io_ports->interrupt_mask_register.IRQ10_LIGHTPEN;
-		bool irq = io_ports->interrupt_status_register.IRQ10_LIGHTPEN;
+		bool enabled = cpu->cop0->interrupt_mask_register.IRQ10_LIGHTPEN;
+		bool irq = cpu->cop0->interrupt_status_register.IRQ10_LIGHTPEN;
 		text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
-	ImGui::End();*/
+	ImGui::End();
 }
