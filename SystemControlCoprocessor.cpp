@@ -55,6 +55,8 @@ void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char valu
 SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
 	Cop(_bus, _cpu)
 {
+	interrupt_status_register.value = 0x0;
+	interrupt_mask_register.value = 0x0;
 }
 
 void SystemControlCoprocessor::save_state(std::ofstream& file)
@@ -146,6 +148,21 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 void SystemControlCoprocessor::trigger_pending_interrupts()
 {
+	unsigned int cause_register = get_control_register(SystemControlCoprocessor::register_names::CAUSE);
+
+	if (interrupt_mask_register.value & interrupt_status_register.value)
+	{
+		// set bit 10
+		cause_register |= 0x1 << 10;
+	}
+	else
+	{
+		// clear bit 10
+		cause_register &= ~(0x1 << 10);
+	}
+
+	set_control_register(SystemControlCoprocessor::register_names::CAUSE, cause_register);
+
 	for (unsigned int idx = 0; idx < num_system_control_devices; idx++)
 	{
 		system_control_devices[idx]->trigger_pending_interrupts(this);

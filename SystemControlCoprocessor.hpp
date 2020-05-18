@@ -23,6 +23,7 @@ public:
 
 	union
 	{
+		unsigned int value;
 		unsigned bytes[4];
 		struct
 		{
