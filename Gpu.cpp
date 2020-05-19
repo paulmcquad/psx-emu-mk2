@@ -9,13 +9,6 @@
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
 
-constexpr unsigned int GPU_SIZE = 8;
-constexpr unsigned int GPU_START = 0x1F801810;
-constexpr unsigned int GPU_END = GPU_START + GPU_SIZE;
-
-constexpr unsigned int GP0_Send_GPUREAD = 0x1F801810;
-constexpr unsigned int GP1_Send_GPUSTAT = 0x1f801814;
-
 bool Gpu::is_address_for_device(unsigned int address)
 {
 	if (address >= GPU_START && address <= GPU_END)

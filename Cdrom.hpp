@@ -199,4 +199,32 @@ public:
 	void execute_getstat_command();
 	void execute_getid_command();
 	void execute_read_toc_command();
+
+private:
+	static const unsigned int CDROM_SIZE = 4;
+	static const unsigned int CDROM_START = 0x1F801800;
+	static const unsigned int CDROM_END = CDROM_START + CDROM_SIZE;
+
+	// https://en.wikipedia.org/wiki/CD-ROM
+	// http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
+	// https://problemkaputt.de/psx-spx.htm#cdromdrive
+	static const unsigned int SECTOR_SIZE = 2352;
+	static const unsigned int STATUS_REGISTER = 0x1F801800;
+
+	// command registers
+	static const unsigned int COMMAND_REGISTER = 0x1F801801;
+	static const unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802;
+	static const unsigned int REQUEST_REGISTER = 0x1F801803;
+
+	static const unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803;
+	static const unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802;
+	static const unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803;
+
+	static const unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801;
+	static const unsigned int DATA_FIFO_REGISTER = 0x1F801802;
+
+	static const unsigned int RESPONSE_FIFO_SIZE = 16;
+	static const unsigned int PARAMETER_FIFO_SIZE = 16;
+	// double check
+	static const unsigned int DATA_FIFO_SIZE = 4096;
 };

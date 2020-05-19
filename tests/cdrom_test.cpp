@@ -1,20 +1,28 @@
 #include <catch.hpp>
 #include <memory>
 #include "../Cdrom.hpp"
-#include "../Exceptions.hpp"
+#include "../Cpu.hpp"
+#include "../Bus.hpp"
+#include "../SystemControlCoprocessor.hpp"
 
 TEST_CASE("Cdrom commands")
 {
-	unsigned int status_address = 0x1F801800 - CDROM_PORT_START;
-	unsigned int command_address = 0x1F801801 - CDROM_PORT_START;
-	unsigned int interrupt_enable_address = 0x1F801802 - CDROM_PORT_START;
-	unsigned int interrupt_flag_address = 0x1F801803 - CDROM_PORT_START;
-	unsigned int response_address = 0x1F801801 - CDROM_PORT_START;
+	unsigned int status_address = 0x1F801800;
+	unsigned int command_address = 0x1F801801;
+	unsigned int interrupt_enable_address = 0x1F801802;
+	unsigned int interrupt_flag_address = 0x1F801803;
+	unsigned int response_address = 0x1F801801;
 
 	std::shared_ptr<Cdrom> cdrom = std::make_shared<Cdrom>();
 	cdrom->init();
 	cdrom->set(status_address, 1);
 	cdrom->set(interrupt_enable_address, 0x1F);
+
+	std::shared_ptr <Cpu> cpu = std::make_shared<Cpu>();
+	std::shared_ptr <Bus> bus = std::make_shared<Bus>();
+	cpu->init(bus);
+
+	cpu->cop0->interrupt_mask_register.IRQ2_CDROM = true;
 
 	SECTION("Status register")
 	{
@@ -41,7 +49,7 @@ TEST_CASE("Cdrom commands")
 	SECTION("Getstat")
 	{
 		{
-			unsigned int status_address = 0x1F801800 - CDROM_PORT_START;
+			unsigned int status_address = 0x1F801800;
 			// index 0 for command register
 			cdrom->set(status_address, 0);
 			cdrom->set(command_address, static_cast<unsigned char>(Cdrom::cdrom_command::Getstat));
@@ -61,8 +69,8 @@ TEST_CASE("Cdrom commands")
 				cdrom->tick();
 			}
 
-			REQUIRE_THROWS_AS(cdrom->trigger_pending_interrupts(), mips_interrupt);
-			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
+			unsigned int excode = 0;
+			REQUIRE(cdrom->trigger_pending_interrupts(cpu->cop0.get(), excode) == true);
 		}
 
 		// check result
@@ -83,7 +91,7 @@ TEST_CASE("Cdrom commands")
 	SECTION("GetID")
 	{
 		{
-			unsigned int status_address = 0x1F801800 - CDROM_PORT_START;
+			unsigned int status_address = 0x1F801800;
 			// index 0 for command register
 			cdrom->set(status_address, 0);
 			cdrom->set(command_address, static_cast<unsigned char>(Cdrom::cdrom_command::GetID));
@@ -103,8 +111,8 @@ TEST_CASE("Cdrom commands")
 				cdrom->tick();
 			}
 
-			REQUIRE_THROWS_AS(cdrom->trigger_pending_interrupts(), mips_interrupt);
-			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
+			unsigned int excode = 0;
+			REQUIRE(cdrom->trigger_pending_interrupts(cpu->cop0.get(), excode) == true);
 		}
 
 		// make sure second interrupt doesn't happen till we acknowledge the first one
@@ -114,7 +122,8 @@ TEST_CASE("Cdrom commands")
 				cdrom->tick();
 			}
 
-			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
+			unsigned int excode = 0;
+			REQUIRE(cdrom->trigger_pending_interrupts(cpu->cop0.get(), excode) == false);
 		}
 
 		// check result
@@ -133,14 +142,15 @@ TEST_CASE("Cdrom commands")
 
 		// still need to wait for the delay to pass on the next response
 		{
-			REQUIRE_NOTHROW(cdrom->trigger_pending_interrupts());
+			unsigned int excode = 0;
+			REQUIRE(cdrom->trigger_pending_interrupts(cpu->cop0.get(), excode) == false);
 
 			for (unsigned int idx = 0; idx < static_cast<unsigned int>(Cdrom::cdrom_response_timings::SECOND_REPONSE_DELAY); idx++)
 			{
 				cdrom->tick();
 			}
 
-			REQUIRE_THROWS_AS(cdrom->trigger_pending_interrupts(), mips_interrupt);
+			REQUIRE(cdrom->trigger_pending_interrupts(cpu->cop0.get(), excode) == true);
 		}
 
 		// check the result

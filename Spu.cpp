@@ -1,12 +1,9 @@
 #include <stdexcept>
 #include "Spu.hpp"
 
-constexpr unsigned int SPU_START = 0x1F801C00;
-constexpr unsigned int SPU_END = SPU_START + SPU_VOICE_SIZE + SPU_CONTROL_SIZE;
-
 bool Spu::init()
 {
-	spu_ram = new unsigned char[512 * 1042];
+	spu_ram = new unsigned char[SPU_RAM_SIZE];
 	return true;
 }
 

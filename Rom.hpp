@@ -1,8 +1,6 @@
 #pragma once
 #include "Bus.hpp"
 
-constexpr unsigned int BIOS_SIZE = 1024 * 512;
-
 class Rom : public Bus::BusDevice
 {
 public:
@@ -13,5 +11,7 @@ public:
 	bool load_bios(std::string bios_filepath);
 
 private:
+	static const unsigned int BIOS_SIZE = 1024 * 512;
+
 	unsigned char bios[BIOS_SIZE] = { 0 };
 };

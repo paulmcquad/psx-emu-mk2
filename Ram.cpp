@@ -3,7 +3,6 @@
 #include <fstream>
 #include <assert.h>
 #include "Ram.hpp"
-#include "Exceptions.hpp"
 
 bool Ram::is_address_for_device(unsigned int address)
 {

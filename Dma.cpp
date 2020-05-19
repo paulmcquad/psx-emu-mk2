@@ -4,18 +4,6 @@
 #include <iostream>
 #include <fstream>
 
-constexpr unsigned int NUM_CHANNELS = 7;
-
-constexpr unsigned int DMA_SIZE = 128;
-constexpr unsigned int DMA_START = 0x1F801080;
-constexpr unsigned int DMA_END = DMA_START + DMA_SIZE;
-constexpr unsigned int DMA_BASE_ADDRESS_START = 0x1F801080 - DMA_START;
-constexpr unsigned int DMA_BLOCK_CONTROL_START = 0x1F801084 - DMA_START;
-constexpr unsigned int DMA_CHANNEL_CONTROL_START = 0x1F801088 - DMA_START;
-constexpr unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
-constexpr unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
-constexpr unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
-
 bool Dma::is_address_for_device(unsigned int address)
 {
 	if (address >= DMA_START && address <= DMA_END)

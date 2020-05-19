@@ -156,6 +156,18 @@ public:
 	DMA_interface* devices[7] = { nullptr };
 private:
 
+	static const unsigned int NUM_CHANNELS = 7;
+
+	static const unsigned int DMA_SIZE = 128;
+	static const unsigned int DMA_START = 0x1F801080;
+	static const unsigned int DMA_END = DMA_START + DMA_SIZE;
+	static const unsigned int DMA_BASE_ADDRESS_START = 0x1F801080 - DMA_START;
+	static const unsigned int DMA_BLOCK_CONTROL_START = 0x1F801084 - DMA_START;
+	static const unsigned int DMA_CHANNEL_CONTROL_START = 0x1F801088 - DMA_START;
+	static const unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
+	static const unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
+	static const unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
+
 	std::shared_ptr<Bus> bus = nullptr;
 
 	unsigned char dma_registers[128] = { 0 };

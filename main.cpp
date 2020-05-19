@@ -60,6 +60,24 @@ int main(int num_args, char ** args )
 		return -1;
 	}
 
+	std::cout << "Create PSX\n";
+	std::string bios_file(args[1]);
+	std::string bin_file(args[2]);
+	std::string cue_file(args[3]);
+
+	std::unique_ptr<Psx> psx = std::make_unique<Psx>();
+	if (psx->init(bios_file) == false)
+	{
+		std::cerr << "Unable to initialise PSX\n";
+		return -1;
+	}
+
+	if (psx->load(bin_file, cue_file) == false)
+	{
+		std::cerr << "Unable to load game\n";
+		return -1;
+	}
+
 	if (!glfwInit())
 	{
 		std::cerr << "Failed to initialize GLFW\n";
@@ -68,7 +86,7 @@ int main(int num_args, char ** args )
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	GLFWwindow* window = glfwCreateWindow(FRAME_WIDTH, FRAME_HEIGHT, "PSX-EMU-MK2", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(psx->gpu->FRAME_WIDTH, psx->gpu->FRAME_HEIGHT, "PSX-EMU-MK2", nullptr, nullptr);
 	if (!window)
 	{
 		std::cerr << "Failed to create window\n";
@@ -141,23 +159,6 @@ int main(int num_args, char ** args )
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	std::cout << "Create PSX\n";
-	std::string bios_file(args[1]);
-	std::string bin_file(args[2]);
-	std::string cue_file(args[3]);
-
-	std::unique_ptr<Psx> psx = std::make_unique<Psx>();
-	if (psx->init(bios_file) == false)
-	{
-		std::cerr << "Unable to initialise PSX\n";
-		return -1;
-	}
-
-	if (psx->load(bin_file, cue_file) == false)
-	{
-		std::cerr << "Unable to load game\n";
-		return -1;
-	}
 
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";

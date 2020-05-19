@@ -6,8 +6,6 @@
 #include <deque>
 #include <iostream>
 
-constexpr unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;
-
 class Ram : public Bus::BusDevice {
 public:
 	bool is_address_for_device(unsigned int address) final;
@@ -19,7 +17,7 @@ public:
 	void load_state(std::ifstream& file);
 
 private:
-
+	static const unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;
 	// four SRAM chips of 512KB
 	unsigned char memory[MAIN_MEMORY_SIZE] = { 0 };
 };

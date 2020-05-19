@@ -7,14 +7,6 @@
 #include "Cpu.hpp"
 #include "Cdrom.hpp"
 
-// I_STAT_SIZE and I_MASK_SIZE only use the first 2 bytes
-// and the next 2 in both are considered garbage areas
-constexpr unsigned int I_STAT_START = 0x1F801070;
-constexpr unsigned int I_STAT_END = I_STAT_START + 4;
-
-constexpr unsigned int I_MASK_START = 0x1F801074;
-constexpr unsigned int I_MASK_END = I_MASK_START + 4;
-
 bool SystemControlCoprocessor::is_address_for_device(unsigned int address)
 {
 	if (address >= I_STAT_START && address <= I_MASK_END)
@@ -51,33 +43,6 @@ void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char valu
 	else
 	{
 		throw std::logic_error("out of bounds");
-	}
-}
-
-unsigned int SystemControlCoprocessor::get_word(unsigned int address)
-{
-	if (address >= I_STAT_START && address <= I_STAT_END)
-	{ 
-		return interrupt_status_register.value;
-	}
-	else if (address >= I_MASK_START && address <= I_MASK_END)
-	{
-		return interrupt_mask_register.value;
-	}
-
-	throw std::logic_error("out of bounds");
-	return 0;
-}
-
-void SystemControlCoprocessor::set_word(unsigned int address, unsigned int value)
-{
-	if (address >= I_STAT_START && address <= I_STAT_END)
-	{
-		interrupt_status_register.value &= value;
-	}
-	else if (address >= I_MASK_START && address <= I_MASK_END)
-	{
-		interrupt_mask_register.value = value;
 	}
 }
 

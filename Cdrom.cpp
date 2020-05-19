@@ -3,33 +3,6 @@
 #include <fstream>
 #include "Cdrom.hpp"
 
-constexpr unsigned int CDROM_SIZE = 4;
-constexpr unsigned int CDROM_START = 0x1F801800;
-constexpr unsigned int CDROM_END = CDROM_START + CDROM_SIZE;
-
-// https://en.wikipedia.org/wiki/CD-ROM
-// http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
-// https://problemkaputt.de/psx-spx.htm#cdromdrive
-constexpr unsigned int SECTOR_SIZE = 2352;
-constexpr unsigned int STATUS_REGISTER = 0x1F801800;
-
-// command registers
-constexpr unsigned int COMMAND_REGISTER = 0x1F801801;
-constexpr unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802;
-constexpr unsigned int REQUEST_REGISTER = 0x1F801803;
-
-constexpr unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803;
-constexpr unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802;
-constexpr unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803;
-
-constexpr unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801;
-constexpr unsigned int DATA_FIFO_REGISTER = 0x1F801802;
-
-constexpr unsigned int RESPONSE_FIFO_SIZE = 16;
-constexpr unsigned int PARAMETER_FIFO_SIZE = 16;
-// double check
-constexpr unsigned int DATA_FIFO_SIZE = 4096;
-
 bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode)
 {
 	// interrupt active and no unacknowledged interrupts

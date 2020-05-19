@@ -4,22 +4,20 @@
 #include <memory>
 #include <limits>
 
+#include "../Bus.hpp"
 #include "../Ram.hpp"
 #include "../Cpu.hpp"
-#include "../IOPorts.hpp"
 #include "../SystemControlCoprocessor.hpp"
 #include "../InstructionEnums.hpp"
-#include "../Exceptions.hpp"
 
 TEST_CASE("Standard Opcodes")
 {
-	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-
+	std::shared_ptr<Bus> bus = std::make_shared<Bus>();
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
-	ram->init(io_ports);
+	bus->register_device(ram.get());
 
 	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
-	cpu->init(ram);
+	cpu->init(bus);
 
 	// make sure the cache isn't isolated
 	SystemControlCoprocessor::status_register status = cpu->cop0->get<SystemControlCoprocessor::status_register>();
@@ -52,27 +50,37 @@ TEST_CASE("Standard Opcodes")
 
 		// test for overflow
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, std::numeric_limits<int>::max());
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::max());
-			REQUIRE_THROWS_AS(cpu->execute(instruction), mips_overflow);
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == true);
+			REQUIRE(cpu->pending_exception_excode == static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov));
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, std::numeric_limits<int>::min());
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::min());
-			REQUIRE_THROWS_AS(cpu->execute(instruction), mips_overflow);
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == true);
+			REQUIRE(cpu->pending_exception_excode == static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov));
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, 0);
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::max());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, 0);
 			instruction_union instruction(cpu_instructions::ADDI, 1, 1, std::numeric_limits<short>::min());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 	}
 
@@ -101,27 +109,35 @@ TEST_CASE("Standard Opcodes")
 
 		// test for overflow - the same as above just all except no throw
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, std::numeric_limits<int>::max());
 			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::max());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, std::numeric_limits<int>::min());
 			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::min());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, 0);
 			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::max());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 
 		{
+			cpu->pending_exception = false;
 			cpu->register_file.set_register(1, 0);
 			instruction_union instruction(cpu_instructions::ADDIU, 1, 1, std::numeric_limits<short>::min());
-			REQUIRE_NOTHROW(cpu->execute(instruction));
+			cpu->execute(instruction);
+			REQUIRE(cpu->pending_exception == false);
 		}
 	}
 
@@ -306,14 +322,12 @@ TEST_CASE("Normal branching opcodes")
 
 TEST_CASE("Special Opcodes")
 {
-	std::shared_ptr<IOPorts> io_ports = std::make_shared<IOPorts>();
-
+	std::shared_ptr<Bus> bus = std::make_shared<Bus>();
 	std::shared_ptr<Ram> ram = std::make_shared<Ram>();
-
-	ram->init(io_ports);
+	bus->register_device(ram.get());
 
 	std::shared_ptr<Cpu> cpu = std::make_shared<Cpu>();
-	cpu->init(ram);
+	cpu->init(bus);
 
 	// make sure the cache isn't isolated
 	SystemControlCoprocessor::status_register status = cpu->cop0->get<SystemControlCoprocessor::status_register>();

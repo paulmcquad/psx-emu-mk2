@@ -8,17 +8,14 @@
 #include "Dma.hpp"
 #include "Bus.hpp"
 
-constexpr unsigned int FRAME_WIDTH = 1024;
-constexpr unsigned int FRAME_HEIGHT = 512;
-constexpr unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
-constexpr unsigned int GP0_FIFO_SIZE = 16;
-
 enum class gp0_commands : unsigned char;
 enum class gp1_commands : unsigned char;
 
 class Gpu : public DMA_interface, public Bus::BusDevice
 {
 public:
+	static const unsigned int FRAME_WIDTH = 1024;
+	static const unsigned int FRAME_HEIGHT = 512;
 	
 	bool is_address_for_device(unsigned int address) final;
 
@@ -97,6 +94,15 @@ public:
 	unsigned int draw_area_max_y = 0;
 
 private:
+	static const unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
+	static const unsigned int GP0_FIFO_SIZE = 16;
+
+	static const unsigned int GPU_SIZE = 8;
+	static const unsigned int GPU_START = 0x1F801810;
+	static const unsigned int GPU_END = GPU_START + GPU_SIZE;
+
+	static const unsigned int GP0_Send_GPUREAD = 0x1F801810;
+	static const unsigned int GP1_Send_GPUSTAT = 0x1f801814;
 
 	// copying variables
 	gp_command copy_dest_coord = 0x0;
