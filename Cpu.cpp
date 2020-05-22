@@ -143,15 +143,17 @@ void Cpu::execute(const instruction_union& instr)
 		case cpu_instructions::ADDI:
 		{
 			unsigned int immediate = (short)instr.immediate_instruction.immediate;
-			int rs_value = register_file.get_register(instr.immediate_instruction.rs);
-
+			unsigned int rs_value = register_file.get_register(instr.immediate_instruction.rs);
 			unsigned int value = rs_value + immediate;
 
 			// check for overflow
 			{
 				int signed_value = value;
-				if ((immediate >= 0 && rs_value >= 0 && signed_value < 0) ||
-					(immediate < 0 && rs_value < 0 && signed_value >= 0))
+				int signed_rs_value = rs_value;
+				int signed_imm = immediate;
+
+				if ((signed_imm >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
+					(signed_imm < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
 					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
@@ -462,15 +464,18 @@ void Cpu::execute_special(const instruction_union& instr)
 	{
 		case cpu_special_funcs::ADD:
 		{
-			int rs_value = register_file.get_register(instr.register_instruction.rs);
-			int rt_value = register_file.get_register(instr.register_instruction.rt);
+			unsigned int rs_value = register_file.get_register(instr.register_instruction.rs);
+			unsigned int rt_value = register_file.get_register(instr.register_instruction.rt);
 			unsigned int value = rs_value + rt_value;
 
 			// check for overflow
 			{
 				int signed_value = value;
-				if ((rt_value >= 0 && rs_value >= 0 && signed_value < 0) ||
-					(rt_value < 0 && rs_value < 0 && signed_value >= 0))
+				int signed_rs_value = rs_value;
+				int signed_rt_value = rt_value;
+
+				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
+					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
 					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
@@ -682,15 +687,18 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::SUB:
 		{
-			int rs_value = register_file.get_register(instr.register_instruction.rs);
-			int rt_value = register_file.get_register(instr.register_instruction.rt);
+			unsigned int rs_value = register_file.get_register(instr.register_instruction.rs);
+			unsigned int rt_value = register_file.get_register(instr.register_instruction.rt);
 			unsigned int value = rs_value - rt_value;
 
 			// check for overflow
 			{
 				int signed_value = value;
-				if ((rt_value >= 0 && rs_value >= 0 && signed_value < 0) ||
-					(rt_value < 0 && rs_value < 0 && signed_value >= 0))
+				int signed_rs_value = rs_value;
+				int signed_rt_value = rt_value;
+
+				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
+					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
 					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
