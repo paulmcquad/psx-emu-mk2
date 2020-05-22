@@ -150,21 +150,12 @@ void Cpu::execute(const instruction_union& instr)
 			// check for overflow
 			{
 				int signed_value = value;
-				if (immediate >= 0 && rs_value >= 0)
+				if ((immediate >= 0 && rs_value >= 0 && signed_value < 0) ||
+					(immediate < 0 && rs_value < 0 && signed_value >= 0))
 				{
-					if (signed_value < 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
-				}
-				else if (immediate < 0 && rs_value < 0)
-				{
-					if (signed_value >= 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
+					pending_exception = true;
+					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					return;
 				}
 			}
 
@@ -478,21 +469,12 @@ void Cpu::execute_special(const instruction_union& instr)
 			// check for overflow
 			{
 				int signed_value = value;
-				if (rt_value >= 0 && rs_value >= 0)
+				if ((rt_value >= 0 && rs_value >= 0 && signed_value < 0) ||
+					(rt_value < 0 && rs_value < 0 && signed_value >= 0))
 				{
-					if (signed_value < 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
-				}
-				else if (rt_value < 0 && rs_value < 0)
-				{
-					if (signed_value >= 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
+					pending_exception = true;
+					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					return;
 				}
 			}
 
@@ -707,21 +689,12 @@ void Cpu::execute_special(const instruction_union& instr)
 			// check for overflow
 			{
 				int signed_value = value;
-				if (rt_value >= 0 && rs_value >= 0)
+				if ((rt_value >= 0 && rs_value >= 0 && signed_value < 0) ||
+					(rt_value < 0 && rs_value < 0 && signed_value >= 0))
 				{
-					if (signed_value < 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
-				}
-				else if (rt_value < 0 && rs_value < 0)
-				{
-					if (signed_value >= 0)
-					{
-						pending_exception = true;
-						pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
-					}
+					pending_exception = true;
+					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					return;
 				}
 			}
 
