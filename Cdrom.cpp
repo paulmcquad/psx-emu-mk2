@@ -7,18 +7,20 @@ bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_
 {
 	// interrupt active and no unacknowledged interrupts
 	if (system_control_processor->interrupt_mask_register.IRQ2_CDROM == true &&
-		system_control_processor->interrupt_status_register.IRQ2_CDROM == false)
+		system_control_processor->interrupt_status_register.IRQ2_CDROM == false &&
+		awaiting_acknowledgement == false)
 	{
 		// if interrupt queued and delay time has passed
 		if (response_interrupt_queue.empty() == false)
 		{
 			auto & top_response = response_interrupt_queue.front();
 			// delay passed and current response matches
-			if (top_response.first == 0 && current_response_received == top_response.second)
+			if (top_response.first == 0)
 			{
 				response_interrupt_queue.pop_front();
 				system_control_processor->interrupt_mask_register.IRQ2_CDROM = true;
 				excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::INT);
+				awaiting_acknowledgement = true;
 				return true;
 			}
 		}
@@ -72,10 +74,10 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
-	if (response_interrupt_queue.empty() == false)
+	if (response_interrupt_queue.empty() == false && awaiting_acknowledgement == false)
 	{
 		auto & top_response = response_interrupt_queue.front();
-		if (top_response.first > 0 && top_response.second == current_response_received)
+		if (top_response.first > 0)
 		{
 			top_response.first--;
 		}
@@ -120,7 +122,8 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 
 unsigned char Cdrom::get(unsigned int address)
 {
-	if (address == STATUS_REGISTER)
+	return 0;
+	/*if (address == STATUS_REGISTER)
 	{
 		status_register_read response;
 
@@ -149,28 +152,28 @@ unsigned char Cdrom::get(unsigned int address)
 			default:
 				throw std::logic_error("not implemented");
 		}
-	}
+	}*/
 }
 
 void Cdrom::set(unsigned int address, unsigned char value)
 {
-	if (address == STATUS_REGISTER)
-	{
-		// only the index value is writable
-		register_index = 0x03 & value;
-	}
-	else
-	{
-		switch (register_index)
-		{
-			case 0:
-				return set_index0(address, value);
-			case 1:
-				return set_index1(address, value);
-			default:
-				throw std::logic_error("not implemented");
-			}
-	}
+	//if (address == STATUS_REGISTER)
+	//{
+	//	// only the index value is writable
+	//	register_index = 0x03 & value;
+	//}
+	//else
+	//{
+	//	switch (register_index)
+	//	{
+	//		case 0:
+	//			return set_index0(address, value);
+	//		case 1:
+	//			return set_index1(address, value);
+	//		default:
+	//			throw std::logic_error("not implemented");
+	//		}
+	//}
 }
 
 unsigned char Cdrom::get_index0(unsigned int address)
@@ -287,6 +290,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 
 			// reset response
 			current_response_received = 0;
+			awaiting_acknowledgement = false;
 
 			if (response_interrupt_queue.empty() == false)
 			{

@@ -103,7 +103,8 @@ public:
 	void set_index1(unsigned int address, unsigned char value);
 
 	unsigned int register_index = 0;
-	unsigned int current_response_received;
+	unsigned int current_response_received = 0;
+	bool awaiting_acknowledgement = false;
 
 	unsigned char interrupt_enable_register = 0x0;
 

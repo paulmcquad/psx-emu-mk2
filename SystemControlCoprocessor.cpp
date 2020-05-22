@@ -34,7 +34,7 @@ void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char valu
 {
 	if (address >= I_STAT_START && address <= I_STAT_END)
 	{
-		interrupt_status_register.bytes[address - I_STAT_START] &= value;
+		interrupt_status_register.bytes[address - I_STAT_START] = value;
 	}
 	else if (address >= I_MASK_START && address <= I_MASK_END)
 	{

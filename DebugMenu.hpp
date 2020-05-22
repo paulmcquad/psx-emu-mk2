@@ -17,11 +17,17 @@ public:
 
 	bool is_paused() { return paused_requested; };
 
-	bool is_step_requested() { 
-		bool result = step_requested;
-		step_requested = false;
+	bool is_forward_step_requested() { 
+		bool result = step_forward_requested;
+		step_forward_requested = false;
 		return result;
 	};
+
+	bool is_backward_step_requested() {
+		bool result = step_backward_requested;
+		step_backward_requested = false;
+		return result;
+	}
 
 	bool is_save_state_requested() {
 		bool result = save_state_requested;
@@ -49,8 +55,10 @@ private:
 	std::shared_ptr<Gpu> gpu = nullptr;
 	std::shared_ptr<IOPorts> io_ports = nullptr;
 
-	bool paused_requested = false;
-	bool step_requested = false;
+	bool paused_requested = true;
+	bool step_forward_requested = false;
+	bool step_backward_requested = false;
+
 	bool save_state_requested = false;
 	bool load_state_requested = false;
 };

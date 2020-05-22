@@ -171,7 +171,7 @@ int main(int num_args, char ** args )
 	{
 		auto start_time = glfwGetTime();
 
-		if (debug_menu->is_paused() == false || debug_menu->is_step_requested() == true)
+		if (debug_menu->is_paused() == false || debug_menu->is_forward_step_requested() == true)
 		{
 			psx->tick();
 

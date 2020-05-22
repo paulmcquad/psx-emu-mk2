@@ -188,9 +188,15 @@ void DebugMenu::draw_controls_menu()
 			paused_requested = !paused_requested;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Step"))
+		if (ImGui::Button("Step Backward"))
 		{
-			step_requested = !step_requested;
+			step_backward_requested = !step_backward_requested;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Step Forward"))
+		{
+			step_forward_requested = !step_forward_requested;
 		}
 
 		save_state_requested = ImGui::Button("Save state");
