@@ -5,13 +5,12 @@
 struct GLFWwindow;
 class Cpu;
 class Gpu;
-class Ram;
-class IOPorts;
+class Bus;
 
 class DebugMenu
 {
 public:
-	void init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu);
+	void init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Bus> _bus);
 	void uninit();
 	void draw();
 
@@ -47,13 +46,15 @@ private:
 
 	void draw_cpu_menu();
 	void draw_gpu_menu();
+	void draw_assembly_menu();
 	
 	void draw_controls_menu();
 	void draw_interrupt_menu();
 
 	std::shared_ptr<Cpu> cpu = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;
-	std::shared_ptr<IOPorts> io_ports = nullptr;
+	std::shared_ptr<Bus> bus = nullptr;
+
 
 	bool paused_requested = true;
 	bool step_forward_requested = false;

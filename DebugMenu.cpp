@@ -6,13 +6,13 @@
 
 #include "Cpu.hpp"
 #include "Gpu.hpp"
-#include "Ram.hpp"
+#include "Bus.hpp"
 #include "SystemControlCoprocessor.hpp"
 
 #include <sstream>
 #include <iomanip>
 
-void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu)
+void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Bus> _bus)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -24,6 +24,7 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 
 	cpu = _cpu;
 	gpu = _gpu;
+	bus = _bus;
 }
 
 void DebugMenu::uninit()
@@ -43,6 +44,8 @@ void DebugMenu::draw()
 	draw_cpu_menu();
 
 	draw_gpu_menu();
+
+	draw_assembly_menu();
 
 	draw_controls_menu();
 
@@ -174,6 +177,28 @@ void DebugMenu::draw_gpu_menu()
 
 		// todo add more
 	}
+
+	ImGui::End();
+}
+
+void DebugMenu::draw_assembly_menu()
+{
+	ImGui::Begin("Assembly");
+
+	unsigned int pc = cpu->current_pc;
+
+	bus->suppress_exceptions = true;
+	std::stringstream asm_text;
+	for (int idx = -10; idx < 10; idx++)
+	{
+		unsigned int pc = cpu->current_pc + static_cast<unsigned int>(idx*4);
+		instruction_union instruction = bus->get_word(pc);
+		asm_text << ((pc == cpu->current_pc) ? "->0x" : "  0x") << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << instruction.to_string() << "\n";
+	}
+	bus->suppress_exceptions = false;
+	
+	ImGui::Text(asm_text.str().c_str());
+	
 
 	ImGui::End();
 }

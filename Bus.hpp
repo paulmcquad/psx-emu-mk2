@@ -78,6 +78,8 @@ public:
 
 	bool is_address_to_ignore(unsigned int address);
 
+	bool suppress_exceptions = false;
+
 private:
 
 	BusDevice * get_bus_device_for_address(unsigned int address);

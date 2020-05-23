@@ -100,7 +100,7 @@ Bus::BusDevice * Bus::get_bus_device_for_address(unsigned int address)
 		}
 	}
 
-	if (is_address_to_ignore(address) == false)
+	if (suppress_exceptions == false && is_address_to_ignore(address) == false)
 	{
 		std::cerr << std::hex << "Bus address error: " << address << std::endl;
 		throw std::logic_error("bus device not implemented!");

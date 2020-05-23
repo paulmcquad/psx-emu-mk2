@@ -348,7 +348,14 @@ void Gpu::execute_gp1_command(gp_command command)
 
 		case gp1_commands::DISPLAY_MODE:
 		{
-			// todo
+			// Some of these values if set cause the psx to get stuck in an infinite loop at startup
+			//gpu_status.h_res_1 = command.display_mode.horizontal_res;
+			//gpu_status.v_res = command.display_mode.vertical_res;
+			gpu_status.video_mode = command.display_mode.video_mode;
+			//gpu_status.display_depth = command.display_mode.display_color_depth;
+			//gpu_status.v_interlace = command.display_mode.vertical_interlace;
+			//gpu_status.h_res_2 = command.display_mode.horizontal_res_2;
+			//gpu_status.reverse = command.display_mode.reverse_flag;
 		} break;
 
 		case gp1_commands::GET_GPU_INFO:
