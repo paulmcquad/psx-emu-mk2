@@ -299,7 +299,6 @@ void Gpu::add_gp0_command(gp_command command, bool via_dma)
 		copy_next_pixel_to_framebuffer(command.pixel_data.data1);
 		num_words_to_copy_to_gpu--;
 	}
-	
 }
 
 void Gpu::execute_gp1_command(gp_command command)
@@ -447,9 +446,9 @@ void Gpu::copy_next_pixel_to_framebuffer(unsigned int short pixel_data)
 	}
 
 	x++;
-	if (x > copy_to_gpu_width_height.dims.x_siz)
+	if ((x - copy_to_gpu_dest_coord.dest_coord.x_pos) >= copy_to_gpu_width_height.dims.x_siz)
 	{
-		x = 0;
+		x = copy_to_gpu_dest_coord.dest_coord.x_pos;
 		y++;
 	}
 
@@ -470,9 +469,9 @@ unsigned short Gpu::copy_next_pixel_from_framebuffer()
 	}
 
 	x++;
-	if (x > copy_to_cpu_width_height.dims.x_siz)
+	if ((x - copy_to_cpu_src_coord.dest_coord.x_pos) >= copy_to_cpu_width_height.dims.x_siz)
 	{
-		x = 0;
+		x = copy_to_cpu_src_coord.dest_coord.x_pos;
 		y++;
 	}
 
