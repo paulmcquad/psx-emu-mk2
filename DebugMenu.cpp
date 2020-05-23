@@ -81,7 +81,59 @@ void DebugMenu::draw_cpu_menu()
 	{
 		for (int idx = 0; idx < 32; idx++)
 		{
+			// add register names
 			std::stringstream reg_text;
+			if (idx == 0)
+			{
+				reg_text << "ZR-";
+			}
+			else if (idx == 1)
+			{
+				reg_text << "AT-";
+			}
+			else if (idx >= 2 && idx <= 3)
+			{
+				reg_text << "V" << idx - 2 << "-";
+			}
+			else if (idx >= 4 && idx <= 7)
+			{
+				reg_text << "A" << idx - 4 << "-";
+			}
+			else if (idx >= 8 && idx <= 15)
+			{
+				reg_text << "T" << idx - 8 << "-";
+			}
+			else if (idx >= 16 && idx <= 23)
+			{
+				reg_text << "S" << idx - 16 << "-";
+			}
+			else if (idx >= 24 && idx <= 25)
+			{
+				// starts at T8 now
+				reg_text << "T" << idx - 16  << "-";
+			}
+			else if (idx >= 26 && idx <= 27)
+			{
+				reg_text << "K" << idx - 26 << "-";
+			}
+			else if (idx == 28 )
+			{
+				reg_text << "GP-";
+			}
+			else if (idx == 29)
+			{
+				reg_text << "SP-";
+			}
+			else if (idx == 30)
+			{
+				reg_text << "FP-";
+			}
+			else if (idx == 31)
+			{
+				reg_text << "RA-";
+			}
+
+			// register contents
 			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.get_register(idx);
 			ImGui::Text(reg_text.str().c_str());
 		}
