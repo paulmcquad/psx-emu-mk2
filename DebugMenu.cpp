@@ -83,6 +83,32 @@ void DebugMenu::draw_cpu_menu()
 		{
 			// add register names
 			std::stringstream reg_text;
+
+			if (idx == 2)
+			{
+				ImGui::Text("Results");
+			}
+			else if (idx == 4)
+			{
+				ImGui::Text("Arguments");
+			}
+			else if (idx == 8 || idx == 24)
+			{
+				ImGui::Text("Temps - not saved");
+			}
+			else if (idx == 16)
+			{
+				ImGui::Text("Saved");
+			}
+			else if (idx == 26)
+			{
+				ImGui::Text("Kernel");
+			}
+			else if (idx == 28)
+			{
+				ImGui::Text("Pointers");
+			}
+
 			if (idx == 0)
 			{
 				reg_text << "ZR-";
