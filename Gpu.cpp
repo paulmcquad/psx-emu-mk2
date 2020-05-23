@@ -295,7 +295,8 @@ void Gpu::add_gp0_command(gp_command command, bool via_dma)
 	}
 	else
 	{
-		// todo copy from cpu to vram
+		copy_next_pixel_to_framebuffer(command.pixel_data.data0);
+		copy_next_pixel_to_framebuffer(command.pixel_data.data1);
 		num_words_to_copy_to_gpu--;
 	}
 	
@@ -434,23 +435,39 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offset)
 	}
 }
 
-unsigned short Gpu::get_pixel(glm::ivec2 v)
+void Gpu::copy_next_pixel_to_framebuffer(unsigned int short pixel_data)
 {
-	if ((v.x >= 0 && v.x < FRAME_WIDTH)  && (v.y >= 0 && v.y < FRAME_HEIGHT))
-	{
-		unsigned int index = ((v.y*FRAME_WIDTH) + v.x);
-		return video_ram[index];
-	}
-	return 0;
-}
+	unsigned int x = copy_to_gpu_current_coord.dest_coord.x_pos;
+	unsigned int y = copy_to_gpu_current_coord.dest_coord.y_pos;
 
+	if ((x >= 0 && x < FRAME_WIDTH) && (y >= 0 && y < FRAME_HEIGHT))
+	{
+		unsigned int index = ((y*FRAME_WIDTH) + x);
+		video_ram[index] = pixel_data;
+	}
+
+	x++;
+	if (x > copy_to_gpu_width_height.dims.x_siz)
+	{
+		x = 0;
+		y++;
+	}
+
+	copy_to_gpu_current_coord.dest_coord.x_pos = x;
+	copy_to_gpu_current_coord.dest_coord.y_pos = y;
+}
 
 unsigned short Gpu::copy_next_pixel_from_framebuffer()
 {
 	unsigned int x = copy_to_cpu_current_coord.dest_coord.x_pos;
 	unsigned int y = copy_to_cpu_current_coord.dest_coord.y_pos;
 
-	unsigned short result = get_pixel(glm::ivec2(x, y));
+	unsigned short result = 0;
+	if ((x >= 0 && x < FRAME_WIDTH) && (y >= 0 && y < FRAME_HEIGHT))
+	{
+		unsigned int index = ((y*FRAME_WIDTH) + x);
+		result = video_ram[index];
+	}
 
 	x++;
 	if (x > copy_to_cpu_width_height.dims.x_siz)
@@ -709,7 +726,7 @@ bool Gpu::copy_rectangle_from_cpu_to_vram()
 	if (gp0_fifo->get_current_size() >= 3)
 	{
 		gp0_fifo->pop();
-		copy_to_gpu_dest_coord = gp0_fifo->pop();
+		copy_to_gpu_current_coord = copy_to_gpu_dest_coord = gp0_fifo->pop();
 		copy_to_gpu_width_height = gp0_fifo->pop();
 
 		unsigned int num_halfwords_to_copy = copy_to_gpu_width_height.dims.x_siz*copy_to_gpu_width_height.dims.y_siz;

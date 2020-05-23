@@ -71,6 +71,11 @@ union gp_command
 		signed short y;
 	} vert;
 
+	struct
+	{
+		unsigned short data0;
+		unsigned short data1;
+	} pixel_data;
 
 	struct
 	{

@@ -100,6 +100,7 @@ private:
 
 	// copying variables
 	gp_command copy_to_gpu_dest_coord = 0x0;
+	gp_command copy_to_gpu_current_coord = 0x0;
 	gp_command copy_to_gpu_width_height = 0x0;
 	unsigned int num_words_to_copy_to_gpu = 0;
 
@@ -116,7 +117,7 @@ private:
 	void draw_rectangle(glm::ivec2 top_left, glm::ivec2 width_height, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offsets = false);
 
-	unsigned short get_pixel(glm::ivec2 v);
+	void copy_next_pixel_to_framebuffer(unsigned int short pixel_data);
 	unsigned short copy_next_pixel_from_framebuffer();
 
 	glm::vec3 calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2);
