@@ -33,12 +33,6 @@ public:
 	virtual void sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
-	union
-	{
-		unsigned int int_value;
-		unsigned char byte_value[4];
-	} gpu_read;
-
 	union gpu_status_union
 	{
 		unsigned int int_value;
@@ -105,9 +99,14 @@ private:
 	static const unsigned int GP1_Send_GPUSTAT = 0x1f801814;
 
 	// copying variables
-	gp_command copy_dest_coord = 0x0;
-	gp_command copy_width_height = 0x0;
-	unsigned int num_words_to_copy = 0;
+	gp_command copy_to_gpu_dest_coord = 0x0;
+	gp_command copy_to_gpu_width_height = 0x0;
+	unsigned int num_words_to_copy_to_gpu = 0;
+
+	gp_command copy_to_cpu_src_coord = 0x0;
+	gp_command copy_to_cpu_current_coord = 0x0;
+	gp_command copy_to_cpu_width_height = 0x0;
+	unsigned int num_words_to_copy_to_cpu = 0;
 
 	void execute_gp0_commands();
 	void add_gp0_command(gp_command command, bool via_dma);
@@ -116,6 +115,9 @@ private:
 	void draw_triangle(glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2, glm::u8vec3 rgb0, glm::u8vec3 rgb1, glm::u8vec3 rgb2);
 	void draw_rectangle(glm::ivec2 top_left, glm::ivec2 width_height, glm::u8vec3 rgb);
 	void draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offsets = false);
+
+	unsigned short get_pixel(glm::ivec2 v);
+	unsigned short copy_next_pixel_from_framebuffer();
 
 	glm::vec3 calc_barycentric(glm::ivec2 pos, glm::ivec2 v0, glm::ivec2 v1, glm::ivec2 v2);
 

@@ -22,7 +22,22 @@ unsigned int Gpu::get_word(unsigned int address)
 {
 	if (address == GP0_Send_GPUREAD)
 	{
-		return gpu_read.int_value;
+		if (gpu_status.ready_vram_to_cpu)
+		{
+			unsigned int result = copy_next_pixel_from_framebuffer();
+			result <<= 16;
+			result |= copy_next_pixel_from_framebuffer();
+
+			num_words_to_copy_to_cpu--;
+			if (num_words_to_copy_to_cpu == 0)
+			{
+				gpu_status.ready_vram_to_cpu = false;
+			}
+
+			return result;
+		}
+
+		return 0;
 	}
 	else if (address == GP1_Send_GPUSTAT)
 	{
@@ -72,7 +87,7 @@ void Gpu::init()
 
 	// hardcoded according to simias guide to get the emulator moving a bit further through the code
 	gpu_status.ready_dma = true;
-	gpu_status.ready_cmd_word = true;	
+	gpu_status.ready_cmd_word = true;
 }
 
 void Gpu::reset()
@@ -122,6 +137,11 @@ void Gpu::load_state(std::ifstream& file)
 
 void Gpu::sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
+	if (channel_control.transfer_direction == 0)
+	{
+		throw std::logic_error("have not implemented gpu to ram transfer");
+	}
+
 	unsigned int num_words = block_control.BS * block_control.BC;
 	DMA_address_step step = static_cast<DMA_address_step>(channel_control.memory_address_step);
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
@@ -138,6 +158,11 @@ void Gpu::sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_add
 
 void Gpu::sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
+	if (channel_control.transfer_direction == 0)
+	{
+		throw std::logic_error("have not implemented gpu to ram transfer");
+	}
+
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
@@ -263,7 +288,7 @@ void Gpu::execute_gp0_commands()
 
 void Gpu::add_gp0_command(gp_command command, bool via_dma)
 {
-	if (num_words_to_copy == 0)
+	if (num_words_to_copy_to_gpu == 0)
 	{
 		gp0_fifo->push(command.raw);
 		execute_gp0_commands();
@@ -271,7 +296,7 @@ void Gpu::add_gp0_command(gp_command command, bool via_dma)
 	else
 	{
 		// todo copy from cpu to vram
-		num_words_to_copy--;
+		num_words_to_copy_to_gpu--;
 	}
 	
 }
@@ -407,6 +432,37 @@ void Gpu::draw_pixel(glm::ivec2 v, glm::u8vec3 rgb, bool ignore_draw_offset)
 			video_ram[index] = colour_16;
 		}
 	}
+}
+
+unsigned short Gpu::get_pixel(glm::ivec2 v)
+{
+	if ((v.x >= 0 && v.x < FRAME_WIDTH)  && (v.y >= 0 && v.y < FRAME_HEIGHT))
+	{
+		unsigned int index = ((v.y*FRAME_WIDTH) + v.x);
+		return video_ram[index];
+	}
+	return 0;
+}
+
+
+unsigned short Gpu::copy_next_pixel_from_framebuffer()
+{
+	unsigned int x = copy_to_cpu_current_coord.dest_coord.x_pos;
+	unsigned int y = copy_to_cpu_current_coord.dest_coord.y_pos;
+
+	unsigned short result = get_pixel(glm::ivec2(x, y));
+
+	x++;
+	if (x > copy_to_cpu_width_height.dims.x_siz)
+	{
+		x = 0;
+		y++;
+	}
+
+	copy_to_cpu_current_coord.dest_coord.x_pos = x;
+	copy_to_cpu_current_coord.dest_coord.y_pos = y;
+
+	return result;
 }
 
 // https://codeplea.com/triangular-interpolation
@@ -653,16 +709,16 @@ bool Gpu::copy_rectangle_from_cpu_to_vram()
 	if (gp0_fifo->get_current_size() >= 3)
 	{
 		gp0_fifo->pop();
-		copy_dest_coord = gp0_fifo->pop();
-		copy_width_height = gp0_fifo->pop();
+		copy_to_gpu_dest_coord = gp0_fifo->pop();
+		copy_to_gpu_width_height = gp0_fifo->pop();
 
-		unsigned int num_halfwords_to_copy = copy_width_height.dims.x_siz*copy_width_height.dims.y_siz;
-		num_words_to_copy = num_halfwords_to_copy / 2;
+		unsigned int num_halfwords_to_copy = copy_to_gpu_width_height.dims.x_siz*copy_to_gpu_width_height.dims.y_siz;
+		num_words_to_copy_to_gpu = num_halfwords_to_copy / 2;
 
 		// if an odd number of halfwords, an extra padding halfword will be added
 		if (num_halfwords_to_copy % 2)
 		{
-			num_words_to_copy += 1;
+			num_words_to_copy_to_gpu += 1;
 		}
 
 		return true;
@@ -676,11 +732,19 @@ bool Gpu::copy_rectangle_from_vram_to_cpu()
 	if (gp0_fifo->get_current_size() >= 3)
 	{
 		gp0_fifo->pop();
-		gp0_fifo->pop();
-		gp0_fifo->pop();
+		copy_to_cpu_src_coord = copy_to_cpu_current_coord = gp0_fifo->pop();
+		copy_to_cpu_width_height = gp0_fifo->pop();
+
+		unsigned int num_halfwords_to_copy = copy_to_cpu_width_height.dims.x_siz*copy_to_cpu_width_height.dims.y_siz;
+		num_words_to_copy_to_cpu = num_halfwords_to_copy / 2;
+
+		// if an odd number of halfwords, an extra padding halfword will be added
+		if (num_halfwords_to_copy % 2)
+		{
+			num_words_to_copy_to_cpu += 1;
+		}
 
 		gpu_status.ready_vram_to_cpu = true;
-		// todo implement
 		return true;
 	}
 
