@@ -47,9 +47,9 @@ private:
 	void draw_cpu_menu();
 	void draw_gpu_menu();
 	void draw_assembly_menu();
-	
 	void draw_controls_menu();
 	void draw_interrupt_menu();
+	void draw_bus_menu();
 
 	std::shared_ptr<Cpu> cpu = nullptr;
 	std::shared_ptr<Gpu> gpu = nullptr;

@@ -51,6 +51,8 @@ void DebugMenu::draw()
 
 	draw_interrupt_menu();
 
+	draw_bus_menu();
+
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -271,7 +273,19 @@ void DebugMenu::draw_assembly_menu()
 	{
 		unsigned int pc = cpu->current_pc + static_cast<unsigned int>(idx*4);
 		instruction_union instruction = bus->get_word(pc);
-		asm_text << ((pc == cpu->current_pc) ? "->0x" : "  0x") << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << instruction.to_string() << "\n";
+		if (pc == cpu->current_pc)
+		{
+			asm_text << ">>";
+		}
+		else if (pc == cpu->next_pc)
+		{
+			asm_text << "->";
+		}
+		else
+		{
+			asm_text << "  ";
+		}
+		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << instruction.to_string() << "\n";
 	}
 	bus->suppress_exceptions = false;
 	
@@ -401,6 +415,71 @@ void DebugMenu::draw_interrupt_menu()
 		text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
+
+	ImGui::End();
+}
+
+void DebugMenu::draw_bus_menu()
+{
+	ImGui::Begin("Bus");
+
+	bus->suppress_exceptions = true;
+
+	static int address_of_interest = 0x0;
+	ImGui::InputInt("Address", &address_of_interest, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+
+	try
+	{
+		std::stringstream text;
+		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << bus->get_word(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+	catch (...)
+	{
+		ImGui::Text("Word access not supported");
+	}
+
+	try
+	{
+		std::stringstream text;
+		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << bus->get_halfword(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+	catch (...)
+	{
+		ImGui::Text("Halfword access not supported");
+	}
+
+	try
+	{
+		std::stringstream text;
+		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)bus->get_byte(address_of_interest);
+		ImGui::Text(text.str().c_str());
+	}
+	catch (...)
+	{
+		ImGui::Text("Byte access not supported");
+	}
+
+	static int new_value = 0x0;
+	ImGui::Text("Alter values");
+	ImGui::InputInt("New Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	if (ImGui::Button("Apply as Word"))
+	{
+		bus->set_word(address_of_interest, new_value);
+	}
+
+	if (ImGui::Button("Apply as Halfword"))
+	{
+		bus->set_halfword(address_of_interest, new_value);
+	}
+
+	if (ImGui::Button("Apply as Byte"))
+	{
+		bus->set_byte(address_of_interest, new_value);
+	}
+
+	bus->suppress_exceptions = false;
 
 	ImGui::End();
 }
