@@ -80,6 +80,10 @@ public:
 
 	bool suppress_exceptions = false;
 
+	unsigned int address_to_pause_on = 0x0;
+	bool enable_pause_on_address_access = false;
+	bool request_pause = false;
+
 private:
 
 	BusDevice * get_bus_device_for_address(unsigned int address);

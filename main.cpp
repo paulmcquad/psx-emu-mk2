@@ -171,9 +171,17 @@ int main(int num_args, char ** args )
 	{
 		auto start_time = glfwGetTime();
 
+
 		if (debug_menu->is_paused() == false || debug_menu->is_forward_step_requested() == true)
 		{
 			psx->tick();
+
+			// allow debug menu to pause on address access
+			if (psx->bus->request_pause)
+			{
+				debug_menu->paused_requested = true;
+				psx->bus->request_pause = false;
+			}
 
 			debug_menu->ticks_per_frame++;
 		}

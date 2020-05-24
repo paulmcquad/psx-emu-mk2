@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Bus> _bus)
 {
@@ -25,6 +26,22 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 	cpu = _cpu;
 	gpu = _gpu;
 	bus = _bus;
+
+	std::ifstream comment_log("comment_file.txt");
+	if (comment_log.is_open())
+	{
+		std::string pc_value;
+		std::string comment_value;
+		while (std::getline(comment_log, pc_value) && std::getline(comment_log, comment_value))
+		{
+			char * buffer = new char[256];
+			memset(buffer, 0, 256);
+			// 254 to ensure we don't overrun the null termination
+			strncat(buffer, comment_value.c_str(), 254);
+			assembly_comment_buffer[std::stoul(pc_value)] = buffer;
+		}
+		comment_log.close();
+	}
 }
 
 void DebugMenu::uninit()
@@ -32,6 +49,19 @@ void DebugMenu::uninit()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+
+	std::ofstream comment_log("comment_file.txt");
+	for (auto iter : assembly_comment_buffer)
+	{
+		if (comment_log.is_open() && strlen(iter.second) > 0)
+		{
+			comment_log << iter.first << std::endl;
+			comment_log << iter.second << std::endl;
+		}
+		delete[] iter.second;
+	}
+
+	comment_log.close();
 }
 
 void DebugMenu::draw()
@@ -268,9 +298,10 @@ void DebugMenu::draw_assembly_menu()
 	unsigned int pc = cpu->current_pc;
 
 	bus->suppress_exceptions = true;
-	std::stringstream asm_text;
+
 	for (int idx = -10; idx < 10; idx++)
 	{
+		std::stringstream asm_text;
 		unsigned int pc = cpu->current_pc + static_cast<unsigned int>(idx*4);
 		instruction_union instruction = bus->get_word(pc);
 		if (pc == cpu->current_pc)
@@ -286,12 +317,21 @@ void DebugMenu::draw_assembly_menu()
 			asm_text << "  ";
 		}
 		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << instruction.to_string() << "\n";
+		ImGui::Text(asm_text.str().c_str());
+		ImGui::SameLine();
+
+		char * buffer = assembly_comment_buffer[pc];
+		if (buffer == nullptr)
+		{
+			buffer = new char[256];
+			memset(buffer, 0, 256);
+			assembly_comment_buffer[pc] = buffer;
+		}
+
+		ImGui::InputText((std::string("##")+std::to_string(idx)).c_str(), buffer, 256);
 	}
 	bus->suppress_exceptions = false;
 	
-	ImGui::Text(asm_text.str().c_str());
-	
-
 	ImGui::End();
 }
 
@@ -428,6 +468,8 @@ void DebugMenu::draw_bus_menu()
 	static int address_of_interest = 0x0;
 	ImGui::InputInt("Address", &address_of_interest, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 
+	bool save_enable_pause_state = bus->enable_pause_on_address_access;
+	bus->enable_pause_on_address_access = false;
 	try
 	{
 		std::stringstream text;
@@ -462,7 +504,7 @@ void DebugMenu::draw_bus_menu()
 	}
 
 	static int new_value = 0x0;
-	ImGui::Text("Alter values");
+	ImGui::NewLine();
 	ImGui::InputInt("New Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 	if (ImGui::Button("Apply as Word"))
 	{
@@ -477,6 +519,14 @@ void DebugMenu::draw_bus_menu()
 	if (ImGui::Button("Apply as Byte"))
 	{
 		bus->set_byte(address_of_interest, new_value);
+	}
+
+	bus->enable_pause_on_address_access = save_enable_pause_state;
+
+	if (ImGui::Button(bus->enable_pause_on_address_access ? "Disable pause on access" : "Enable pause on access"))
+	{
+		bus->enable_pause_on_address_access = !bus->enable_pause_on_address_access;
+		bus->address_to_pause_on = address_of_interest;
 	}
 
 	bus->suppress_exceptions = false;

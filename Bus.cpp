@@ -91,6 +91,11 @@ bool Bus::is_address_to_ignore(unsigned int address)
 
 Bus::BusDevice * Bus::get_bus_device_for_address(unsigned int address)
 {
+	if (enable_pause_on_address_access == true && address_to_pause_on == address)
+	{
+		request_pause = true;
+	}
+
 	for (int idx = 0; idx < num_devices; idx++)
 	{
 		BusDevice * device = bus_devices[idx];

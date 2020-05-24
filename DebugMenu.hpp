@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 
 struct GLFWwindow;
 class Cpu;
@@ -41,6 +42,7 @@ public:
 	};
 
 	long ticks_per_frame = 0;
+	bool paused_requested = true;
 
 private:
 
@@ -55,11 +57,11 @@ private:
 	std::shared_ptr<Gpu> gpu = nullptr;
 	std::shared_ptr<Bus> bus = nullptr;
 
-
-	bool paused_requested = true;
 	bool step_forward_requested = false;
 	bool step_backward_requested = false;
 
 	bool save_state_requested = false;
 	bool load_state_requested = false;
+
+	std::map<unsigned int, char *> assembly_comment_buffer;
 };
