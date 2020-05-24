@@ -84,12 +84,12 @@ void Cdrom::tick()
 	}
 }
 
-void Cdrom::save_state(std::ofstream& file)
+void Cdrom::save_state(std::stringstream& file)
 {
 
 }
 
-void Cdrom::load_state(std::ifstream& file)
+void Cdrom::load_state(std::stringstream& file)
 {
 
 }
@@ -123,7 +123,7 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 unsigned char Cdrom::get(unsigned int address)
 {
 	return 0;
-	/*if (address == STATUS_REGISTER)
+	if (address == STATUS_REGISTER)
 	{
 		status_register_read response;
 
@@ -152,28 +152,28 @@ unsigned char Cdrom::get(unsigned int address)
 			default:
 				throw std::logic_error("not implemented");
 		}
-	}*/
+	}
 }
 
 void Cdrom::set(unsigned int address, unsigned char value)
 {
-	//if (address == STATUS_REGISTER)
-	//{
-	//	// only the index value is writable
-	//	register_index = 0x03 & value;
-	//}
-	//else
-	//{
-	//	switch (register_index)
-	//	{
-	//		case 0:
-	//			return set_index0(address, value);
-	//		case 1:
-	//			return set_index1(address, value);
-	//		default:
-	//			throw std::logic_error("not implemented");
-	//		}
-	//}
+	if (address == STATUS_REGISTER)
+	{
+		// only the index value is writable
+		register_index = 0x03 & value;
+	}
+	else
+	{
+		switch (register_index)
+		{
+			case 0:
+				return set_index0(address, value);
+			case 1:
+				return set_index1(address, value);
+			default:
+				throw std::logic_error("not implemented");
+			}
+	}
 }
 
 unsigned char Cdrom::get_index0(unsigned int address)

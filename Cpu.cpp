@@ -101,7 +101,7 @@ void Cpu::tick()
 }
 
 
-void Cpu::save_state(std::ofstream& file)
+void Cpu::save_state(std::stringstream& file)
 {
 	register_file.save_state(file);
 
@@ -117,7 +117,7 @@ void Cpu::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(&in_delay_slot), sizeof(bool));
 }
 
-void Cpu::load_state(std::ifstream& file)
+void Cpu::load_state(std::stringstream& file)
 {
 	register_file.load_state(file);
 

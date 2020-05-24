@@ -31,8 +31,8 @@ public:
 
 	void execute_mips_exception(unsigned int excode);
 
-	void save_state(std::ofstream& file);
-	void load_state(std::ifstream& file);
+	void save_state(std::stringstream& file);
+	void load_state(std::stringstream& file);
 
 	void execute(const instruction_union& instruction);
 	void execute_special(const instruction_union& instr);

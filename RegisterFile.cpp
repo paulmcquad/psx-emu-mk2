@@ -1,13 +1,13 @@
 #include "RegisterFile.hpp"
 
-void RegisterFile::save_state(std::ofstream& file)
+void RegisterFile::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(stage_1_registers), sizeof(unsigned int) * 32);
 	file.write(reinterpret_cast<char*>(stage_2_registers), sizeof(unsigned int) * 32);
 	file.write(reinterpret_cast<char*>(stage_3_registers), sizeof(unsigned int) * 32);
 }
 
-void RegisterFile::load_state(std::ifstream& file)
+void RegisterFile::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(stage_1_registers), sizeof(unsigned int) * 32);
 	file.read(reinterpret_cast<char*>(stage_2_registers), sizeof(unsigned int) * 32);

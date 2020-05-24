@@ -110,12 +110,12 @@ void Dma::tick()
 	}
 }
 
-void Dma::save_state(std::ofstream& file)
+void Dma::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(&dma_registers[0]), sizeof(unsigned char) * 128);
 }
 
-void Dma::load_state(std::ifstream& file)
+void Dma::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&dma_registers[0]), sizeof(unsigned char) * 128);
 }

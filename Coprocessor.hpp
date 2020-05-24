@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "InstructionTypes.hpp"
+#include <sstream>
 
 class Bus;
 class Cpu;
@@ -13,8 +14,8 @@ public:
 		cpu = _cpu;
 	};
 
-	virtual void save_state(std::ofstream& file) = 0;
-	virtual void load_state(std::ifstream& file) = 0;
+	virtual void save_state(std::stringstream& file) = 0;
+	virtual void load_state(std::stringstream& file) = 0;
 
 	virtual void execute(const instruction_union& instruction) = 0;
 

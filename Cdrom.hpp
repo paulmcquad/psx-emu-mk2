@@ -84,8 +84,8 @@ public:
 	void init();
 	~Cdrom();
 
-	void save_state(std::ofstream& file);
-	void load_state(std::ifstream& file);
+	void save_state(std::stringstream& file);
+	void load_state(std::stringstream& file);
 
 	unsigned char get(unsigned int address);
 	void set(unsigned int address, unsigned char value);

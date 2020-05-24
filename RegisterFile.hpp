@@ -1,11 +1,12 @@
+#pragma once
 #include <iostream>
-#include <fstream>
+#include <sstream>
 
 class RegisterFile
 {
 public:
-	void save_state(std::ofstream& file);
-	void load_state(std::ifstream& file);
+	void save_state(std::stringstream& file);
+	void load_state(std::stringstream& file);
 
 	void reset();
 	void tick();

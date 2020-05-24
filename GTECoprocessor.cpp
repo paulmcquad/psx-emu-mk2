@@ -13,13 +13,13 @@ GTECoprocessor::GTECoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _
 
 }
 
-void GTECoprocessor::save_state(std::ofstream& file)
+void GTECoprocessor::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 	file.write(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);
 }
 
-void GTECoprocessor::load_state(std::ifstream& file)
+void GTECoprocessor::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
 	file.read(reinterpret_cast<char*>(&data_registers[0]), sizeof(unsigned int) * 32);

@@ -13,8 +13,8 @@ public:
 	unsigned char get_byte(unsigned int address) final;
 	void set_byte(unsigned int address, unsigned char value) final;
 
-	void save_state(std::ofstream& file);
-	void load_state(std::ifstream& file);
+	void save_state(std::stringstream& file);
+	void load_state(std::stringstream& file);
 
 private:
 	static const unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;

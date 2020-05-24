@@ -1,6 +1,6 @@
 #include <stdexcept>
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <assert.h>
 #include "Ram.hpp"
 
@@ -32,12 +32,12 @@ void Ram::set_byte(unsigned int address, unsigned char value)
 	memory[address & 0x0FFFFFFF] = value;
 }
 
-void Ram::save_state(std::ofstream& file)
+void Ram::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(&memory[0]), sizeof(unsigned char) * MAIN_MEMORY_SIZE);
 }
 
-void Ram::load_state(std::ifstream& file)
+void Ram::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&memory[0]), sizeof(unsigned char) * MAIN_MEMORY_SIZE);
 }

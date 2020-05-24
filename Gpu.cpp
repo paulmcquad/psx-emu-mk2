@@ -98,7 +98,7 @@ void Gpu::tick()
 {
 }
 
-void Gpu::save_state(std::ofstream& file)
+void Gpu::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
 	file.write(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
@@ -115,7 +115,7 @@ void Gpu::save_state(std::ofstream& file)
 	file.write(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
 }
 
-void Gpu::load_state(std::ifstream& file)
+void Gpu::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
 	file.read(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);

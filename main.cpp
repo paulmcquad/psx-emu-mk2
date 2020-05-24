@@ -188,11 +188,31 @@ int main(int num_args, char ** args )
 
 		if (debug_menu->is_save_state_requested())
 		{
-			psx->save_state("save_state.bin");
+			std::cout << "Saving state!\n";
+
+			std::ofstream state_file;
+			state_file.open("save_state.bin", std::ios::out | std::ios::binary);
+
+			if (state_file.is_open())
+			{
+				std::stringstream state_stream;
+				psx->save_state(state_stream);
+				state_file << state_stream.rdbuf();
+				state_file.close();
+			}
+			
 		}
 		if (debug_menu->is_load_state_requested())
 		{
-			psx->load_state("save_state.bin");
+			std::ifstream state_file;
+			state_file.open("save_state.bin", std::ios::in | std::ios::binary);
+			if (state_file.is_open())
+			{
+				std::stringstream state_stream;
+				state_stream << state_file.rdbuf();
+				psx->load_state(state_stream);
+				state_file.close();
+			}
 		}
 
 		auto end_time = glfwGetTime();

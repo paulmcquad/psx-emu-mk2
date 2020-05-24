@@ -195,6 +195,24 @@ void DebugMenu::draw_cpu_menu()
 			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.get_register(idx);
 			ImGui::Text(reg_text.str().c_str());
 		}
+
+		static int register_of_interest = 0;
+		ImGui::InputInt("Register:", &register_of_interest, 1, 1);
+		if (register_of_interest < 0)
+		{
+			register_of_interest = 0;
+		}
+		else if (register_of_interest > 31)
+		{
+			register_of_interest = 31;
+		}
+
+		static int new_value = 0x0;
+		ImGui::InputInt("New Register Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+		if (ImGui::Button("Apply"))
+		{
+			cpu->register_file.set_register(register_of_interest, new_value);
+		}
 	}
 
 	ImGui::End();

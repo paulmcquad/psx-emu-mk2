@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <sstream>
 
 class Bus;
 class Cdrom;
@@ -23,8 +24,8 @@ public:
 	bool load(std::string bin_path, std::string cue_path);
 	void tick();
 
-	void save_state(std::string state_file_path);
-	void load_state(std::string state_file_path);
+	void save_state(std::stringstream& state_stream);
+	void load_state(std::stringstream& state_stream);
 
 	std::shared_ptr <Cdrom> cdrom = nullptr;
 	std::shared_ptr <Gpu> gpu = nullptr;

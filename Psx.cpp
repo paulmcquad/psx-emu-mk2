@@ -84,50 +84,22 @@ void Psx::tick()
 	cdrom->tick();
 }
 
-void Psx::save_state(std::string state_file_path)
+void Psx::save_state(std::stringstream& state_stream)
 {
-	std::cout << "Saving state!\n";
-
-	std::ofstream state_file;
-	state_file.open(state_file_path, std::ios::out | std::ios::binary);
-
-	if (state_file.is_open())
-	{
-		cpu->save_state(state_file);
-		gpu->save_state(state_file);
-		dma->save_state(state_file);
-		ram->save_state(state_file);
-		cdrom->save_state(state_file);
-
-		state_file.close();
-		std::cout << "State saved!\n";
-	}
-	else
-	{
-		std::cout << "Failed to save state!\n";
-	}
+	cpu->save_state(state_stream);
+	gpu->save_state(state_stream);
+	dma->save_state(state_stream);
+	ram->save_state(state_stream);
+	cdrom->save_state(state_stream);
 }
 
-void Psx::load_state(std::string state_file_path)
+void Psx::load_state(std::stringstream& state_stream)
 {
-	std::ifstream state_file;
-	state_file.open(state_file_path, std::ios::in | std::ios::binary);
-
-	if (state_file.is_open())
-	{
-		cpu->load_state(state_file);
-		gpu->load_state(state_file);
-		dma->load_state(state_file);
-		ram->load_state(state_file);
-		cdrom->load_state(state_file);
-
-		state_file.close();
-		std::cout << "State restored!\n";
-	}
-	else
-	{
-		std::cout << "Failed to load state!\n";
-	}
+	cpu->load_state(state_stream);
+	gpu->load_state(state_stream);
+	dma->load_state(state_stream);
+	ram->load_state(state_stream);
+	cdrom->load_state(state_stream);
 }
 
 bool Psx::load(std::string bin_path, std::string cue_path)
