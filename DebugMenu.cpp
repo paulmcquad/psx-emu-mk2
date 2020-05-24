@@ -4,6 +4,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "Psx.hpp"
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "Bus.hpp"
@@ -13,7 +14,7 @@
 #include <iomanip>
 #include <fstream>
 
-void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Bus> _bus)
+void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -23,9 +24,7 @@ void DebugMenu::init(GLFWwindow* window, std::shared_ptr<Cpu> _cpu, std::shared_
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(nullptr);
 
-	cpu = _cpu;
-	gpu = _gpu;
-	bus = _bus;
+	psx = _psx;
 
 	std::ifstream comment_log("comment_file.txt");
 	if (comment_log.is_open())
@@ -60,8 +59,15 @@ void DebugMenu::uninit()
 		}
 		delete[] iter.second;
 	}
-
 	comment_log.close();
+	assembly_comment_buffer.clear();
+
+	for (auto iter : backward_states)
+	{
+		delete iter;
+	}
+	backward_states.clear();
+	
 }
 
 void DebugMenu::draw()
@@ -87,6 +93,22 @@ void DebugMenu::draw()
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void DebugMenu::tick()
+{
+	if (recording_states)
+	{
+		if (backward_states.size() > MAX_BACKWARDS_STATES_SAVED)
+		{
+			delete backward_states.front();
+			backward_states.pop_front();
+		}
+
+		std::stringstream * state = new std::stringstream();
+		psx->save_state(*state);
+		backward_states.push_back(state);
+	}
+}
+
 void DebugMenu::draw_cpu_menu()
 {
 	ImGui::Begin("CPU Registers");
@@ -99,13 +121,13 @@ void DebugMenu::draw_cpu_menu()
 
 	{
 		std::stringstream current_pc_text;
-		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
+		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_pc;
 		ImGui::Text(current_pc_text.str().c_str());
 	}
 
 	{
 		std::stringstream current_instr_text;
-		current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_instruction;
+		current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_instruction;
 		ImGui::Text(current_instr_text.str().c_str());
 		ImGui::Separator();
 	}
@@ -192,7 +214,7 @@ void DebugMenu::draw_cpu_menu()
 			}
 
 			// register contents
-			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->register_file.get_register(idx);
+			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->register_file.get_register(idx);
 			ImGui::Text(reg_text.str().c_str());
 		}
 
@@ -211,7 +233,7 @@ void DebugMenu::draw_cpu_menu()
 		ImGui::InputInt("New Register Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 		if (ImGui::Button("Apply"))
 		{
-			cpu->register_file.set_register(register_of_interest, new_value);
+			psx->cpu->register_file.set_register(register_of_interest, new_value);
 		}
 	}
 
@@ -224,62 +246,62 @@ void DebugMenu::draw_gpu_menu()
 
 	{
 		std::stringstream status_text;
-		status_text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(8) << gpu->gpu_status.int_value;
+		status_text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->gpu->gpu_status.int_value;
 		ImGui::Text(status_text.str().c_str());
 
 		{
 			std::stringstream text;
-			text << "Drawing offsets: " << gpu->x_offset << " " << gpu->y_offset;
+			text << "Drawing offsets: " << psx->gpu->x_offset << " " << psx->gpu->y_offset;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Video Mode: " << (gpu->gpu_status.video_mode == 0 ? "NTSC" : "PAL");
+			text << "Video Mode: " << (psx->gpu->gpu_status.video_mode == 0 ? "NTSC" : "PAL");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Vertical Interface: " << gpu->gpu_status.v_interlace;
+			text << "Vertical Interface: " << psx->gpu->gpu_status.v_interlace;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
 			// 0 = Enabled
-			text << "Display Enable: " << (gpu->gpu_status.display_enable == 0);
+			text << "Display Enable: " << (psx->gpu->gpu_status.display_enable == 0);
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Interrupt Request: " << gpu->gpu_status.irq_request;
+			text << "Interrupt Request: " << psx->gpu->gpu_status.irq_request;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Ready DMA block: " << gpu->gpu_status.ready_dma;
+			text << "Ready DMA block: " << psx->gpu->gpu_status.ready_dma;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Ready CMD Word: " << gpu->gpu_status.ready_cmd_word;
+			text << "Ready CMD Word: " << psx->gpu->gpu_status.ready_cmd_word;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			text << "Ready VRAM to CPU: " << gpu->gpu_status.ready_vram_to_cpu;
+			text << "Ready VRAM to CPU: " << psx->gpu->gpu_status.ready_vram_to_cpu;
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
 			text << "DMA Direction: ";
-			switch (gpu->gpu_status.dma_direction)
+			switch (psx->gpu->gpu_status.dma_direction)
 			{
 			case 0:
 				text << "Off";
@@ -299,7 +321,7 @@ void DebugMenu::draw_gpu_menu()
 
 		{
 			std::stringstream text;
-			text << "Drawing: " << (gpu->gpu_status.even_odd ? "Odd" : "Even/Vblank");
+			text << "Drawing: " << (psx->gpu->gpu_status.even_odd ? "Odd" : "Even/Vblank");
 			ImGui::Text(text.str().c_str());
 		}
 
@@ -313,20 +335,20 @@ void DebugMenu::draw_assembly_menu()
 {
 	ImGui::Begin("Assembly");
 
-	unsigned int pc = cpu->current_pc;
+	unsigned int pc = psx->cpu->current_pc;
 
-	bus->suppress_exceptions = true;
+	psx->bus->suppress_exceptions = true;
 
 	for (int idx = -10; idx < 10; idx++)
 	{
 		std::stringstream asm_text;
-		unsigned int pc = cpu->current_pc + static_cast<unsigned int>(idx*4);
-		instruction_union instruction = bus->get_word(pc);
-		if (pc == cpu->current_pc)
+		unsigned int pc = psx->cpu->current_pc + static_cast<unsigned int>(idx*4);
+		instruction_union instruction = psx->bus->get_word(pc);
+		if (pc == psx->cpu->current_pc)
 		{
 			asm_text << ">>";
 		}
-		else if (pc == cpu->next_pc)
+		else if (pc == psx->cpu->next_pc)
 		{
 			asm_text << "->";
 		}
@@ -348,7 +370,7 @@ void DebugMenu::draw_assembly_menu()
 
 		ImGui::InputText((std::string("##")+std::to_string(idx)).c_str(), buffer, 256);
 	}
-	bus->suppress_exceptions = false;
+	psx->bus->suppress_exceptions = false;
 	
 	ImGui::End();
 }
@@ -363,15 +385,38 @@ void DebugMenu::draw_controls_menu()
 			paused_requested = !paused_requested;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Step Backward"))
+		if (backward_states.empty() == false)
 		{
-			step_backward_requested = !step_backward_requested;
+			if (ImGui::Button("Step Backward"))
+			{
+				std::stringstream * state = backward_states.back();
+				psx->load_state(*state);
+				delete state;
+				backward_states.pop_back();
+			}
+		}
+		else
+		{
+			ImGui::Text("Step Backward");
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Step Forward"))
 		{
 			step_forward_requested = !step_forward_requested;
+		}
+
+		if (ImGui::Button(recording_states ? "Stop Record" : "Start Record"))
+		{
+			recording_states = !recording_states;
+			if (recording_states == false)
+			{
+				for (auto iter : backward_states)
+				{
+					delete iter;
+				}
+				backward_states.clear();
+			}
 		}
 
 		save_state_requested = ImGui::Button("Save state");
@@ -388,88 +433,88 @@ void DebugMenu::draw_interrupt_menu()
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ0_VBLANK;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ0_VBLANK;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ0_VBLANK;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ0_VBLANK;
 		text << "IRQ0_VBLANK: " <<  (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ1_GPU;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ1_GPU;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ1_GPU;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ1_GPU;
 		text << "IRQ1_GPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ2_CDROM;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ2_CDROM;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ2_CDROM;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ2_CDROM;
 		text << "IRQ2_CDROM: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ3_DMA;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ3_DMA;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ3_DMA;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ3_DMA;
 		text << "IRQ3_DMA: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ4_TMR0;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ4_TMR0;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ4_TMR0;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ4_TMR0;
 		text << "IRQ4_TMR0: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ5_TMR1;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ5_TMR1;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ5_TMR1;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ5_TMR1;
 		text << "IRQ5_TMR1: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ6_TMR2;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ6_TMR2;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ6_TMR2;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ6_TMR2;
 		text << "IRQ6_TMR2: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
 		text << "IRQ7_CTRL_MEM_CRD: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ8_SIO;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ8_SIO;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ8_SIO;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ8_SIO;
 		text << "IRQ8_SIO: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ9_SPU;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ9_SPU;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ9_SPU;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ9_SPU;
 		text << "IRQ9_SPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
 
 	{
 		std::stringstream text;
-		bool enabled = cpu->cop0->interrupt_mask_register.IRQ10_LIGHTPEN;
-		bool irq = cpu->cop0->interrupt_status_register.IRQ10_LIGHTPEN;
+		bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ10_LIGHTPEN;
+		bool irq = psx->cpu->cop0->interrupt_status_register.IRQ10_LIGHTPEN;
 		text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
@@ -481,17 +526,17 @@ void DebugMenu::draw_bus_menu()
 {
 	ImGui::Begin("Bus");
 
-	bus->suppress_exceptions = true;
+	psx->bus->suppress_exceptions = true;
 
 	static int address_of_interest = 0x0;
 	ImGui::InputInt("Address", &address_of_interest, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 
-	bool save_enable_pause_state = bus->enable_pause_on_address_access;
-	bus->enable_pause_on_address_access = false;
+	bool save_enable_pause_state = psx->bus->enable_pause_on_address_access;
+	psx->bus->enable_pause_on_address_access = false;
 	try
 	{
 		std::stringstream text;
-		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << bus->get_word(address_of_interest);
+		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->bus->get_word(address_of_interest);
 		ImGui::Text(text.str().c_str());
 	}
 	catch (...)
@@ -502,7 +547,7 @@ void DebugMenu::draw_bus_menu()
 	try
 	{
 		std::stringstream text;
-		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << bus->get_halfword(address_of_interest);
+		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << psx->bus->get_halfword(address_of_interest);
 		ImGui::Text(text.str().c_str());
 	}
 	catch (...)
@@ -513,7 +558,7 @@ void DebugMenu::draw_bus_menu()
 	try
 	{
 		std::stringstream text;
-		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)bus->get_byte(address_of_interest);
+		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)psx->bus->get_byte(address_of_interest);
 		ImGui::Text(text.str().c_str());
 	}
 	catch (...)
@@ -526,28 +571,28 @@ void DebugMenu::draw_bus_menu()
 	ImGui::InputInt("New Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 	if (ImGui::Button("Apply as Word"))
 	{
-		bus->set_word(address_of_interest, new_value);
+		psx->bus->set_word(address_of_interest, new_value);
 	}
 
 	if (ImGui::Button("Apply as Halfword"))
 	{
-		bus->set_halfword(address_of_interest, new_value);
+		psx->bus->set_halfword(address_of_interest, new_value);
 	}
 
 	if (ImGui::Button("Apply as Byte"))
 	{
-		bus->set_byte(address_of_interest, new_value);
+		psx->bus->set_byte(address_of_interest, new_value);
 	}
 
-	bus->enable_pause_on_address_access = save_enable_pause_state;
+	psx->bus->enable_pause_on_address_access = save_enable_pause_state;
 
-	if (ImGui::Button(bus->enable_pause_on_address_access ? "Disable pause on access" : "Enable pause on access"))
+	if (ImGui::Button(psx->bus->enable_pause_on_address_access ? "Disable pause on access" : "Enable pause on access"))
 	{
-		bus->enable_pause_on_address_access = !bus->enable_pause_on_address_access;
-		bus->address_to_pause_on = address_of_interest;
+		psx->bus->enable_pause_on_address_access = !psx->bus->enable_pause_on_address_access;
+		psx->bus->address_to_pause_on = address_of_interest;
 	}
 
-	bus->suppress_exceptions = false;
+	psx->bus->suppress_exceptions = false;
 
 	ImGui::End();
 }

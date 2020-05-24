@@ -65,7 +65,7 @@ int main(int num_args, char ** args )
 	std::string bin_file(args[2]);
 	std::string cue_file(args[3]);
 
-	std::unique_ptr<Psx> psx = std::make_unique<Psx>();
+	std::shared_ptr<Psx> psx = std::make_unique<Psx>();
 	if (psx->init(bios_file) == false)
 	{
 		std::cerr << "Unable to initialise PSX\n";
@@ -163,7 +163,7 @@ int main(int num_args, char ** args )
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
 	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
-	debug_menu->init(window, psx->cpu, psx->gpu, psx->bus);
+	debug_menu->init(window, psx);
 
 	std::cout << "Running!\n";
 	double current_frame_time = 0.0;
@@ -175,6 +175,7 @@ int main(int num_args, char ** args )
 		if (debug_menu->is_paused() == false || debug_menu->is_forward_step_requested() == true)
 		{
 			psx->tick();
+			debug_menu->tick();
 
 			// allow debug menu to pause on address access
 			if (psx->bus->request_pause)
