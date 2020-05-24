@@ -2,11 +2,11 @@
 
 bool MemoryControl::is_address_for_device(unsigned int address)
 {
-	if (address >= MEMORY_CONTROL_1_START && address <= MEMORY_CONTROL_1_END)
+	if (address >= MEMORY_CONTROL_1_START && address < MEMORY_CONTROL_1_END)
 	{
 		return true;
 	}
-	else if (address >= MEMORY_CONTROL_2_START && address <= MEMORY_CONTROL_2_END)
+	else if (address >= MEMORY_CONTROL_2_START && address < MEMORY_CONTROL_2_END)
 	{
 		return true;
 	}

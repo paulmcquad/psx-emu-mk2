@@ -2,7 +2,7 @@
 
 bool CacheControl::is_address_for_device(unsigned int address)
 {
-	if (address >= CACHE_CONTROL_START && address <= CACHE_CONTROL_END)
+	if (address >= CACHE_CONTROL_START && address < CACHE_CONTROL_END)
 	{
 		return true;
 	}

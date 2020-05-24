@@ -2,7 +2,7 @@
 
 bool Timers::is_address_for_device(unsigned int address)
 {
-	if (address >= TIMER_START && address <= TIMER_END)
+	if (address >= TIMER_START && address < TIMER_END)
 	{
 		return true;
 	}

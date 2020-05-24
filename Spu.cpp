@@ -17,7 +17,7 @@ Spu::~Spu()
 
 bool Spu::is_address_for_device(unsigned int address)
 {
-	if (address >= SPU_START && address <= SPU_END)
+	if (address >= SPU_START && address < SPU_END)
 	{
 		return true;
 	}

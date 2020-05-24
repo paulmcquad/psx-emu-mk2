@@ -6,7 +6,7 @@
 
 bool Dma::is_address_for_device(unsigned int address)
 {
-	if (address >= DMA_START && address <= DMA_END)
+	if (address >= DMA_START && address < DMA_END)
 	{
 		return true;
 	}

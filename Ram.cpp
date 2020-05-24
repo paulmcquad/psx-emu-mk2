@@ -6,7 +6,7 @@
 
 bool Ram::is_address_for_device(unsigned int address)
 {
-	if (address >= 0x0 && address <= MAIN_MEMORY_SIZE)
+	if (address >= 0x0 && address < MAIN_MEMORY_SIZE)
 	{
 		return true;
 	}

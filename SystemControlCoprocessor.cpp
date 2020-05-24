@@ -9,7 +9,7 @@
 
 bool SystemControlCoprocessor::is_address_for_device(unsigned int address)
 {
-	if (address >= I_STAT_START && address <= I_MASK_END)
+	if (address >= I_STAT_START && address < I_MASK_END)
 	{
 		return true;
 	}
@@ -18,11 +18,11 @@ bool SystemControlCoprocessor::is_address_for_device(unsigned int address)
 
 unsigned char SystemControlCoprocessor::get_byte(unsigned int address)
 {
-	if (address >= I_STAT_START && address <= I_STAT_END)
+	if (address >= I_STAT_START && address < I_STAT_END)
 	{
 		return interrupt_status_register.bytes[address - I_STAT_START];
 	}
-	else if (address >= I_MASK_START && address <= I_MASK_END)
+	else if (address >= I_MASK_START && address < I_MASK_END)
 	{
 		return interrupt_mask_register.bytes[address - I_MASK_START];
 	}
@@ -32,11 +32,11 @@ unsigned char SystemControlCoprocessor::get_byte(unsigned int address)
 
 void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char value)
 {
-	if (address >= I_STAT_START && address <= I_STAT_END)
+	if (address >= I_STAT_START && address < I_STAT_END)
 	{
 		interrupt_status_register.bytes[address - I_STAT_START] &= value;
 	}
-	else if (address >= I_MASK_START && address <= I_MASK_END)
+	else if (address >= I_MASK_START && address < I_MASK_END)
 	{
 		interrupt_mask_register.bytes[address - I_MASK_START] = value;
 	}

@@ -2,7 +2,7 @@
 
 bool ParallelPort::is_address_for_device(unsigned int address)
 {
-	if (address >= PARALLEL_START && address <= PARALLEL_END)
+	if (address >= PARALLEL_START && address < PARALLEL_END)
 	{
 		return true;
 	}

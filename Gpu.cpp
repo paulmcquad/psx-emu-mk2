@@ -11,7 +11,7 @@
 
 bool Gpu::is_address_for_device(unsigned int address)
 {
-	if (address >= GPU_START && address <= GPU_END)
+	if (address >= GPU_START && address < GPU_END)
 	{
 		return true;
 	}

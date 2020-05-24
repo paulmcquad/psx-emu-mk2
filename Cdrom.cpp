@@ -30,7 +30,7 @@ bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_
 
 bool Cdrom::is_address_for_device(unsigned int address)
 {
-	if (address >= CDROM_START && address <= CDROM_END)
+	if (address >= CDROM_START && address < CDROM_END)
 	{
 		return true;
 	}
