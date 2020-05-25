@@ -212,6 +212,12 @@ union instruction_union
 			case cpu_special_funcs::MFLO:
 				opcode_str = "MFLO";
 				break;
+			case cpu_special_funcs::MTHI:
+				opcode_str = "MTHI";
+				break;
+			case cpu_special_funcs::MTLO:
+				opcode_str = "MTLO";
+				break;
 			case cpu_special_funcs::MULT:
 				opcode_str = "MULT";
 				break;
