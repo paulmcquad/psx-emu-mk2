@@ -39,6 +39,7 @@ public:
 	long ticks_per_frame = 0;
 	bool paused_requested = true;
 	bool recording_states = false;
+	bool pause_on_enter_exit_exception = false;
 
 	static const int MAX_BACKWARDS_STATES_SAVED = 100;
 

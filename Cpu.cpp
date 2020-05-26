@@ -28,6 +28,8 @@ void Cpu::reset()
 
 void Cpu::execute_mips_exception(unsigned int excode)
 {
+	currently_entering_exiting_exeception = true;
+
 	SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
 	
 	if (in_delay_slot) {
@@ -70,6 +72,9 @@ void Cpu::execute_mips_exception(unsigned int excode)
 
 void Cpu::tick()
 {
+	// this is just used for the debug menu
+	currently_entering_exiting_exeception = false;
+
 	current_pc = next_pc;
 	current_instruction = next_instruction;
 

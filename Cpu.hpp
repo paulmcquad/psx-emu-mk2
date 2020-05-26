@@ -54,4 +54,6 @@ public:
 
 	bool pending_exception = false;
 	unsigned int pending_exception_excode = 0;
+
+	bool currently_entering_exiting_exeception = false;
 };

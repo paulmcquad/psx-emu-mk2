@@ -85,6 +85,7 @@ void SystemControlCoprocessor::execute(const instruction_union& instruction)
 		switch (func) {
 			case cop0_instructions::RFE:
 			{
+				cpu->currently_entering_exiting_exeception = true;
 				restore_from_exception(instruction);
 			} break;
 			default:

@@ -178,7 +178,7 @@ int main(int num_args, char ** args )
 			debug_menu->tick();
 
 			// allow debug menu to pause on address access
-			if (psx->bus->request_pause)
+			if (psx->bus->request_pause || (debug_menu->pause_on_enter_exit_exception && psx->cpu->currently_entering_exiting_exeception))
 			{
 				debug_menu->paused_requested = true;
 				psx->bus->request_pause = false;

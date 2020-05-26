@@ -424,6 +424,11 @@ void DebugMenu::draw_controls_menu()
 		save_state_requested = ImGui::Button("Save state");
 		ImGui::SameLine();
 		load_state_requested = ImGui::Button("Load state");
+
+		if (ImGui::Button(pause_on_enter_exit_exception ? "Disable pause on enter/exit exception" : "Enable pause on enter/exit exception"))
+		{
+			pause_on_enter_exit_exception = !pause_on_enter_exit_exception;
+		}
 	}
 
 	ImGui::End();
