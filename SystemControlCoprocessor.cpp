@@ -51,6 +51,7 @@ SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, st
 {
 	interrupt_status_register.value = 0x0;
 	interrupt_mask_register.value = 0x0;
+	control_registers[static_cast<unsigned int>(register_names::PRID)] = 0x00000002;
 }
 
 void SystemControlCoprocessor::save_state(std::stringstream& file)
