@@ -388,11 +388,21 @@ public:
 				copz_instructions function = static_cast<copz_instructions>(instruction.register_instruction.rs);
 				switch (function) {
 					case copz_instructions::MT:
+					{
+						param_str_stream << "MT rt[" << instruction.register_instruction.rt << "], rd[" << instruction.register_instruction.rd << "]";
+					} break;
+
 					case copz_instructions::MF:
+					{
+						param_str_stream << "MF rt[" << instruction.register_instruction.rt << "], rd[" << instruction.register_instruction.rd << "]";
+					} break;
 					case copz_instructions::CF:
+					{
+						param_str_stream << "CF rt[" << instruction.register_instruction.rt << "], rd[" << instruction.register_instruction.rd << "]";
+					} break;
 					case copz_instructions::CT:
 					{
-						param_str_stream << "rt[" << instruction.register_instruction.rt << "], rd[" << instruction.register_instruction.rd << "]";
+						param_str_stream << "CT rt[" << instruction.register_instruction.rt << "], rd[" << instruction.register_instruction.rd << "]";
 					} break;
 
 					// it can only be the coprocessor function
