@@ -40,6 +40,13 @@ void GTECoprocessor::execute(const instruction_union& instruction)
 		} return;
 	}
 
+	
+	if (instruction.immediate_instruction.op == 0b0100101)
+	{
+		move_control_to_cop_fun(instruction);
+		return;
+	}
+
 	copz_instructions function = static_cast<copz_instructions>(instruction.register_instruction.rs);
 	switch (function) {
 		case copz_instructions::MF:

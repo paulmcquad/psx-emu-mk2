@@ -49,7 +49,7 @@ void Cpu::execute_mips_exception(unsigned int excode)
 		next_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
 	}
 
-	// push mode
+	// push mode - these kind of act like a stack of exception states o = old, p = previous, c = current
 	sr.IEo = sr.IEp;
 	sr.KUo = sr.KUp;
 

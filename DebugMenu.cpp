@@ -1,5 +1,7 @@
 #include "DebugMenu.hpp"
 
+#include <MipsToString.hpp>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -356,7 +358,7 @@ void DebugMenu::draw_assembly_menu()
 		{
 			asm_text << "  ";
 		}
-		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << instruction.to_string() << "\n";
+		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << MipsToString::to_string(instruction) << "\n";
 		ImGui::Text(asm_text.str().c_str());
 		ImGui::SameLine();
 
