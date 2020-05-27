@@ -81,17 +81,10 @@ void DebugMenu::draw()
 
 	draw_main_menu();
 
-	draw_cpu_menu();
-
-	draw_gpu_menu();
-
-	draw_assembly_menu();
-
-	draw_controls_menu();
-
-	draw_interrupt_menu();
-
-	draw_bus_menu();
+	if (show_cpu_window) { draw_cpu_menu(); }
+	if (show_gpu_window) { draw_gpu_menu(); }
+	if (show_assembly_window) { draw_assembly_menu(); }
+	if (show_memory_window) { draw_bus_menu(); }
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -121,6 +114,21 @@ void DebugMenu::draw_main_menu()
 		if (ImGui::MenuItem("Save state")) { save_state_requested = true;  }
 		if (ImGui::MenuItem("Load state")) { load_state_requested = true; }
 
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("View"))
+	{
+		ImGui::Checkbox("Show Assembly", &show_assembly_window);
+		ImGui::Checkbox("Show Memory", &show_memory_window);
+		ImGui::Checkbox("Show Cpu", &show_cpu_window);
+		ImGui::Checkbox("Show Gpu", &show_gpu_window);
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("Options"))
+	{
+		ImGui::Checkbox("Pause on enter/exit interrupt", &pause_on_enter_exit_exception);
 		ImGui::EndMenu();
 	}
 
@@ -401,21 +409,6 @@ void DebugMenu::draw_assembly_menu()
 	}
 	psx->bus->suppress_exceptions = false;
 	
-	ImGui::End();
-}
-
-void DebugMenu::draw_controls_menu()
-{
-	ImGui::Begin("Controls");
-
-	{
-
-		if (ImGui::Button(pause_on_enter_exit_exception ? "Disable pause on enter/exit exception" : "Enable pause on enter/exit exception"))
-		{
-			pause_on_enter_exit_exception = !pause_on_enter_exit_exception;
-		}
-	}
-
 	ImGui::End();
 }
 

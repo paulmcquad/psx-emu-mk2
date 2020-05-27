@@ -44,11 +44,15 @@ public:
 
 private:
 
+	bool show_assembly_window = false;
+	bool show_memory_window = false;
+	bool show_cpu_window = false;
+	bool show_gpu_window = false;
+
 	void draw_main_menu();
 	void draw_cpu_menu();
 	void draw_gpu_menu();
 	void draw_assembly_menu();
-	void draw_controls_menu();
 	void draw_interrupt_menu();
 	void draw_bus_menu();
 
