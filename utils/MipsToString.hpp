@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
+#include <sstream>
 #include "../InstructionTypes.hpp"
 
 class MipsToString
 {
 public:
-	static std::string to_string(instruction_union instruction)
+	static std::string instruction_to_string(instruction_union instruction)
 	{
 		if (instruction.raw == 0x0)
 		{
@@ -420,4 +421,62 @@ public:
 
 		return opcode_str + " " + param_str_stream.str();
 	}
+
+	static std::string register_to_string(int idx)
+	{
+		std::stringstream reg_text;
+		reg_text << "R[" << idx << "]-";
+		if (idx == 0)
+		{
+			reg_text << "ZR";
+		}
+		else if (idx == 1)
+		{
+			reg_text << "AT";
+		}
+		else if (idx >= 2 && idx <= 3)
+		{
+			reg_text << "V" << idx - 2;
+		}
+		else if (idx >= 4 && idx <= 7)
+		{
+			reg_text << "A" << idx - 4;
+		}
+		else if (idx >= 8 && idx <= 15)
+		{
+			reg_text << "T" << idx - 8;
+		}
+		else if (idx >= 16 && idx <= 23)
+		{
+			reg_text << "S" << idx - 16;
+		}
+		else if (idx >= 24 && idx <= 25)
+		{
+			// starts at T8 now
+			reg_text << "T" << idx - 16;
+		}
+		else if (idx >= 26 && idx <= 27)
+		{
+			reg_text << "K" << idx - 26;
+		}
+		else if (idx == 28)
+		{
+			reg_text << "GP";
+		}
+		else if (idx == 29)
+		{
+			reg_text << "SP";
+		}
+		else if (idx == 30)
+		{
+			reg_text << "FP";
+		}
+		else if (idx == 31)
+		{
+			reg_text << "RA";
+		}
+
+		return reg_text.str();
+	}
 };
+

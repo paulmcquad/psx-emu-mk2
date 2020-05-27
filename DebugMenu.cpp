@@ -85,6 +85,7 @@ void DebugMenu::draw()
 	if (show_gpu_window) { draw_gpu_menu(); }
 	if (show_assembly_window) { draw_assembly_menu(); }
 	if (show_memory_window) { draw_bus_menu(); }
+	if (show_interrupt_window) { draw_interrupt_menu(); }
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -123,6 +124,7 @@ void DebugMenu::draw_main_menu()
 		ImGui::Checkbox("Show Memory", &show_memory_window);
 		ImGui::Checkbox("Show Cpu", &show_cpu_window);
 		ImGui::Checkbox("Show Gpu", &show_gpu_window);
+		ImGui::Checkbox("Show Interrupts", &show_interrupt_window);
 		ImGui::EndMenu();
 	}
 
@@ -132,6 +134,7 @@ void DebugMenu::draw_main_menu()
 		ImGui::EndMenu();
 	}
 
+	ImGui::Separator();
 	// step backwards
 	if (ImGui::MenuItem("<-", nullptr, nullptr, backward_states.empty() == false)) {
 		std::stringstream * state = backward_states.back();
@@ -148,6 +151,7 @@ void DebugMenu::draw_main_menu()
 
 	// step forwards
 	if (ImGui::MenuItem("->")) { step_forward_requested = true; }
+	ImGui::Separator();
 
 	ImGui::EndMainMenuBar();
 }
@@ -169,12 +173,12 @@ void DebugMenu::draw_cpu_menu()
 		ImGui::Separator();
 	}
 
+	if (ImGui::TreeNode("Registers"))
 	{
 		for (int idx = 0; idx < 32; idx++)
 		{
 			// add register names
 			std::stringstream reg_text;
-
 			if (idx == 2)
 			{
 				ImGui::Text("Results");
@@ -200,78 +204,13 @@ void DebugMenu::draw_cpu_menu()
 				ImGui::Text("Pointers");
 			}
 
-			if (idx == 0)
-			{
-				reg_text << "ZR-";
-			}
-			else if (idx == 1)
-			{
-				reg_text << "AT-";
-			}
-			else if (idx >= 2 && idx <= 3)
-			{
-				reg_text << "V" << idx - 2 << "-";
-			}
-			else if (idx >= 4 && idx <= 7)
-			{
-				reg_text << "A" << idx - 4 << "-";
-			}
-			else if (idx >= 8 && idx <= 15)
-			{
-				reg_text << "T" << idx - 8 << "-";
-			}
-			else if (idx >= 16 && idx <= 23)
-			{
-				reg_text << "S" << idx - 16 << "-";
-			}
-			else if (idx >= 24 && idx <= 25)
-			{
-				// starts at T8 now
-				reg_text << "T" << idx - 16  << "-";
-			}
-			else if (idx >= 26 && idx <= 27)
-			{
-				reg_text << "K" << idx - 26 << "-";
-			}
-			else if (idx == 28 )
-			{
-				reg_text << "GP-";
-			}
-			else if (idx == 29)
-			{
-				reg_text << "SP-";
-			}
-			else if (idx == 30)
-			{
-				reg_text << "FP-";
-			}
-			else if (idx == 31)
-			{
-				reg_text << "RA-";
-			}
-
 			// register contents
-			reg_text << "R[" << idx << "]: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->register_file.get_register(idx);
-			ImGui::Text(reg_text.str().c_str());
+			std::string reg_name = MipsToString::register_to_string(idx);
+			int * reg_ref = reinterpret_cast<int*>(psx->cpu->register_file.get_register_ref(idx));
+			ImGui::InputInt(reg_name.c_str(), reg_ref, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 		}
 
-		static int register_of_interest = 0;
-		ImGui::InputInt("Register:", &register_of_interest, 1, 1);
-		if (register_of_interest < 0)
-		{
-			register_of_interest = 0;
-		}
-		else if (register_of_interest > 31)
-		{
-			register_of_interest = 31;
-		}
-
-		static int new_value = 0x0;
-		ImGui::InputInt("New Register Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-		if (ImGui::Button("Apply"))
-		{
-			psx->cpu->register_file.set_register(register_of_interest, new_value);
-		}
+		ImGui::TreePop();
 	}
 
 	ImGui::End();
@@ -381,10 +320,12 @@ void DebugMenu::draw_assembly_menu()
 		std::stringstream asm_text;
 		unsigned int pc = psx->cpu->current_pc + static_cast<unsigned int>(idx*4);
 		instruction_union instruction = psx->bus->get_word(pc);
+		// current instruction
 		if (pc == psx->cpu->current_pc)
 		{
 			asm_text << ">>";
 		}
+		// next instruction
 		else if (pc == psx->cpu->next_pc)
 		{
 			asm_text << "->";
@@ -393,7 +334,7 @@ void DebugMenu::draw_assembly_menu()
 		{
 			asm_text << "  ";
 		}
-		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << MipsToString::to_string(instruction) << "\n";
+		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << MipsToString::instruction_to_string(instruction) << "\n";
 		ImGui::Text(asm_text.str().c_str());
 		ImGui::SameLine();
 

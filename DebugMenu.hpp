@@ -48,6 +48,7 @@ private:
 	bool show_memory_window = false;
 	bool show_cpu_window = false;
 	bool show_gpu_window = false;
+	bool show_interrupt_window = false;
 
 	void draw_main_menu();
 	void draw_cpu_menu();
