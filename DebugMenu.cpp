@@ -1,4 +1,4 @@
-#include "DebugMenu.hpp"
+﻿#include "DebugMenu.hpp"
 
 #include <MipsToString.hpp>
 
@@ -79,6 +79,8 @@ void DebugMenu::draw()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	draw_main_menu();
+
 	draw_cpu_menu();
 
 	draw_gpu_menu();
@@ -109,6 +111,37 @@ void DebugMenu::tick()
 		psx->save_state(*state);
 		backward_states.push_back(state);
 	}
+}
+
+void DebugMenu::draw_main_menu()
+{
+	ImGui::BeginMainMenuBar();
+	if (ImGui::BeginMenu("File"))
+	{
+		if (ImGui::MenuItem("Save state")) { save_state_requested = true;  }
+		if (ImGui::MenuItem("Load state")) { load_state_requested = true; }
+
+		ImGui::EndMenu();
+	}
+
+	// step backwards
+	if (ImGui::MenuItem("<-", nullptr, nullptr, backward_states.empty() == false)) {
+		std::stringstream * state = backward_states.back();
+		psx->load_state(*state);
+		delete state;
+		backward_states.pop_back();
+	}
+
+	// stop start
+	if (ImGui::MenuItem(paused_requested ? "|>" : "||")) { paused_requested = !paused_requested; }
+
+	// recording to enable backward steps
+	if (ImGui::MenuItem(recording_states ? "[]" : "()")) { recording_states = !recording_states; }
+
+	// step forwards
+	if (ImGui::MenuItem("->")) { step_forward_requested = true; }
+
+	ImGui::EndMainMenuBar();
 }
 
 void DebugMenu::draw_cpu_menu()
@@ -382,48 +415,6 @@ void DebugMenu::draw_controls_menu()
 	ImGui::Begin("Controls");
 
 	{
-		if (ImGui::Button(paused_requested ? "Start" : "Stop"))
-		{
-			paused_requested = !paused_requested;
-		}
-		ImGui::SameLine();
-		if (backward_states.empty() == false)
-		{
-			if (ImGui::Button("Step Backward"))
-			{
-				std::stringstream * state = backward_states.back();
-				psx->load_state(*state);
-				delete state;
-				backward_states.pop_back();
-			}
-		}
-		else
-		{
-			ImGui::Text("Step Backward");
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button("Step Forward"))
-		{
-			step_forward_requested = !step_forward_requested;
-		}
-
-		if (ImGui::Button(recording_states ? "Stop Record" : "Start Record"))
-		{
-			recording_states = !recording_states;
-			if (recording_states == false)
-			{
-				for (auto iter : backward_states)
-				{
-					delete iter;
-				}
-				backward_states.clear();
-			}
-		}
-
-		save_state_requested = ImGui::Button("Save state");
-		ImGui::SameLine();
-		load_state_requested = ImGui::Button("Load state");
 
 		if (ImGui::Button(pause_on_enter_exit_exception ? "Disable pause on enter/exit exception" : "Enable pause on enter/exit exception"))
 		{
