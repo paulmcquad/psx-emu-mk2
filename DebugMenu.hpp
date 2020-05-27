@@ -36,7 +36,6 @@ public:
 		return result;
 	};
 
-	long ticks_per_frame = 0;
 	bool paused_requested = true;
 	bool recording_states = false;
 	bool pause_on_enter_exit_exception = false;

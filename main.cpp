@@ -167,6 +167,7 @@ int main(int num_args, char ** args )
 
 	std::cout << "Running!\n";
 	double current_frame_time = 0.0;
+	int ticks_per_frame = 0;
 	while (!glfwWindowShouldClose(window))
 	{
 		auto start_time = glfwGetTime();
@@ -184,7 +185,7 @@ int main(int num_args, char ** args )
 				psx->bus->request_pause = false;
 			}
 
-			debug_menu->ticks_per_frame++;
+			ticks_per_frame++;
 		}
 
 		if (debug_menu->is_save_state_requested())
@@ -233,7 +234,10 @@ int main(int num_args, char ** args )
 				debug_menu->draw();
 			}
 
-			debug_menu->ticks_per_frame = 0;
+			std::stringstream title_text;
+			title_text << "PSX-EMU-MK2 FPS: " << std::dec<< 1.0f / current_frame_time << " Ticks Per Frame: " << ticks_per_frame;
+			glfwSetWindowTitle(window, title_text.str().c_str());
+			ticks_per_frame = 0;
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
