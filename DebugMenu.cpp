@@ -10,6 +10,7 @@
 #include "Cpu.hpp"
 #include "Gpu.hpp"
 #include "Bus.hpp"
+#include "Cdrom.hpp"
 #include "SystemControlCoprocessor.hpp"
 
 #include <sstream>
@@ -86,6 +87,7 @@ void DebugMenu::draw()
 	if (show_assembly_window) { draw_assembly_menu(); }
 	if (show_memory_window) { draw_bus_menu(); }
 	if (show_interrupt_window) { draw_interrupt_menu(); }
+	if (show_cdrom_window) { draw_cdrom_menu(); }
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -125,6 +127,7 @@ void DebugMenu::draw_main_menu()
 		ImGui::Checkbox("Show Cpu", &show_cpu_window);
 		ImGui::Checkbox("Show Gpu", &show_gpu_window);
 		ImGui::Checkbox("Show Interrupts", &show_interrupt_window);
+		ImGui::Checkbox("Show Cdrom", &show_cdrom_window);
 		ImGui::EndMenu();
 	}
 
@@ -519,6 +522,19 @@ void DebugMenu::draw_bus_menu()
 	}
 
 	psx->bus->suppress_exceptions = false;
+
+	ImGui::End();
+}
+
+void DebugMenu::draw_cdrom_menu()
+{
+	ImGui::Begin("Cdrom");
+
+	unsigned char cdrom_status_register = psx->cdrom->get_byte(Cdrom::STATUS_REGISTER);
+
+	std::stringstream text;
+	text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)cdrom_status_register;
+	ImGui::Text(text.str().c_str());
 
 	ImGui::End();
 }

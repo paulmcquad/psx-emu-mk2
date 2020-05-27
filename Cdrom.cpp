@@ -122,13 +122,12 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 
 unsigned char Cdrom::get(unsigned int address)
 {
-	return 0;
 	if (address == STATUS_REGISTER)
 	{
 		status_register_read response;
 
 		response.INDEX = register_index;
-		response.ADPBUSY = false;
+		response.ADPBUSY = false; // not implemented yet
 		response.PRMEMPT = parameter_fifo->is_empty();
 		response.PRMWRDY = parameter_fifo->is_full() == false;
 		response.RSLRRDY = response_fifo->is_empty() == false;

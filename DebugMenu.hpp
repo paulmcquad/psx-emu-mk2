@@ -49,6 +49,7 @@ private:
 	bool show_cpu_window = false;
 	bool show_gpu_window = false;
 	bool show_interrupt_window = false;
+	bool show_cdrom_window = false;
 
 	void draw_main_menu();
 	void draw_cpu_menu();
@@ -56,6 +57,7 @@ private:
 	void draw_assembly_menu();
 	void draw_interrupt_menu();
 	void draw_bus_menu();
+	void draw_cdrom_menu();
 
 	std::shared_ptr<Psx> psx = nullptr;
 
