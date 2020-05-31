@@ -64,7 +64,6 @@ void DebugMenuManager::draw()
 		iter->draw_menu();
 	}
 
-	if (show_cpu_window) { draw_cpu_menu(); }
 	if (show_gpu_window) { draw_gpu_menu(); }
 	if (show_interrupt_window) { draw_interrupt_menu(); }
 	if (show_cdrom_window) { draw_cdrom_menu(); }
@@ -151,11 +150,6 @@ void DebugMenuManager::draw_main_menu()
 	ImGui::Separator();
 
 	ImGui::EndMainMenuBar();
-}
-
-void DebugMenuManager::draw_cpu_menu()
-{
-	
 }
 
 void DebugMenuManager::draw_gpu_menu()
