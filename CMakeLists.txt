@@ -39,6 +39,16 @@ set(glad_files
 	glad/glad.c
 )
 
+set(debug_files
+		DebugMenuManager.hpp
+		DebugMenuManager.cpp
+		AssemblyMenu.hpp
+		AssemblyMenu.cpp
+		MemoryMenu.hpp
+		MemoryMenu.cpp
+)
+	
+
 set(source_files
 		Psx.hpp
 		Psx.cpp
@@ -84,7 +94,7 @@ set (test_files
 	tests/cdrom_test.cpp
 )
 
-add_executable(${PROJECT_NAME} main.cpp ${source_files} ${imgui_files} ${glad_files} DebugMenu.hpp DebugMenu.cpp)
+add_executable(${PROJECT_NAME} main.cpp ${source_files} ${imgui_files} ${glad_files} ${debug_files})
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} glm)
 

@@ -15,7 +15,7 @@
 #include "Cdrom.hpp"
 #include "glad.h"
 
-#include "DebugMenu.hpp"
+#include "DebugMenuManager.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -162,7 +162,7 @@ int main(int num_args, char ** args )
 
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
-	std::shared_ptr<DebugMenu> debug_menu = std::make_shared<DebugMenu>();
+	std::shared_ptr<DebugMenuManager> debug_menu = std::make_shared<DebugMenuManager>();
 	debug_menu->init(window, psx);
 
 	std::cout << "Running!\n";

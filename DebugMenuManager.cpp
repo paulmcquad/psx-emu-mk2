@@ -13,6 +13,7 @@
 #include "Cdrom.hpp"
 #include "SystemControlCoprocessor.hpp"
 #include "AssemblyMenu.hpp"
+#include "MemoryMenu.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -30,21 +31,8 @@ void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 
 	psx = _psx;
 
-	std::ifstream comment_log("comment_file.txt");
-	if (comment_log.is_open())
-	{
-		std::string pc_value;
-		std::string comment_value;
-		while (std::getline(comment_log, pc_value) && std::getline(comment_log, comment_value))
-		{
-			char * buffer = new char[256];
-			memset(buffer, 0, 256);
-			// 254 to ensure we don't overrun the null termination
-			strncat(buffer, comment_value.c_str(), 254);
-			assembly_comment_buffer[std::stoul(pc_value)] = buffer;
-		}
-		comment_log.close();
-	}
+	menus.push_back(std::make_shared<AssemblyMenu>(psx));
+	menus.push_back(std::make_shared<MemoryMenu>(psx));
 }
 
 void DebugMenuManager::uninit()
@@ -52,19 +40,6 @@ void DebugMenuManager::uninit()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-
-	std::ofstream comment_log("comment_file.txt");
-	for (auto iter : assembly_comment_buffer)
-	{
-		if (comment_log.is_open() && strlen(iter.second) > 0)
-		{
-			comment_log << iter.first << std::endl;
-			comment_log << iter.second << std::endl;
-		}
-		delete[] iter.second;
-	}
-	comment_log.close();
-	assembly_comment_buffer.clear();
 
 	for (auto iter : backward_states)
 	{
@@ -82,10 +57,13 @@ void DebugMenuManager::draw()
 
 	draw_main_menu();
 
+	for (auto& iter : menus)
+	{
+		iter->draw_menu();
+	}
+
 	if (show_cpu_window) { draw_cpu_menu(); }
 	if (show_gpu_window) { draw_gpu_menu(); }
-	if (show_assembly_window) { draw_assembly_menu(); }
-	if (show_memory_window) { draw_bus_menu(); }
 	if (show_interrupt_window) { draw_interrupt_menu(); }
 	if (show_cdrom_window) { draw_cdrom_menu(); }
 
@@ -114,26 +92,41 @@ void DebugMenuManager::draw_main_menu()
 	ImGui::BeginMainMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
-		if (ImGui::MenuItem("Save state")) { save_state_requested = true;  }
+		if (ImGui::MenuItem("Save state")) { save_state_requested = true; }
 		if (ImGui::MenuItem("Load state")) { load_state_requested = true; }
+
+		for (auto& iter : menus)
+		{
+			iter->draw_in_category(DebugMenu::menubar_category::FILE);
+		}
 
 		ImGui::EndMenu();
 	}
 
 	if (ImGui::BeginMenu("View"))
 	{
-		ImGui::Checkbox("Show Assembly", &show_assembly_window);
-		ImGui::Checkbox("Show Memory", &show_memory_window);
 		ImGui::Checkbox("Show Cpu", &show_cpu_window);
 		ImGui::Checkbox("Show Gpu", &show_gpu_window);
 		ImGui::Checkbox("Show Interrupts", &show_interrupt_window);
 		ImGui::Checkbox("Show Cdrom", &show_cdrom_window);
+
+		for (auto& iter : menus)
+		{
+			iter->draw_in_category(DebugMenu::menubar_category::VIEW);
+		}
+
 		ImGui::EndMenu();
 	}
 
 	if (ImGui::BeginMenu("Options"))
 	{
 		ImGui::Checkbox("Pause on enter/exit interrupt", &pause_on_enter_exit_exception);
+
+		for (auto& iter : menus)
+		{
+			iter->draw_in_category(DebugMenu::menubar_category::OPTIONS);
+		}
+
 		ImGui::EndMenu();
 	}
 
@@ -310,52 +303,6 @@ void DebugMenuManager::draw_gpu_menu()
 	ImGui::End();
 }
 
-void DebugMenuManager::draw_assembly_menu()
-{
-	ImGui::Begin("Assembly");
-
-	unsigned int pc = psx->cpu->current_pc;
-
-	psx->bus->suppress_exceptions = true;
-
-	for (int idx = -10; idx < 10; idx++)
-	{
-		std::stringstream asm_text;
-		unsigned int pc = psx->cpu->current_pc + static_cast<unsigned int>(idx*4);
-		instruction_union instruction = psx->bus->get_word(pc);
-		// current instruction
-		if (pc == psx->cpu->current_pc)
-		{
-			asm_text << ">>";
-		}
-		// next instruction
-		else if (pc == psx->cpu->next_pc)
-		{
-			asm_text << "->";
-		}
-		else
-		{
-			asm_text << "  ";
-		}
-		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << MipsToString::instruction_to_string(instruction) << "\n";
-		ImGui::Text(asm_text.str().c_str());
-		ImGui::SameLine();
-
-		char * buffer = assembly_comment_buffer[pc];
-		if (buffer == nullptr)
-		{
-			buffer = new char[256];
-			memset(buffer, 0, 256);
-			assembly_comment_buffer[pc] = buffer;
-		}
-
-		ImGui::InputText((std::string("##")+std::to_string(idx)).c_str(), buffer, 256);
-	}
-	psx->bus->suppress_exceptions = false;
-	
-	ImGui::End();
-}
-
 void DebugMenuManager::draw_interrupt_menu()
 {
 	ImGui::Begin("Interrupts");
@@ -447,81 +394,6 @@ void DebugMenuManager::draw_interrupt_menu()
 		text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 		ImGui::Text(text.str().c_str());
 	}
-
-	ImGui::End();
-}
-
-void DebugMenuManager::draw_bus_menu()
-{
-	ImGui::Begin("Bus");
-
-	psx->bus->suppress_exceptions = true;
-
-	static int address_of_interest = 0x0;
-	ImGui::InputInt("Address", &address_of_interest, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-
-	bool save_enable_pause_state = psx->bus->enable_pause_on_address_access;
-	psx->bus->enable_pause_on_address_access = false;
-	try
-	{
-		std::stringstream text;
-		text << "Word: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->bus->get_word(address_of_interest);
-		ImGui::Text(text.str().c_str());
-	}
-	catch (...)
-	{
-		ImGui::Text("Word access not supported");
-	}
-
-	try
-	{
-		std::stringstream text;
-		text << "Halfword: 0x" << std::hex << std::setfill('0') << std::setw(4) << psx->bus->get_halfword(address_of_interest);
-		ImGui::Text(text.str().c_str());
-	}
-	catch (...)
-	{
-		ImGui::Text("Halfword access not supported");
-	}
-
-	try
-	{
-		std::stringstream text;
-		text << "Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)psx->bus->get_byte(address_of_interest);
-		ImGui::Text(text.str().c_str());
-	}
-	catch (...)
-	{
-		ImGui::Text("Byte access not supported");
-	}
-
-	static int new_value = 0x0;
-	ImGui::NewLine();
-	ImGui::InputInt("New Value", &new_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-	if (ImGui::Button("Apply as Word"))
-	{
-		psx->bus->set_word(address_of_interest, new_value);
-	}
-
-	if (ImGui::Button("Apply as Halfword"))
-	{
-		psx->bus->set_halfword(address_of_interest, new_value);
-	}
-
-	if (ImGui::Button("Apply as Byte"))
-	{
-		psx->bus->set_byte(address_of_interest, new_value);
-	}
-
-	psx->bus->enable_pause_on_address_access = save_enable_pause_state;
-
-	if (ImGui::Button(psx->bus->enable_pause_on_address_access ? "Disable pause on access" : "Enable pause on access"))
-	{
-		psx->bus->enable_pause_on_address_access = !psx->bus->enable_pause_on_address_access;
-		psx->bus->address_to_pause_on = address_of_interest;
-	}
-
-	psx->bus->suppress_exceptions = false;
 
 	ImGui::End();
 }
