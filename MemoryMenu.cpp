@@ -10,7 +10,6 @@
 
 #include <sstream>
 #include <iomanip>
-#include <fstream>
 
 void MemoryMenu::draw_in_category(menubar_category category)
 {

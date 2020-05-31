@@ -14,6 +14,7 @@
 #include "SystemControlCoprocessor.hpp"
 #include "AssemblyMenu.hpp"
 #include "MemoryMenu.hpp"
+#include "CpuMenu.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -33,6 +34,7 @@ void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 
 	menus.push_back(std::make_shared<AssemblyMenu>(psx));
 	menus.push_back(std::make_shared<MemoryMenu>(psx));
+	menus.push_back(std::make_shared<CpuMenu>(psx));
 }
 
 void DebugMenuManager::uninit()
@@ -105,7 +107,6 @@ void DebugMenuManager::draw_main_menu()
 
 	if (ImGui::BeginMenu("View"))
 	{
-		ImGui::Checkbox("Show Cpu", &show_cpu_window);
 		ImGui::Checkbox("Show Gpu", &show_gpu_window);
 		ImGui::Checkbox("Show Interrupts", &show_interrupt_window);
 		ImGui::Checkbox("Show Cdrom", &show_cdrom_window);
@@ -154,62 +155,7 @@ void DebugMenuManager::draw_main_menu()
 
 void DebugMenuManager::draw_cpu_menu()
 {
-	ImGui::Begin("CPU Registers");
-
-	{
-		std::stringstream current_pc_text;
-		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_pc;
-		ImGui::Text(current_pc_text.str().c_str());
-	}
-
-	{
-		std::stringstream current_instr_text;
-		current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_instruction;
-		ImGui::Text(current_instr_text.str().c_str());
-		ImGui::Separator();
-	}
-
-	if (ImGui::TreeNode("Registers"))
-	{
-		for (int idx = 0; idx < 32; idx++)
-		{
-			// add register names
-			std::stringstream reg_text;
-			if (idx == 2)
-			{
-				ImGui::Text("Results");
-			}
-			else if (idx == 4)
-			{
-				ImGui::Text("Arguments");
-			}
-			else if (idx == 8 || idx == 24)
-			{
-				ImGui::Text("Temps - not saved");
-			}
-			else if (idx == 16)
-			{
-				ImGui::Text("Saved");
-			}
-			else if (idx == 26)
-			{
-				ImGui::Text("Kernel");
-			}
-			else if (idx == 28)
-			{
-				ImGui::Text("Pointers");
-			}
-
-			// register contents
-			std::string reg_name = MipsToString::register_to_string(idx);
-			int * reg_ref = reinterpret_cast<int*>(psx->cpu->register_file.get_register_ref(idx));
-			ImGui::InputInt(reg_name.c_str(), reg_ref, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-		}
-
-		ImGui::TreePop();
-	}
-
-	ImGui::End();
+	
 }
 
 void DebugMenuManager::draw_gpu_menu()

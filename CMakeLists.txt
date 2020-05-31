@@ -46,6 +46,8 @@ set(debug_files
 		AssemblyMenu.cpp
 		MemoryMenu.hpp
 		MemoryMenu.cpp
+		CpuMenu.hpp
+		CpuMenu.cpp
 )
 	
 
