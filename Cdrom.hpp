@@ -91,6 +91,7 @@ public:
 	void set(unsigned int address, unsigned char value);
 
 	void tick();
+	void reset();
 
 	bool load(std::string bin_path, std::string cue_path);
 

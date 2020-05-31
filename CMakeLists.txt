@@ -48,6 +48,10 @@ set(debug_files
 		MemoryMenu.cpp
 		CpuMenu.hpp
 		CpuMenu.cpp
+		GpuMenu.hpp
+		GpuMenu.cpp
+		CdromMenu.hpp
+		CdromMenu.cpp
 )
 	
 

@@ -41,3 +41,8 @@ void Ram::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&memory[0]), sizeof(unsigned char) * MAIN_MEMORY_SIZE);
 }
+
+void Ram::reset()
+{
+	memset(memory, 0, MAIN_MEMORY_SIZE);
+}

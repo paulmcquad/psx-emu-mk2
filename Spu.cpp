@@ -4,6 +4,7 @@
 bool Spu::init()
 {
 	spu_ram = new unsigned char[SPU_RAM_SIZE];
+	memset(spu_ram, 0, SPU_RAM_SIZE);
 	return true;
 }
 
@@ -33,4 +34,11 @@ unsigned char Spu::get_byte(unsigned int address)
 void Spu::set_byte(unsigned int address, unsigned char value)
 {
 	//throw std::logic_error("not implemented");
+}
+
+void Spu::reset()
+{
+	memset(spu_control, 0, SPU_CONTROL_SIZE);
+	memset(spu_voice_registers, 0, SPU_VOICE_SIZE);
+	memset(spu_ram, 0, SPU_RAM_SIZE);
 }

@@ -84,6 +84,16 @@ void Psx::tick()
 	cdrom->tick();
 }
 
+void Psx::reset()
+{
+	cpu->reset();
+	gpu->reset();
+	ram->reset();
+	cdrom->reset();
+	spu->reset();
+	dma->reset();
+}
+
 void Psx::save_state(std::stringstream& state_stream)
 {
 	cpu->save_state(state_stream);

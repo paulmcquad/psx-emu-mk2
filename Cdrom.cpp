@@ -84,14 +84,115 @@ void Cdrom::tick()
 	}
 }
 
+void Cdrom::reset()
+{
+	response_fifo->clear();
+	data_fifo->clear();
+	parameter_fifo->clear();
+	response_interrupt_queue.clear();
+
+	register_index = 0;
+	current_response_received = 0;
+	awaiting_acknowledgement = false;
+
+	interrupt_enable_register = 0x0;
+}
+
 void Cdrom::save_state(std::stringstream& file)
 {
+	{
+		std::vector<unsigned int> responses;
+		while (response_fifo->get_current_size() > 0)
+		{
+			responses.push_back(response_fifo->pop());
+		}
+		unsigned int num_responses = responses.size();
+		file.write(reinterpret_cast<char*>(&num_responses), sizeof(unsigned int));
+		file.write(reinterpret_cast<char*>(responses.data()), sizeof(unsigned int)*num_responses);
+	}
+	
+	{
+		std::vector<unsigned int> data;
+		while (data_fifo->get_current_size() > 0)
+		{
+			data.push_back(data_fifo->pop());
+		}
+		unsigned int num_data = data.size();
+		file.write(reinterpret_cast<char*>(&num_data), sizeof(unsigned int));
+		file.write(reinterpret_cast<char*>(data.data()), sizeof(unsigned int)*num_data);
+	}
 
+	{
+		std::vector<unsigned int> params;
+		while (parameter_fifo->get_current_size() > 0)
+		{
+			params.push_back(parameter_fifo->pop());
+		}
+		unsigned int num_params = params.size();
+		file.write(reinterpret_cast<char*>(&num_params), sizeof(unsigned int));
+		file.write(reinterpret_cast<char*>(params.data()), sizeof(unsigned int)*num_params);
+	}
+
+	file.write(reinterpret_cast<char*>(&register_index), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&current_response_received), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&interrupt_enable_register), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&awaiting_acknowledgement), sizeof(bool));
 }
 
 void Cdrom::load_state(std::stringstream& file)
 {
+	{
+		unsigned int num_responses = 0;
+		file.read(reinterpret_cast<char*>(&num_responses), sizeof(unsigned int));
 
+		std::vector<unsigned int> responses;
+		responses.resize(num_responses);
+		file.read(reinterpret_cast<char*>(responses.data()), sizeof(unsigned int)*num_responses);
+
+		response_fifo->clear();
+
+		for (auto iter : responses)
+		{
+			response_fifo->push(iter);
+		}
+	}
+
+	{
+		unsigned int num_data = 0;
+		file.read(reinterpret_cast<char*>(&num_data), sizeof(unsigned int));
+
+		std::vector<unsigned int> data;
+		data.resize(num_data);
+		file.read(reinterpret_cast<char*>(data.data()), sizeof(unsigned int)*num_data);
+
+		data_fifo->clear();
+
+		for (auto iter : data)
+		{
+			data_fifo->push(iter);
+		}
+	}
+
+	{
+		unsigned int num_params = 0;
+		file.read(reinterpret_cast<char*>(&num_params), sizeof(unsigned int));
+
+		std::vector<unsigned int> params;
+		params.resize(num_params);
+		file.read(reinterpret_cast<char*>(params.data()), sizeof(unsigned int)*num_params);
+
+		parameter_fifo->clear();
+
+		for (auto iter : params)
+		{
+			parameter_fifo->push(iter);
+		}
+	}
+
+	file.read(reinterpret_cast<char*>(&register_index), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&current_response_received), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&interrupt_enable_register), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&awaiting_acknowledgement), sizeof(bool));
 }
 
 bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)

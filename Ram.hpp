@@ -15,6 +15,7 @@ public:
 
 	void save_state(std::stringstream& file);
 	void load_state(std::stringstream& file);
+	void reset();
 
 private:
 	static const unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;

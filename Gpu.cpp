@@ -92,6 +92,35 @@ void Gpu::init()
 
 void Gpu::reset()
 {
+	memset(video_ram, 0, VRAM_SIZE * sizeof(unsigned short));
+
+	gp0_fifo->clear();
+
+	// hardcoded according to simias guide to get the emulator moving a bit further through the code
+	gpu_status = 0x0;
+	gpu_status.ready_dma = true;
+	gpu_status.ready_cmd_word = true;
+
+	width = FRAME_WIDTH;
+	height = FRAME_HEIGHT;
+
+	x_offset = 0;
+	y_offset = 0;
+
+	draw_area_min_x = 0;
+	draw_area_min_y = 0;
+	draw_area_max_x = 0;
+	draw_area_max_y = 0;
+
+	copy_to_gpu_dest_coord = 0x0;
+	copy_to_gpu_current_coord = 0x0;
+	copy_to_gpu_width_height = 0x0;
+	num_words_to_copy_to_gpu = 0;
+
+	copy_to_cpu_src_coord = 0x0;
+	copy_to_cpu_current_coord = 0x0;
+	copy_to_cpu_width_height = 0x0;
+	num_words_to_copy_to_cpu = 0;
 }
 
 void Gpu::tick()

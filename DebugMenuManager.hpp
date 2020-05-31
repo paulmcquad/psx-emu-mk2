@@ -64,14 +64,7 @@ public:
 private:
 	std::vector <std::shared_ptr<DebugMenu>> menus;
 
-	bool show_gpu_window = false;
-	bool show_interrupt_window = false;
-	bool show_cdrom_window = false;
-
 	void draw_main_menu();
-	void draw_gpu_menu();
-	void draw_interrupt_menu();
-	void draw_cdrom_menu();
 
 	std::shared_ptr<Psx> psx = nullptr;
 

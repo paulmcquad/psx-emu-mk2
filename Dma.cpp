@@ -46,15 +46,11 @@ void Dma::init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared
 
 void Dma::reset()
 {
+	memset(dma_registers, 0, 128);
+
+	// according to problem kaputt documentation
 	*control_register = 0x07654321;
 	*interrupt_register = 0x0;
-
-	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
-	{
-		*base_address_registers[chan_idx] = 0x0;
-		*block_control_registers[chan_idx] = 0x0;
-		*channel_control_registers[chan_idx] = 0x0;
-	}
 }
 
 void Dma::tick()
