@@ -68,6 +68,12 @@ void DebugMenuManager::tick()
 {
 	if (recording_states)
 	{
+		if (backward_states.size() > max_saved_states)
+		{
+			delete backward_states.front();
+			backward_states.pop_front();
+		}
+
 		std::stringstream * state = new std::stringstream();
 		psx->save_state(*state);
 		backward_states.push_back(state);
