@@ -578,21 +578,94 @@ TEST_CASE("Special Opcodes")
 			REQUIRE(result == correct_result);
 		}
 
+		// normal positive * negtive value that takes up more than 32 bits
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 2, 1, 0, 0, cpu_special_funcs::MULT);
+
+			// rs
+			cpu->register_file.set_register(2, std::numeric_limits<int>::max());
+
+			// rt
+			cpu->register_file.set_register(1, -4);
+
+			cpu->execute(instruction);
+
+			long long result = ((long long)(cpu->hi) << 32) | cpu->lo;
+			long long correct_result = std::numeric_limits<int>::max() * (-4);
+
+			REQUIRE(result == correct_result);
+		}
 	}
 
 	SECTION("MULTU")
 	{
+		// normal positive * positive value that takes up more than 32 bits
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 2, 1, 0, 0, cpu_special_funcs::MULTU);
 
+			// rs
+			cpu->register_file.set_register(2, std::numeric_limits<unsigned int>::max());
+
+			// rt
+			cpu->register_file.set_register(1, 4);
+
+			cpu->execute(instruction);
+
+			long long result = ((long long)(cpu->hi) << 32) | cpu->lo;
+			long long correct_result = std::numeric_limits<unsigned int>::max() * 4;
+
+			REQUIRE(result == correct_result);
+		}
 	}
 
 	SECTION("DIV")
 	{
+		// normal positive * positive value that takes up more than 32 bits
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 2, 1, 0, 0, cpu_special_funcs::DIV);
 
+			// rs
+			cpu->register_file.set_register(2, std::numeric_limits<int>::max());
+
+			// rt
+			cpu->register_file.set_register(1, 4);
+
+			cpu->execute(instruction);
+
+			int result_quotient = cpu->lo;
+			int result_remainder = cpu->hi;
+
+			int correct_quotient = std::numeric_limits<int>::max() / 4;
+			int correct_remainder = std::numeric_limits<int>::max() % 4;
+
+			REQUIRE(result_quotient == correct_quotient);
+			REQUIRE(result_remainder == correct_remainder);
+		}
 	}
 
 	SECTION("DIVU")
 	{
+		// normal positive * positive value that takes up more than 32 bits
+		{
+			instruction_union instruction(cpu_instructions::SPECIAL, 2, 1, 0, 0, cpu_special_funcs::DIVU);
 
+			// rs
+			cpu->register_file.set_register(2, std::numeric_limits<unsigned int>::max());
+
+			// rt
+			cpu->register_file.set_register(1, 4);
+
+			cpu->execute(instruction);
+
+			unsigned int result_quotient = cpu->lo;
+			unsigned int result_remainder = cpu->hi;
+
+			unsigned int correct_quotient = std::numeric_limits<unsigned int>::max() / 4;
+			unsigned int correct_remainder = std::numeric_limits<unsigned int>::max() % 4;
+
+			REQUIRE(result_quotient == correct_quotient);
+			REQUIRE(result_remainder == correct_remainder);
+		}
 	}
 
 	SECTION("ADD")
