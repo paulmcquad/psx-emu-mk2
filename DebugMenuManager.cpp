@@ -11,6 +11,7 @@
 #include "GpuMenu.hpp"
 #include "CdromMenu.hpp"
 
+#include <iostream>
 #include <sstream>
 
 void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
@@ -67,12 +68,6 @@ void DebugMenuManager::tick()
 {
 	if (recording_states)
 	{
-		if (backward_states.size() > MAX_BACKWARDS_STATES_SAVED)
-		{
-			delete backward_states.front();
-			backward_states.pop_front();
-		}
-
 		std::stringstream * state = new std::stringstream();
 		psx->save_state(*state);
 		backward_states.push_back(state);
@@ -108,11 +103,19 @@ void DebugMenuManager::draw_main_menu()
 
 	if (ImGui::BeginMenu("Options"))
 	{
+		ImGui::InputInt("Number of backward steps to record", &max_saved_states);
+
+		if (max_saved_states < 0)
+		{
+			max_saved_states = 0;
+		}
+
 		ImGui::Checkbox("Pause on enter/exit interrupt", &pause_on_enter_exit_exception);
 		ImGui::Checkbox("Pause on access peripheral", &pause_on_access_perhipheral);
 		ImGui::Checkbox("Ignore GPU Access", &ignore_pause_on_access_gpu);
 		ImGui::Checkbox("Ignore SPU Access", &ignore_pause_on_access_spu);
 		ImGui::Checkbox("Ignore CDROM Access", &ignore_pause_on_access_cdrom);
+		ImGui::Checkbox("Ignore Interrupt Control Access", &ignore_pause_on_interrupt_control);
 
 		for (auto& iter : menus)
 		{

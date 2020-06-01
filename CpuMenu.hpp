@@ -12,6 +12,7 @@ public:
 	virtual void draw_menu() final;
 
 	virtual void tick() final;
+
 private:
 	bool is_visible = false;
 };

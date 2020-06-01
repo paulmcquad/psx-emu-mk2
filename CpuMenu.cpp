@@ -67,8 +67,10 @@ void CpuMenu::draw_menu()
 				ImGui::Text("Pointers");
 			}
 
-			// register contents
 			std::string reg_name = MipsToString::register_to_string(idx);
+			ImGui::Checkbox(std::string("##" + reg_name).c_str(), &psx->cpu->register_file.break_on_change[idx]);
+			ImGui::SameLine();
+			// register contents
 			int * reg_ref = reinterpret_cast<int*>(psx->cpu->register_file.get_register_ref(idx));
 			ImGui::InputInt(reg_name.c_str(), reg_ref, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 		}

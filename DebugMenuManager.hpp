@@ -63,8 +63,9 @@ public:
 	bool ignore_pause_on_access_gpu = true;
 	bool ignore_pause_on_access_spu = true;
 	bool ignore_pause_on_access_cdrom = true;
+	bool ignore_pause_on_interrupt_control = true;
 
-	static const int MAX_BACKWARDS_STATES_SAVED = 100;
+	int max_saved_states = 100;
 
 private:
 	std::vector <std::shared_ptr<DebugMenu>> menus;

@@ -44,6 +44,10 @@ unsigned int RegisterFile::get_register(unsigned int index, bool ignore_load_del
 
 void RegisterFile::set_register(unsigned int index, unsigned int value, bool load_delay)
 {
+	// debug use
+	register_just_changed = true;
+	index_of_register_changed = index;
+
 	if (index != 0)
 	{
 		if (load_delay)

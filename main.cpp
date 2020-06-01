@@ -181,6 +181,17 @@ int main(int num_args, char ** args )
 			// allow debug menu to pause on address access
 			bool exception_pause_request = (debug_menu->pause_on_enter_exit_exception && psx->cpu->currently_entering_exiting_exeception);
 			bool device_pause_request = (debug_menu->pause_on_access_perhipheral && psx->bus->currently_accessing_peripheral);
+			
+			bool register_pause_request = false;
+			if (psx->cpu->register_file.register_just_changed)
+			{
+				int idx = psx->cpu->register_file.index_of_register_changed;
+				if (psx->cpu->register_file.break_on_change[idx])
+				{
+					register_pause_request = true;
+					psx->cpu->register_file.register_just_changed = false;
+				}
+			}
 
 			// cancel pause request if the device is being ignored,
 			// we don't want it stopping on every device access, it would take forever to get anywhere
@@ -212,6 +223,14 @@ int main(int num_args, char ** args )
 						}
 					} break;
 
+					case Bus::BusDevice::bus_device_type::INTERRUPT_CONTROL:
+					{
+						if (debug_menu->ignore_pause_on_interrupt_control)
+						{
+							device_pause_request = false;
+						}
+					} break;
+
 					default:
 					{
 						// do nothing
@@ -220,7 +239,7 @@ int main(int num_args, char ** args )
 			}
 
 			psx->bus->currently_accessing_peripheral = false;
-			if (psx->bus->request_pause || exception_pause_request || device_pause_request)
+			if (psx->bus->request_pause || exception_pause_request || device_pause_request || register_pause_request)
 			{
 				debug_menu->paused_requested = true;
 				psx->bus->request_pause = false;

@@ -19,6 +19,9 @@ public:
 	{
 		return &stage_3_registers[index];
 	}
+	bool register_just_changed = false;
+	int index_of_register_changed = 0;
+	bool break_on_change[32] = { false };
 
 private:
 	unsigned int stage_1_registers[32] = { 0 };
