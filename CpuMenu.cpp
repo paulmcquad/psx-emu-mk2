@@ -37,7 +37,10 @@ void CpuMenu::draw_menu()
 	}
 
 	if (ImGui::TreeNode("Registers"))
-	{
+	{	
+		ImGui::InputInt("Only pause on" , &psx->cpu->register_file.pause_on_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+		ImGui::Checkbox("Only pause on specific value", &psx->cpu->register_file.only_pause_on_value);
+		ImGui::Separator();
 		for (int idx = 0; idx < 32; idx++)
 		{
 			// add register names

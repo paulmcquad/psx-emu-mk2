@@ -47,6 +47,7 @@ void RegisterFile::set_register(unsigned int index, unsigned int value, bool loa
 	// debug use
 	register_just_changed = true;
 	index_of_register_changed = index;
+	value_of_register_changed = value;
 
 	if (index != 0)
 	{

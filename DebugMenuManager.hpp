@@ -65,7 +65,7 @@ public:
 	bool ignore_pause_on_access_cdrom = true;
 	bool ignore_pause_on_interrupt_control = true;
 
-	int max_saved_states = 50;
+	int max_saved_states = 150;
 
 private:
 	std::vector <std::shared_ptr<DebugMenu>> menus;

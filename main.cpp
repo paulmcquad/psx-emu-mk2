@@ -188,8 +188,19 @@ int main(int num_args, char ** args )
 				int idx = psx->cpu->register_file.index_of_register_changed;
 				if (psx->cpu->register_file.break_on_change[idx])
 				{
-					register_pause_request = true;
-					psx->cpu->register_file.register_just_changed = false;
+					if (psx->cpu->register_file.only_pause_on_value)
+					{
+						if (psx->cpu->register_file.value_of_register_changed == (unsigned int)psx->cpu->register_file.pause_on_value)
+						{
+							register_pause_request = true;
+							psx->cpu->register_file.register_just_changed = false;
+						}
+					}
+					else
+					{
+						register_pause_request = true;
+						psx->cpu->register_file.register_just_changed = false;
+					}
 				}
 			}
 
