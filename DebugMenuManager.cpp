@@ -135,7 +135,13 @@ void DebugMenuManager::draw_main_menu()
 	if (ImGui::MenuItem(paused_requested ? "|>" : "||")) { paused_requested = !paused_requested; }
 
 	// recording to enable backward steps
-	if (ImGui::MenuItem(recording_states ? "[]" : "()")) { recording_states = !recording_states; }
+	if (ImGui::MenuItem(recording_states ? "[]" : "()")) { 
+		recording_states = !recording_states;
+		if (recording_states == false)
+		{
+			backward_states.clear();
+		}
+	}
 
 	// step forwards
 	if (ImGui::MenuItem("->")) { step_forward_requested = true; }
