@@ -179,7 +179,48 @@ int main(int num_args, char ** args )
 			debug_menu->tick();
 
 			// allow debug menu to pause on address access
-			if (psx->bus->request_pause || (debug_menu->pause_on_enter_exit_exception && psx->cpu->currently_entering_exiting_exeception))
+			bool exception_pause_request = (debug_menu->pause_on_enter_exit_exception && psx->cpu->currently_entering_exiting_exeception);
+			bool device_pause_request = (debug_menu->pause_on_access_perhipheral && psx->bus->currently_accessing_peripheral);
+
+			// cancel pause request if the device is being ignored,
+			// we don't want it stopping on every device access, it would take forever to get anywhere
+			if (device_pause_request)
+			{
+				switch (psx->bus->device_being_accessed)
+				{
+					case Bus::BusDevice::bus_device_type::GPU:
+					{
+						if (debug_menu->ignore_pause_on_access_gpu)
+						{
+							device_pause_request = false;
+						}
+					} break;
+
+					case Bus::BusDevice::bus_device_type::SPU:
+					{
+						if (debug_menu->ignore_pause_on_access_spu)
+						{
+							device_pause_request = false;
+						}
+					} break;
+
+					case Bus::BusDevice::bus_device_type::CDROM:
+					{
+						if (debug_menu->ignore_pause_on_access_cdrom)
+						{
+							device_pause_request = false;
+						}
+					} break;
+
+					default:
+					{
+						// do nothing
+					}
+				}
+			}
+
+			psx->bus->currently_accessing_peripheral = false;
+			if (psx->bus->request_pause || exception_pause_request || device_pause_request)
 			{
 				debug_menu->paused_requested = true;
 				psx->bus->request_pause = false;

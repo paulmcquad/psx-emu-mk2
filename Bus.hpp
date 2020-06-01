@@ -8,6 +8,14 @@ public:
 	class BusDevice
 	{
 	public:
+		enum class bus_device_type {GPU, SPU, RAM, ROM, CDROM, PARALLEL_PORT, MEMORY_CONTROL, TIMERS, DMA, CACHE_CONTROL, INTERRUPT_CONTROL, UNKNOWN};
+
+		virtual bus_device_type get_bus_device_type() = 0;
+
+		virtual bool is_peripheral() {
+			return false;
+		}
+
 		virtual bool is_address_for_device(unsigned int address) = 0;
 
 		virtual unsigned char get_byte(unsigned int address)
@@ -83,6 +91,10 @@ public:
 	unsigned int address_to_pause_on = 0x0;
 	bool enable_pause_on_address_access = false;
 	bool request_pause = false;
+
+	// debug only
+	bool currently_accessing_peripheral = false;
+	BusDevice::bus_device_type device_being_accessed = BusDevice::bus_device_type::UNKNOWN;
 
 private:
 

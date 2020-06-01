@@ -4,9 +4,9 @@
 class Rom : public Bus::BusDevice
 {
 public:
-	bool is_address_for_device(unsigned int address) final;
-
-	unsigned char get_byte(unsigned int address) final;
+	virtual bus_device_type get_bus_device_type() final { return bus_device_type::ROM; }
+	virtual bool is_address_for_device(unsigned int address) final;
+	virtual unsigned char get_byte(unsigned int address) final;
 
 	bool load_bios(std::string bios_filepath);
 

@@ -140,9 +140,11 @@ public:
 class Dma : public DMA_interface, public Bus::BusDevice
 {
 public:
-	bool is_address_for_device(unsigned int address) final;
-	unsigned char get_byte(unsigned int address) final;
-	void set_byte(unsigned int address, unsigned char value) final;
+	virtual bus_device_type get_bus_device_type() final { return bus_device_type::DMA; }
+
+	virtual bool is_address_for_device(unsigned int address) final;
+	virtual unsigned char get_byte(unsigned int address) final;
+	virtual void set_byte(unsigned int address, unsigned char value) final;
 
 	void init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
 	void reset();

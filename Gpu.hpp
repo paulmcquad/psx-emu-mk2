@@ -17,11 +17,15 @@ public:
 	static const unsigned int FRAME_WIDTH = 1024;
 	static const unsigned int FRAME_HEIGHT = 512;
 	
-	bool is_address_for_device(unsigned int address) final;
+	virtual bus_device_type get_bus_device_type() final { return bus_device_type::GPU; }
+
+	virtual bool is_peripheral() final { return true; }
+
+	virtual bool is_address_for_device(unsigned int address) final;
 
 	// AFAIK the GPU is only accessed with full word accesses
-	unsigned int get_word(unsigned int address) final;
-	void set_word(unsigned int address, unsigned int value) final;
+	virtual unsigned int get_word(unsigned int address) final;
+	virtual void set_word(unsigned int address, unsigned int value) final;
 
 	~Gpu();
 	void init();

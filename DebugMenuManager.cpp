@@ -109,6 +109,10 @@ void DebugMenuManager::draw_main_menu()
 	if (ImGui::BeginMenu("Options"))
 	{
 		ImGui::Checkbox("Pause on enter/exit interrupt", &pause_on_enter_exit_exception);
+		ImGui::Checkbox("Pause on access peripheral", &pause_on_access_perhipheral);
+		ImGui::Checkbox("Ignore GPU Access", &ignore_pause_on_access_gpu);
+		ImGui::Checkbox("Ignore SPU Access", &ignore_pause_on_access_spu);
+		ImGui::Checkbox("Ignore CDROM Access", &ignore_pause_on_access_cdrom);
 
 		for (auto& iter : menus)
 		{

@@ -101,6 +101,17 @@ Bus::BusDevice * Bus::get_bus_device_for_address(unsigned int address)
 		BusDevice * device = bus_devices[idx];
 		if (device->is_address_for_device(address))
 		{
+			device_being_accessed = device->get_bus_device_type();
+			// for debugging use only
+			if (device->is_peripheral())
+			{
+				currently_accessing_peripheral = true;
+			}
+			else
+			{
+				currently_accessing_peripheral = false;
+			}
+
 			return device;
 		}
 	}
