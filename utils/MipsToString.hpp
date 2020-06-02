@@ -6,6 +6,37 @@
 class MipsToString
 {
 public:
+	static bool is_branch_or_jump(instruction_union instruction)
+	{
+		cpu_instructions opcode = static_cast<cpu_instructions>(instruction.jump_instruction.op);
+
+		switch (opcode)
+		{
+			case cpu_instructions::BCOND:
+			case cpu_instructions::BEQ:
+			case cpu_instructions::BGTZ:
+			case cpu_instructions::BLEZ:
+			case cpu_instructions::BNE:
+			case cpu_instructions::J:
+			case cpu_instructions::JAL:
+			{
+				return true;
+			} break;
+			case cpu_instructions::SPECIAL:
+			{
+				cpu_special_funcs special_opcode = static_cast<cpu_special_funcs>(instruction.register_instruction.funct);
+				switch (special_opcode)
+				{
+					case cpu_special_funcs::JALR:
+					case cpu_special_funcs::JR:
+						return true;
+				} break;
+			} break;
+		}
+
+		return false;
+	}
+
 	static std::string instruction_to_string(instruction_union instruction)
 	{
 		if (instruction.raw == 0x0)

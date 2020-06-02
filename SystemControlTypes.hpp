@@ -26,7 +26,7 @@ namespace system_control
 		};
 	};
 
-	enum class system_control_register_names : unsigned int
+	enum class register_names : unsigned int
 	{
 		BPC = 3,
 		BDA = 5,

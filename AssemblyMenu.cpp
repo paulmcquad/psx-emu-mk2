@@ -85,7 +85,19 @@ void AssemblyMenu::draw_menu()
 			asm_text << "  ";
 		}
 		asm_text << "0x" << std::hex << std::setfill('0') << std::setw(8) << instruction.raw << "; " << MipsToString::instruction_to_string(instruction) << "\n";
-		ImGui::Text(asm_text.str().c_str());
+		
+		if (MipsToString::is_branch_or_jump(instruction))
+		{
+			static ImVec4 red = { 1, 0, 0, 1 };
+			ImGui::TextColored(red, asm_text.str().c_str());
+		}
+		else
+		{
+			static ImVec4 yellow = { 1, 1, 0, 1 };
+			ImGui::TextColored(yellow, asm_text.str().c_str());
+		}
+		
+		
 		ImGui::SameLine();
 
 		char * buffer = assembly_comment_buffer[pc];

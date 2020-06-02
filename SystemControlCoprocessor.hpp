@@ -48,14 +48,14 @@ public:
 	system_control::status_register get<system_control::status_register>()
 	{
 		system_control::status_register result;
-		result.raw = get_control_register(system_control::system_control_register_names::SR);
+		result.raw = get_control_register(system_control::register_names::SR);
 		return result;
 	}
 
 	template<>
 	void set<system_control::status_register>(system_control::status_register value)
 	{
-		set_control_register(system_control::system_control_register_names::SR, value.raw);
+		set_control_register(system_control::register_names::SR, value.raw);
 	}
 
 	// cause register - get and set
@@ -63,14 +63,14 @@ public:
 	system_control::cause_register get<system_control::cause_register>()
 	{
 		system_control::cause_register result;
-		result.raw = get_control_register(system_control::system_control_register_names::CAUSE);
+		result.raw = get_control_register(system_control::register_names::CAUSE);
 		return result;
 	}
 
 	template<>
 	void set<system_control::cause_register>(system_control::cause_register value)
 	{
-		set_control_register(system_control::system_control_register_names::CAUSE, value.raw);
+		set_control_register(system_control::register_names::CAUSE, value.raw);
 	}
 
 	SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu);
@@ -80,8 +80,8 @@ public:
 
 	void execute(const instruction_union& instruction) final;
 
-	unsigned int get_control_register(system_control::system_control_register_names register_name);
-	void set_control_register(system_control::system_control_register_names register_name, unsigned int value);
+	unsigned int get_control_register(system_control::register_names register_name);
+	void set_control_register(system_control::register_names register_name, unsigned int value);
 
 	bool trigger_pending_interrupts(unsigned int & excode);
 

@@ -34,11 +34,11 @@ void Cpu::execute_mips_exception(unsigned int excode)
 	
 	if (in_delay_slot) {
 		cause.BD = true;
-		cop0->set_control_register(system_control::system_control_register_names::EPC, current_pc - 4);
+		cop0->set_control_register(system_control::register_names::EPC, current_pc - 4);
 	}
 	else
 	{
-		cop0->set_control_register(system_control::system_control_register_names::EPC, current_pc);
+		cop0->set_control_register(system_control::register_names::EPC, current_pc);
 	}
 
 	system_control::status_register sr = cop0->get<system_control::status_register>();
