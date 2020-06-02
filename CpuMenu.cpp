@@ -15,6 +15,10 @@ void CpuMenu::draw_in_category(menubar_category category)
 	{
 		ImGui::Checkbox("Show Cpu", &is_visible);
 	}
+	else if (category == menubar_category::OPTIONS)
+	{
+		ImGui::Checkbox("Break on register load delay overwritten", &psx->cpu->register_file.break_on_overwrite);
+	}
 }
 
 void CpuMenu::draw_menu()
@@ -70,12 +74,26 @@ void CpuMenu::draw_menu()
 				ImGui::Text("Pointers");
 			}
 
+			bool overwrite_during_load_delay_detected = psx->cpu->register_file.overwrites[idx] != 0;
+			if (overwrite_during_load_delay_detected)
+			{
+				ImGui::Separator();
+				static ImVec4 red = { 1, 0, 0, 1 };
+				ImGui::TextColored(red, std::to_string(psx->cpu->register_file.overwrites[idx]).c_str());
+				ImGui::SameLine();
+			}
+
 			std::string reg_name = MipsToString::register_to_string(idx);
 			ImGui::Checkbox(std::string("##" + reg_name).c_str(), &psx->cpu->register_file.break_on_change[idx]);
 			ImGui::SameLine();
 			// register contents
 			int * reg_ref = reinterpret_cast<int*>(psx->cpu->register_file.get_register_ref(idx));
 			ImGui::InputInt(reg_name.c_str(), reg_ref, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+
+			if (overwrite_during_load_delay_detected)
+			{
+				ImGui::Separator();
+			}
 		}
 
 		ImGui::TreePop();

@@ -68,7 +68,7 @@ void DebugMenuManager::tick()
 {
 	if (recording_states)
 	{
-		if (backward_states.size() > max_saved_states)
+		if (backward_states.size() > static_cast<unsigned int>(max_saved_states))
 		{
 			delete backward_states.front();
 			backward_states.pop_front();

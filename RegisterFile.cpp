@@ -16,12 +16,10 @@ void RegisterFile::load_state(std::stringstream& file)
 
 void RegisterFile::reset()
 {
-	for (int idx = 0; idx < 32; idx++)
-	{
-		stage_1_registers[idx] = 0;
-		stage_2_registers[idx] = 0;
-		stage_3_registers[idx] = 0;
-	}
+	memset(stage_1_registers, 0, sizeof(unsigned int)*32);
+	memset(stage_2_registers, 0, sizeof(unsigned int) * 32);
+	memset(stage_3_registers, 0, sizeof(unsigned int) * 32);
+	memset(overwrites, 0, sizeof(unsigned int) * 32);
 }
 
 void RegisterFile::tick()
@@ -57,6 +55,15 @@ void RegisterFile::set_register(unsigned int index, unsigned int value, bool loa
 		}
 		else
 		{
+			// debug
+			bool no_load_delays_pending = (stage_1_registers[index] == stage_2_registers[index]) &&
+									      (stage_1_registers[index] == stage_3_registers[index]);
+			if (no_load_delays_pending == false)
+			{
+				overwrites[index]++;
+				register_just_overwritten = true;
+			}
+
 			stage_1_registers[index] = stage_2_registers[index] = stage_3_registers[index] = value;
 		}
 	}

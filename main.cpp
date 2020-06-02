@@ -248,9 +248,12 @@ int main(int num_args, char ** args )
 					}
 				}
 			}
-
 			psx->bus->currently_accessing_peripheral = false;
-			if (psx->bus->request_pause || exception_pause_request || device_pause_request || register_pause_request)
+
+			bool overwrite_request_pause = psx->cpu->register_file.break_on_overwrite && psx->cpu->register_file.register_just_overwritten;
+			psx->cpu->register_file.register_just_overwritten = false;
+
+			if (psx->bus->request_pause || exception_pause_request || device_pause_request || register_pause_request || overwrite_request_pause)
 			{
 				debug_menu->paused_requested = true;
 				psx->bus->request_pause = false;
