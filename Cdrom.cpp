@@ -19,7 +19,7 @@ bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_
 			{
 				response_interrupt_queue.pop_front();
 				system_control_processor->interrupt_mask_register.IRQ2_CDROM = true;
-				excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::INT);
+				excode = static_cast<unsigned int>(system_control::excode::INT);
 				awaiting_acknowledgement = true;
 				return true;
 			}

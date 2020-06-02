@@ -51,7 +51,7 @@ SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, st
 {
 	interrupt_status_register.value = 0x0;
 	interrupt_mask_register.value = 0x0;
-	control_registers[static_cast<unsigned int>(register_names::PRID)] = 0x00000002;
+	control_registers[static_cast<unsigned int>(system_control::system_control_register_names::PRID)] = 0x00000002;
 }
 
 void SystemControlCoprocessor::save_state(std::stringstream& file)
@@ -120,13 +120,13 @@ void SystemControlCoprocessor::execute(const instruction_union& instruction)
 	}
 }
 
-unsigned int SystemControlCoprocessor::get_control_register(SystemControlCoprocessor::register_names register_name)
+unsigned int SystemControlCoprocessor::get_control_register(system_control::system_control_register_names register_name)
 {
 	unsigned int index = static_cast<unsigned int>(register_name);
 	return control_registers[index];
 }
 
-void SystemControlCoprocessor::set_control_register(SystemControlCoprocessor::register_names register_name, unsigned int value)
+void SystemControlCoprocessor::set_control_register(system_control::system_control_register_names register_name, unsigned int value)
 {
 	unsigned int index = static_cast<unsigned int>(register_name);
 	control_registers[index] = value;
@@ -144,7 +144,7 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 
 bool SystemControlCoprocessor::trigger_pending_interrupts(unsigned int & excode)
 {
-	unsigned int cause_register = get_control_register(SystemControlCoprocessor::register_names::CAUSE);
+	unsigned int cause_register = get_control_register(system_control::system_control_register_names::CAUSE);
 
 	if (interrupt_mask_register.value & interrupt_status_register.value)
 	{
@@ -157,7 +157,7 @@ bool SystemControlCoprocessor::trigger_pending_interrupts(unsigned int & excode)
 		cause_register &= ~(0x1 << 10);
 	}
 
-	set_control_register(SystemControlCoprocessor::register_names::CAUSE, cause_register);
+	set_control_register(system_control::system_control_register_names::CAUSE, cause_register);
 
 	for (unsigned int idx = 0; idx < num_system_control_devices; idx++)
 	{
@@ -230,11 +230,11 @@ void SystemControlCoprocessor::move_from_cp0(const instruction_union& instr)
 
 void SystemControlCoprocessor::restore_from_exception(const instruction_union& instr)
 {
-	SystemControlCoprocessor::status_register sr = get<SystemControlCoprocessor::status_register>();
+	system_control::status_register sr = get<system_control::status_register>();
 
 	unsigned int mode = sr.raw & 0x3f;
 	sr.raw &= ~0x3f;
 	sr.raw |= mode >> 2;
 
-	set<SystemControlCoprocessor::status_register>(sr);
+	set<system_control::status_register>(sr);
 }

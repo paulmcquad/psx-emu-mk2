@@ -77,6 +77,7 @@ set(source_files
 		RegisterFile.hpp
 		RegisterFile.cpp
 		Coprocessor.hpp
+		SystemControlTypes.hpp
 		SystemControlCoprocessor.hpp
 		SystemControlCoprocessor.cpp
 		GTECoprocessor.hpp

@@ -19,7 +19,7 @@ void Cpu::reset()
 {
 	current_instruction = 0;
 	next_instruction = 0;
-	current_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::RESET);
+	current_pc = static_cast<unsigned int>(system_control::exception_vector::RESET);
 	next_pc = current_pc;
 	cop0->reset();
 	cop2->reset();
@@ -30,25 +30,25 @@ void Cpu::execute_mips_exception(unsigned int excode)
 {
 	currently_entering_exiting_exeception = true;
 
-	SystemControlCoprocessor::cause_register cause = cop0->get<SystemControlCoprocessor::cause_register>();
+	system_control::cause_register cause = cop0->get<system_control::cause_register>();
 	
 	if (in_delay_slot) {
 		cause.BD = true;
-		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc - 4);
+		cop0->set_control_register(system_control::system_control_register_names::EPC, current_pc - 4);
 	}
 	else
 	{
-		cop0->set_control_register(SystemControlCoprocessor::register_names::EPC, current_pc);
+		cop0->set_control_register(system_control::system_control_register_names::EPC, current_pc);
 	}
 
-	SystemControlCoprocessor::status_register sr = cop0->get<SystemControlCoprocessor::status_register>();
+	system_control::status_register sr = cop0->get<system_control::status_register>();
 	if (sr.BEV == 0)
 	{
-		next_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::GENERAL_BEV0);
+		next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV0);
 	}
 	else
 	{
-		next_pc = static_cast<unsigned int>(SystemControlCoprocessor::exception_vector::GENERAL_BEV1);
+		next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV1);
 	}
 
 	// push mode - these kind of act like a stack of exception states o = old, p = previous, c = current
@@ -60,11 +60,11 @@ void Cpu::execute_mips_exception(unsigned int excode)
 
 	sr.IEc = sr.KUc = 0;
 
-	cop0->set<SystemControlCoprocessor::status_register>(sr);
+	cop0->set<system_control::status_register>(sr);
 
 	cause.Excode = excode;
 
-	cop0->set<SystemControlCoprocessor::cause_register>(cause);
+	cop0->set<system_control::cause_register>(cause);
 
 	// dump the next instruction
 	next_instruction = 0x0;
@@ -161,7 +161,7 @@ void Cpu::execute(const instruction_union& instr)
 					(signed_imm < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -274,7 +274,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned char value = bus->get_byte(addr);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -285,7 +285,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (char)bus->get_byte(addr);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -296,7 +296,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (short)bus->get_halfword(addr);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -307,7 +307,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned short value = bus->get_halfword(addr);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -324,7 +324,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = bus->get_word(addr);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				register_file.set_register(instr.immediate_instruction.rt, value, true);
 			}
@@ -370,7 +370,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
+			if (cop0->get<system_control::status_register>().Isc == false) {
 				bus->set_word(addr_aligned, new_value);
 			}
 		} break;
@@ -387,7 +387,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0xffffff00 << (alignment * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false) {
+			if (cop0->get<system_control::status_register>().Isc == false) {
 				bus->set_word(addr_aligned, new_value);
 			}
 		} break;
@@ -404,7 +404,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				bus->set_byte(addr, value);
 			}
@@ -415,7 +415,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				bus->set_halfword(addr, value);
 			}
@@ -447,7 +447,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
 
-			if (cop0->get<SystemControlCoprocessor::status_register>().Isc == false)
+			if (cop0->get<system_control::status_register>().Isc == false)
 			{
 				bus->set_word(addr, value);
 			}
@@ -483,7 +483,7 @@ void Cpu::execute_special(const instruction_union& instr)
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -511,7 +511,7 @@ void Cpu::execute_special(const instruction_union& instr)
 		case cpu_special_funcs::BREAK:
 		{
 			pending_exception = true;
-			pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::BP);
+			pending_exception_excode = static_cast<unsigned int>(system_control::excode::BP);
 		} break;
 
 		case cpu_special_funcs::DIV:
@@ -706,7 +706,7 @@ void Cpu::execute_special(const instruction_union& instr)
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
 					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Ov);
+					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -725,7 +725,7 @@ void Cpu::execute_special(const instruction_union& instr)
 		case cpu_special_funcs::SYSCALL:
 		{
 			pending_exception = true;
-			pending_exception_excode = static_cast<unsigned int>(SystemControlCoprocessor::excode::Syscall);
+			pending_exception_excode = static_cast<unsigned int>(system_control::excode::Syscall);
 		} break;
 
 		case cpu_special_funcs::XOR:
