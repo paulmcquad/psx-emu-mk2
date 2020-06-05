@@ -86,6 +86,7 @@ union DMA_control_register
 
 union DMA_interrupt_register
 {
+	unsigned int value;
 	unsigned char byte_value[4];
 	struct
 	{
@@ -156,6 +157,7 @@ public:
 	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
 	DMA_interface* devices[7] = { nullptr };
+	DMA_interrupt_register interrupt_register;
 private:
 
 	static const unsigned int NUM_CHANNELS = 7;
@@ -163,12 +165,12 @@ private:
 	static const unsigned int DMA_SIZE = 128;
 	static const unsigned int DMA_START = 0x1F801080;
 	static const unsigned int DMA_END = DMA_START + DMA_SIZE;
-	static const unsigned int DMA_BASE_ADDRESS_START = 0x1F801080 - DMA_START;
-	static const unsigned int DMA_BLOCK_CONTROL_START = 0x1F801084 - DMA_START;
-	static const unsigned int DMA_CHANNEL_CONTROL_START = 0x1F801088 - DMA_START;
-	static const unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0 - DMA_START;
-	static const unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4 - DMA_START;
-	static const unsigned int DMA_GARBAGE_START = 0x1F8010F8 - DMA_START;
+	static const unsigned int DMA_BASE_ADDRESS_START = 0x1F801080;
+	static const unsigned int DMA_BLOCK_CONTROL_START = 0x1F801084;
+	static const unsigned int DMA_CHANNEL_CONTROL_START = 0x1F801088;
+	static const unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0;
+	static const unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4;
+	static const unsigned int DMA_GARBAGE_START = 0x1F8010F8;
 
 	std::shared_ptr<Bus> bus = nullptr;
 
@@ -177,5 +179,4 @@ private:
 	unsigned int * block_control_registers[7] = { nullptr };
 	unsigned int * channel_control_registers[7] = { nullptr };
 	unsigned int * control_register = nullptr;
-	unsigned int * interrupt_register = nullptr;
 };

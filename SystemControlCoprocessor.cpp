@@ -46,6 +46,38 @@ void SystemControlCoprocessor::set_byte(unsigned int address, unsigned char valu
 	}
 }
 
+unsigned int SystemControlCoprocessor::get_word(unsigned int address)
+{
+	if (address == I_STAT_START)
+	{
+		return interrupt_status_register.value;
+	}
+	else if (address == I_MASK_START)
+	{
+		return interrupt_mask_register.value;
+	}
+	else
+	{
+		throw std::logic_error("out of bounds");
+	}
+}
+
+void SystemControlCoprocessor::set_word(unsigned int address, unsigned int value)
+{
+	if (address == I_STAT_START)
+	{
+		interrupt_status_register.value &= value;
+	}
+	else if (address == I_MASK_START)
+	{
+		interrupt_mask_register.value = value;
+	}
+	else
+	{
+		throw std::logic_error("out of bounds");
+	}
+}
+
 SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
 	Cop(_bus, _cpu)
 {

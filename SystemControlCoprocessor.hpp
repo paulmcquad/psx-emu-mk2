@@ -25,6 +25,9 @@ public:
 
 	virtual unsigned char get_byte(unsigned int address) final;
 	virtual void set_byte(unsigned int address, unsigned char value) final;
+	virtual unsigned int get_word(unsigned int address) final;
+	virtual void set_word(unsigned int address, unsigned int value) final;
+
 
 	system_control::interrupt_register interrupt_status_register, interrupt_mask_register;
 
