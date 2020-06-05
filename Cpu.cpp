@@ -41,6 +41,9 @@ void Cpu::execute_mips_exception(unsigned int excode)
 		cop0->set_control_register(system_control::register_names::EPC, current_pc);
 	}
 
+	//TODO check does the interrupt pending field need to be set in the cause register
+	// I have read that there is only 1 interrupt field implement for the playstation but I can't recall the number
+
 	system_control::status_register sr = cop0->get<system_control::status_register>();
 	if (sr.BEV == 0)
 	{
