@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "Bus.hpp"
+#include "SystemControlCoprocessor.hpp"
 
 class Gpu;
 class Spu;
@@ -138,7 +139,7 @@ public:
 	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
 };
 
-class Dma : public DMA_interface, public Bus::BusDevice
+class Dma : public DMA_interface, public Bus::BusDevice, public SystemControlCoprocessor::SystemControlInterface
 {
 public:
 	virtual bus_device_type get_bus_device_type() final { return bus_device_type::DMA; }
@@ -179,4 +180,8 @@ private:
 	unsigned int * block_control_registers[7] = { nullptr };
 	unsigned int * channel_control_registers[7] = { nullptr };
 	unsigned int * control_register = nullptr;
+
+	// Inherited via SystemControlInterface
+	bool trigger_interrupt = false;
+	virtual bool trigger_pending_interrupts(SystemControlCoprocessor * system_control_processor, unsigned int & excode) final;
 };

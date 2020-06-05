@@ -71,6 +71,7 @@ bool Psx::init(std::string bios_path)
 	bus->register_device(cpu->cop0.get());
 
 	dma->init(bus, gpu, spu);
+	cpu->cop0->register_system_control_device(dma.get());
 
 	return true;
 }

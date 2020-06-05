@@ -79,6 +79,7 @@ void Dma::reset()
 	// according to problem kaputt documentation
 	*control_register = 0x07654321;
 	interrupt_register.value = 0x0;
+	trigger_interrupt = false;
 }
 
 void Dma::tick()
@@ -152,8 +153,10 @@ void Dma::tick()
 
 	// setup the interrupts, failing to setup this stuff
 	// caused 1.5 months of stalled progress in this project
-	bool irq_active = (interrupt_register.irq_master_enable & interrupt_register.irq_flags);
-	bool irq_master_flag_previous_state = interrupt_register.irq_master_flag;
+
+	bool previous_interrupt_master_flag_value = interrupt_register.irq_master_flag;
+
+	bool irq_active = (interrupt_register.irq_enable & interrupt_register.irq_flags);
 	if (interrupt_register.force_irq || (interrupt_register.irq_master_enable && irq_active))
 	{
 		interrupt_register.irq_master_flag = true;
@@ -163,8 +166,10 @@ void Dma::tick()
 		interrupt_register.irq_master_flag = false;
 	}
 
-	// on 0 to 1 transition, the IRQ3 flag of the I_STAT should be set
-	// TODO
+	if (previous_interrupt_master_flag_value == false && interrupt_register.irq_master_flag == true)
+	{
+		trigger_interrupt = true;
+	}
 }
 
 void Dma::save_state(std::stringstream& file)
@@ -202,4 +207,20 @@ void Dma::sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_addr
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
+}
+
+bool Dma::trigger_pending_interrupts(SystemControlCoprocessor * system_control_processor, unsigned int & excode)
+{
+	if (system_control_processor->interrupt_mask_register.IRQ3_DMA == true &&
+		system_control_processor->interrupt_status_register.IRQ3_DMA == false)
+	{
+		if (trigger_interrupt)
+		{
+			trigger_interrupt = false;
+			system_control_processor->interrupt_status_register.IRQ3_DMA = true;
+			excode = static_cast<unsigned int>(system_control::excode::INT);
+			return true;
+		}
+	}
+	return false;
 }

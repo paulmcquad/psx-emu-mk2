@@ -4,6 +4,7 @@
 #include "imgui_impl_opengl3.h"
 #include "Psx.hpp"
 #include "Cpu.hpp"
+#include "Dma.hpp"
 #include "SystemControlCoprocessor.hpp"
 #include "MipsToString.hpp"
 #include <sstream>
@@ -190,6 +191,42 @@ void CpuMenu::draw_menu()
 		}
 
 		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("DMA"))
+	{
+		ImGui::TreePop();
+		DMA_interrupt_register reg = psx->dma->interrupt_register;
+
+		{
+			std::stringstream text;
+			text << "IRQ Master Flag: " << (reg.irq_master_flag ? "Enabled " : "Disabled ");
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "IRQ Master Enable: " << (reg.irq_master_enable ? "Enabled " : "Disabled ");
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "Force IRQ: " << (reg.force_irq ? "Force " : "None ");
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "IRQ Enable: " << std::hex << reg.irq_enable;
+			ImGui::Text(text.str().c_str());
+		}
+
+		{
+			std::stringstream text;
+			text << "IRQ Flags: " << std::hex << reg.irq_flags;
+			ImGui::Text(text.str().c_str());
+		}
 	}
 
 	ImGui::End();
