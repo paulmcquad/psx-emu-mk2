@@ -9,7 +9,20 @@
 
 InterruptMenu::InterruptMenu(std::shared_ptr<Psx> _psx) : DebugMenu(_psx)
 {
-	
+	for (int idx = 0; idx < NUM_IRQS; idx++)
+	{
+		i_stat_irqs[idx] = new CircularBuffer<float>(MAX_VALUE_COUNT);
+		i_mask_irqs[idx] = new CircularBuffer<float>(MAX_VALUE_COUNT);
+	}
+}
+
+InterruptMenu::~InterruptMenu()
+{
+	for (int idx = 0; idx < NUM_IRQS; idx++)
+	{
+		delete i_stat_irqs[idx];
+		delete i_mask_irqs[idx];
+	}
 }
 
 void InterruptMenu::draw_in_category(menubar_category category)
@@ -28,40 +41,42 @@ void InterruptMenu::draw_menu()
 	}
 
 	ImGui::Begin("Interrupt");
-	ImGui::Text("I_STAT");
-	for (int idx = 0; idx < NUM_IRQS; idx++)
+	ImPlot::SetNextPlotLimits(0, MAX_VALUE_COUNT, -0.1f, 1.1f, ImGuiCond_Always);
+	if (ImPlot::BeginPlot("I_STAT", "ticks", nullptr, ImVec2(0, 0)))
 	{
-		ImGui::PlotLines(std::to_string(idx).c_str(), 
-			[](void *data, int idx) {
-			std::deque<float> * values = static_cast<std::deque<float>*>(data);
-			if (static_cast<unsigned int>(idx) < values->size())
-			{
-				return (*values)[idx];
-			}
-			else
-			{
-				return 0.f;
-			}
-			},
-			reinterpret_cast<void*>(&i_stat_irqs[idx]), MAX_VALUE_COUNT, 0, 0, 0.f, 1.f);
-	}
+		for (int idx = 0; idx < NUM_IRQS; idx++)
+		{
+			ImPlot::PlotLine(labels[idx],
+				[](void *data, int _idx) {
+				CircularBuffer<float> * values = static_cast<CircularBuffer<float>*>(data);
+				ImPlotPoint result;
+				result.x = _idx;
+				result.y = values->get(_idx);
 
-	ImGui::Text("I_MASK");
-	for (int idx = 0; idx < NUM_IRQS; idx++)
-	{
-		ImGui::PlotLines(std::to_string(idx).c_str(),
-			[](void *data, int idx) {
-			std::deque<float> * values = static_cast<std::deque<float>*>(data);
-			if (static_cast<unsigned int>(idx) < values->size())
-			{
-				return (*values)[idx];
-			}
-			else
-			{
-				return 0.f;
-			}
+				return result;
 			},
-			reinterpret_cast<void*>(&i_mask_irqs[idx]), MAX_VALUE_COUNT, 0, 0, 0.f, 1.f);
+				reinterpret_cast<void*>(i_stat_irqs[idx]), MAX_VALUE_COUNT);
+		}
+		ImPlot::EndPlot();
+	}
+	ImGui::SameLine();
+	ImPlot::SetNextPlotLimits(0, MAX_VALUE_COUNT, -0.1f, 1.1f, ImGuiCond_Always);
+	if (ImPlot::BeginPlot("I_MASK", "ticks", nullptr, ImVec2(0,0)))
+	{
+		for (int idx = 0; idx < NUM_IRQS; idx++)
+		{
+			ImPlot::PlotLine(labels[idx],
+				[](void *data, int _idx) {
+				CircularBuffer<float> * values = static_cast<CircularBuffer<float>*>(data);
+				ImPlotPoint result;
+				result.x = _idx;
+				result.y = values->get(_idx);
+
+				return result;
+			},
+			reinterpret_cast<void*>(i_mask_irqs[idx]), MAX_VALUE_COUNT);
+		}
+		ImPlot::EndPlot();
 	}
 	ImGui::End();
 }
@@ -83,15 +98,8 @@ void InterruptMenu::tick()
 		bool i_stat_for_idx = i_stat_bits & 0x1;
 		bool i_mask_for_idx = i_mask_bits & 0x1;
 
-		i_stat_irqs[idx].push_back(i_stat_for_idx ? 1.f : 0.f);
-		i_mask_irqs[idx].push_back(i_mask_for_idx ? 1.f : 0.f);
-
-		if (i_stat_irqs[idx].size() > MAX_VALUE_COUNT)
-		{
-			// can pop both as they will have the exact same size
-			i_stat_irqs[idx].pop_front();
-			i_mask_irqs[idx].pop_front();
-		}
+		i_stat_irqs[idx]->push(i_stat_for_idx ? 1.f : 0.f);
+		i_mask_irqs[idx]->push(i_mask_for_idx ? 1.f : 0.f);
 
 		// shift to next irq bit to check
 		i_stat_bits >>= 1;
