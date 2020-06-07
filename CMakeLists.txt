@@ -32,6 +32,8 @@ set(imgui_files
 		imgui/imstb_rectpack.h
 		imgui/imstb_textedit.h
 		imgui/imstb_truetype.h
+		imgui/implot.h
+		imgui/implot.cpp
 )
 
 set(glad_files
@@ -52,6 +54,8 @@ set(debug_files
 		GpuMenu.cpp
 		CdromMenu.hpp
 		CdromMenu.cpp
+		InterruptMenu.hpp
+		InterruptMenu.cpp
 )
 	
 

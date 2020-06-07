@@ -10,6 +10,7 @@
 #include "CpuMenu.hpp"
 #include "GpuMenu.hpp"
 #include "CdromMenu.hpp"
+#include "InterruptMenu.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -31,6 +32,7 @@ void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 	menus.push_back(std::make_shared<CpuMenu>(psx));
 	menus.push_back(std::make_shared<GpuMenu>(psx));
 	menus.push_back(std::make_shared<CdromMenu>(psx));
+	menus.push_back(std::make_shared<InterruptMenu>(psx));
 }
 
 void DebugMenuManager::uninit()
@@ -77,6 +79,11 @@ void DebugMenuManager::tick()
 		std::stringstream * state = new std::stringstream();
 		psx->save_state(*state);
 		backward_states.push_back(state);
+	}
+
+	for (auto& iter : menus)
+	{
+		iter->tick();
 	}
 }
 
