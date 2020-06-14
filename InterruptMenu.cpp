@@ -1,7 +1,4 @@
 #include "InterruptMenu.hpp"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include "SystemControlCoprocessor.hpp"
 #include "Psx.hpp"

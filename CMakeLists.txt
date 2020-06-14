@@ -56,6 +56,10 @@ set(debug_files
 		CdromMenu.cpp
 		InterruptMenu.hpp
 		InterruptMenu.cpp
+		apg_console.h
+		apg_console.c
+		DebugConsole.hpp
+		DebugConsole.cpp
 )
 	
 

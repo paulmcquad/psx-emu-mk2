@@ -1,9 +1,5 @@
 ﻿#include "DebugMenuManager.hpp"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
 #include "Psx.hpp"
 #include "AssemblyMenu.hpp"
 #include "MemoryMenu.hpp"
@@ -11,6 +7,7 @@
 #include "GpuMenu.hpp"
 #include "CdromMenu.hpp"
 #include "InterruptMenu.hpp"
+#include "DebugConsole.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -33,6 +30,7 @@ void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 	menus.push_back(std::make_shared<GpuMenu>(psx));
 	menus.push_back(std::make_shared<CdromMenu>(psx));
 	menus.push_back(std::make_shared<InterruptMenu>(psx));
+	menus.push_back(std::make_shared<DebugConsole>(psx));
 }
 
 void DebugMenuManager::uninit()

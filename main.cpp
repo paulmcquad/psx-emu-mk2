@@ -42,13 +42,15 @@ bool show_debug_menus = true;
 
 void key_callback(GLFWwindow * window, int key, int /*scancode*/, int action, int /*mods*/)
 {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	if (action == GLFW_PRESS)
 	{
-		glfwSetWindowShouldClose(window, true);
-	}
-	else if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
-	{
-		show_debug_menus = !show_debug_menus;
+		switch (key)
+		{
+			case GLFW_KEY_ESCAPE:
+			{
+				glfwSetWindowShouldClose(window, true);
+			} break;
+		}
 	}
 }
 
@@ -115,7 +117,7 @@ int main(int num_args, char ** args )
 		glGenBuffers(1, &vbo);
 
 		float vertices[] = {
-		//   X   |  Y  |   U  |   V
+		   //   X   |  Y  |   U  |   V
 		   -1.0f,  1.0f,  0.0f,  0.0f,
 			1.0f,  1.0f,  1.0f,  0.0f,
 		   -1.0f, -1.0f,  0.0f,  1.0f,
