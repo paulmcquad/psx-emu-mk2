@@ -13,6 +13,7 @@
 #include "CacheControl.hpp"
 #include "ParallelPort.hpp"
 #include "Timers.hpp"
+#include "Post.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -59,6 +60,7 @@ bool Psx::init(std::string bios_path)
 	bus->register_device(timers);
 	bus->register_device(dma);
 	bus->register_device(gpu);
+	bus->register_device(Post::get_instance());
 
 	Cpu * cpu = Cpu::get_instance();
 	cpu->init();

@@ -8,7 +8,7 @@ public:
 	class BusDevice
 	{
 	public:
-		enum class bus_device_type {GPU, SPU, RAM, ROM, CDROM, PARALLEL_PORT, MEMORY_CONTROL, TIMERS, DMA, CACHE_CONTROL, INTERRUPT_CONTROL, UNKNOWN};
+		enum class bus_device_type {GPU, SPU, RAM, ROM, CDROM, PARALLEL_PORT, MEMORY_CONTROL, TIMERS, DMA, CACHE_CONTROL, INTERRUPT_CONTROL, POST, UNKNOWN};
 
 		virtual bus_device_type get_bus_device_type() = 0;
 

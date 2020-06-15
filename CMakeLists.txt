@@ -100,6 +100,8 @@ set(source_files
 		Cdrom.cpp
 		Bus.hpp
 		Bus.cpp
+		Post.hpp
+		Post.cpp
 )
 
 set (test_files
