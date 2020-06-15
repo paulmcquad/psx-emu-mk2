@@ -2,7 +2,7 @@
 
 class GTECoprocessor : public Cop {
 public:
-	GTECoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu);
+	static GTECoprocessor * get_instance();
 
 	void save_state(std::stringstream& file) override;
 	void load_state(std::stringstream& file) override;
@@ -10,6 +10,9 @@ public:
 	void execute(const instruction_union& instruction) final;
 
 private:
+	GTECoprocessor() = default;
+	~GTECoprocessor() = default;
+
 	unsigned int get_data_register(unsigned int index);
 	void set_data_register(unsigned int index, unsigned int value);
 

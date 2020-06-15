@@ -7,11 +7,20 @@
 #include "GTECoprocessor.hpp"
 #include "InstructionEnums.hpp"
 
-void Cpu::init(std::shared_ptr<Bus> _bus)
+static Cpu* instance = nullptr;
+
+Cpu* Cpu::get_instance()
 {
-	bus = _bus;
-	cop0 = std::make_shared<SystemControlCoprocessor>(bus, shared_from_this());
-	cop2 = std::make_shared<GTECoprocessor>(bus, shared_from_this());
+	if (instance == nullptr)
+	{
+		instance = new Cpu();
+	}
+
+	return instance;
+}
+
+void Cpu::init()
+{
 	reset();
 }
 
@@ -21,15 +30,12 @@ void Cpu::reset()
 	next_instruction = 0;
 	current_pc = static_cast<unsigned int>(system_control::exception_vector::RESET);
 	next_pc = current_pc;
-	cop0->reset();
-	cop2->reset();
 	register_file.reset();
 }
 
 void Cpu::execute_mips_exception(unsigned int excode)
 {
-	currently_entering_exiting_exeception = true;
-
+	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
 	system_control::cause_register cause = cop0->get<system_control::cause_register>();
 	
 	if (in_delay_slot) {
@@ -75,8 +81,7 @@ void Cpu::execute_mips_exception(unsigned int excode)
 
 void Cpu::tick()
 {
-	// this is just used for the debug menu
-	currently_entering_exiting_exeception = false;
+	Bus * bus = Bus::get_instance();
 
 	current_pc = next_pc;
 	current_instruction = next_instruction;
@@ -90,7 +95,7 @@ void Cpu::tick()
 		execute(instr);
 		if (pending_exception == false)
 		{
-			pending_exception = cop0->trigger_pending_interrupts(pending_exception_excode);
+			pending_exception = SystemControlCoprocessor::get_instance()->trigger_pending_interrupts(pending_exception_excode);
 		}
 
 		if (pending_exception)
@@ -113,8 +118,8 @@ void Cpu::save_state(std::stringstream& file)
 {
 	register_file.save_state(file);
 
-	cop0->save_state(file);
-	cop2->save_state(file);
+	SystemControlCoprocessor::get_instance()->save_state(file);
+	GTECoprocessor::get_instance()->save_state(file);
 
 	file.write(reinterpret_cast<char*>(&hi), sizeof(unsigned int));
 	file.write(reinterpret_cast<char*>(&lo), sizeof(unsigned int));
@@ -129,8 +134,8 @@ void Cpu::load_state(std::stringstream& file)
 {
 	register_file.load_state(file);
 
-	cop0->load_state(file);
-	cop2->load_state(file);
+	SystemControlCoprocessor::get_instance()->load_state(file);
+	GTECoprocessor::get_instance()->load_state(file);
 
 	file.read(reinterpret_cast<char*>(&hi), sizeof(unsigned int));
 	file.read(reinterpret_cast<char*>(&lo), sizeof(unsigned int));
@@ -143,6 +148,11 @@ void Cpu::load_state(std::stringstream& file)
 
 void Cpu::execute(const instruction_union& instr)
 {
+	Bus * bus = Bus::get_instance();
+
+	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
+	GTECoprocessor * cop2 = GTECoprocessor::get_instance();
+
 	// doesn't matter if its a jump instruction or not, the opcode bits are the same for all instructions
 	cpu_instructions opcode = static_cast<cpu_instructions>(instr.jump_instruction.op);
 
@@ -803,11 +813,11 @@ void Cpu::execute_cop(const instruction_union& instr)
 	unsigned int cop_number = (instr.raw >> 26) & 0x3;
 	if (cop_number == 0)
 	{
-		cop0->execute(instr);
+		SystemControlCoprocessor::get_instance()->execute(instr);
 	}
-	else if (cop_number == 1)
+	else if (cop_number == 2)
 	{
-		cop2->execute(instr);
+		GTECoprocessor::get_instance()->execute(instr);
 	}
 }
 

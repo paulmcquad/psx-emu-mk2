@@ -5,6 +5,7 @@
 #include "Cdrom.hpp"
 #include "Cpu.hpp"
 #include "SystemControlCoprocessor.hpp"
+#include "GTECoprocessor.hpp"
 #include "Bus.hpp"
 #include "Ram.hpp"
 #include "Rom.hpp"
@@ -18,60 +19,58 @@
 
 bool Psx::init(std::string bios_path)
 {
-	dma = std::make_shared<Dma>();
+	Dma * dma = Dma::get_instance();
 
-	gpu = std::make_shared<Gpu>();
+	Gpu * gpu = Gpu::get_instance();
 	gpu->init();
 	
-	spu = std::make_shared<Spu>();
+	Spu * spu = Spu::get_instance();
 	if (spu->init() == false)
 	{
 		std::cerr << "Failed to initialise SPU\n";
 		return false;
 	}
 
-	cdrom = std::make_shared<Cdrom>();
+	Cdrom * cdrom = Cdrom::get_instance();
 	cdrom->init();
 
-	ram = std::make_shared<Ram>();
-	
-	rom = std::make_shared<Rom>();
+	Ram * ram = Ram::get_instance();
+	Rom * rom = Rom::get_instance();
 	if (false == rom->load_bios(bios_path))
 	{
 		std::cerr << "Failed to load bios\n";
 		return false;
 	}
 
-	memory_control = std::make_shared<MemoryControl>();
-
-	cache_control = std::make_shared<CacheControl>();
-
-	parallel_port = std::make_shared<ParallelPort>();
-
-	timers = std::make_shared<Timers>();
+	MemoryControl * memory_control = MemoryControl::get_instance();
+	CacheControl * cache_control = CacheControl::get_instance();
+	ParallelPort * parallel_port = ParallelPort::get_instance();
+	Timers * timers = Timers::get_instance();
 
 	// hook up the bus
-	bus = std::make_shared<Bus>();
-	bus->register_device(cdrom.get());
-	bus->register_device(ram.get());
-	bus->register_device(rom.get());
-	bus->register_device(memory_control.get());
-	bus->register_device(cache_control.get());
-	bus->register_device(spu.get());
-	bus->register_device(parallel_port.get());
-	bus->register_device(timers.get());
-	bus->register_device(dma.get());
-	bus->register_device(gpu.get());
+	Bus * bus = Bus::get_instance();
+	bus->register_device(cdrom);
+	bus->register_device(ram);
+	bus->register_device(rom);
+	bus->register_device(memory_control);
+	bus->register_device(cache_control);
+	bus->register_device(spu);
+	bus->register_device(parallel_port);
+	bus->register_device(timers);
+	bus->register_device(dma);
+	bus->register_device(gpu);
 
-	cpu = std::make_shared<Cpu>();
-	cpu->init(bus);
+	Cpu * cpu = Cpu::get_instance();
+	cpu->init();
 
-	cpu->cop0->register_system_control_device(cdrom.get());
+	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
+	cop0->register_system_control_device(cdrom);
+	GTECoprocessor::get_instance();
 
-	bus->register_device(cpu->cop0.get());
+	bus->register_device(cop0);
 
-	dma->init(bus, gpu, spu);
-	cpu->cop0->register_system_control_device(dma.get());
+	dma->init();
+	cop0->register_system_control_device(dma);
 
 	return true;
 }
@@ -79,41 +78,41 @@ bool Psx::init(std::string bios_path)
 
 void Psx::tick()
 {
-	cpu->tick();
-	dma->tick();
-	gpu->tick();
-	cdrom->tick();
+	Cpu::get_instance()->tick();
+	Dma::get_instance()->tick();
+	Gpu::get_instance()->tick();
+	Cdrom::get_instance()->tick();
 }
 
 void Psx::reset()
 {
-	cpu->reset();
-	gpu->reset();
-	ram->reset();
-	cdrom->reset();
-	spu->reset();
-	dma->reset();
+	Cpu::get_instance()->reset();
+	Gpu::get_instance()->reset();
+	Ram::get_instance()->reset();
+	Cdrom::get_instance()->reset();
+	Spu::get_instance()->reset();
+	Dma::get_instance()->reset();
 }
 
 void Psx::save_state(std::stringstream& state_stream)
 {
-	cpu->save_state(state_stream);
-	gpu->save_state(state_stream);
-	dma->save_state(state_stream);
-	ram->save_state(state_stream);
-	cdrom->save_state(state_stream);
+	Cpu::get_instance()->save_state(state_stream);
+	Gpu::get_instance()->save_state(state_stream);
+	Dma::get_instance()->save_state(state_stream);
+	Ram::get_instance()->save_state(state_stream);
+	Cdrom::get_instance()->save_state(state_stream);
 }
 
 void Psx::load_state(std::stringstream& state_stream)
 {
-	cpu->load_state(state_stream);
-	gpu->load_state(state_stream);
-	dma->load_state(state_stream);
-	ram->load_state(state_stream);
-	cdrom->load_state(state_stream);
+	Cpu::get_instance()->load_state(state_stream);
+	Gpu::get_instance()->load_state(state_stream);
+	Dma::get_instance()->load_state(state_stream);
+	Ram::get_instance()->load_state(state_stream);
+	Cdrom::get_instance()->load_state(state_stream);
 }
 
 bool Psx::load(std::string bin_path, std::string cue_path)
 {
-	return cdrom->load(bin_path, cue_path);
+	return Cdrom::get_instance()->load(bin_path, cue_path);
 }

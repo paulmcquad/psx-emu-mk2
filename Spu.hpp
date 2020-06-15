@@ -5,8 +5,9 @@
 class Spu : public DMA_interface, public Bus::BusDevice
 {
 public:
+	static Spu * get_instance();
+
 	bool init();
-	~Spu();
 
 	virtual bus_device_type get_bus_device_type() final { return bus_device_type::SPU; }
 	virtual bool is_peripheral() final { return true; }
@@ -17,6 +18,9 @@ public:
 
 	void reset();
 private:
+	Spu() = default;
+	~Spu();
+
 	static const unsigned int SPU_RAM_SIZE = 512 * 1042;
 	static const unsigned int SPU_CONTROL_SIZE = 64;
 	static const unsigned int SPU_VOICE_SIZE = 576;

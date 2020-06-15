@@ -7,10 +7,16 @@
 #include "Cpu.hpp"
 #include "Bus.hpp"
 
-GTECoprocessor::GTECoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
-	Cop(_bus, _cpu)
-{
+static GTECoprocessor * instance = nullptr;
 
+GTECoprocessor * GTECoprocessor::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new GTECoprocessor();
+	}
+
+	return instance;
 }
 
 void GTECoprocessor::save_state(std::stringstream& file)
@@ -93,39 +99,39 @@ void GTECoprocessor::set_control_register(unsigned int index, unsigned int value
 
 void GTECoprocessor::load_word_to_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	unsigned int word = bus->get_word(addr);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)Cpu::get_instance()->register_file.get_register(instr.immediate_instruction.rs);
+	unsigned int word = Bus::get_instance()->get_word(addr);
 	set_data_register(instr.immediate_instruction.rt, word);
 }
 
 void GTECoprocessor::store_word_from_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	bus->set_word(addr,get_data_register(instr.immediate_instruction.rt));
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)Cpu::get_instance()->register_file.get_register(instr.immediate_instruction.rs);
+	Bus::get_instance()->set_word(addr,get_data_register(instr.immediate_instruction.rt));
 }
 
 void GTECoprocessor::move_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
+	unsigned int value = Cpu::get_instance()->register_file.get_register(instr.register_instruction.rt);
 	set_data_register(instr.register_instruction.rd, value);
 }
 
 void GTECoprocessor::move_from_cop(const instruction_union& instr)
 {
 	unsigned value = get_data_register(instr.register_instruction.rd);
-	cpu->register_file.set_register(instr.register_instruction.rs, value);
+	Cpu::get_instance()->register_file.set_register(instr.register_instruction.rs, value);
 }
 
 void GTECoprocessor::move_control_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
+	unsigned int value = Cpu::get_instance()->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
 void GTECoprocessor::move_control_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
-	cpu->register_file.set_register(instr.register_instruction.rt, value);
+	Cpu::get_instance()->register_file.set_register(instr.register_instruction.rt, value);
 }
 
 void GTECoprocessor::move_control_to_cop_fun(const instruction_union& instr)

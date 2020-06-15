@@ -33,8 +33,8 @@ static char _c_user_entered_text[APG_C_STR_MAX];
 static char _c_command_history[APG_C_MAX_COMMAND_HIST][APG_C_STR_MAX];
 static int _c_latest_command_in_history = -1;
 
-static const int _c_n_built_in_commands            = 5;
-static char _c_built_in_commands[5][APG_C_STR_MAX] = { "help", "clear", "list_vars", "list_funcs" };
+static const int _c_n_built_in_commands            = 4;
+static char _c_built_in_commands[4][APG_C_STR_MAX] = { "help", "list_vars", "list_funcs" };
 
 static bool _c_redraw_required;
 
@@ -144,11 +144,6 @@ static bool _parse_user_entered_instruction( const char* str ) {
     // search for command match
     if ( strncmp( one, "help", APG_C_STR_MAX ) == 0 ) {
       _help();
-      return true;
-    }
-
-    if ( strncmp( one, "clear", APG_C_STR_MAX ) == 0 ) {
-      apg_c_output_clear();
       return true;
     }
 

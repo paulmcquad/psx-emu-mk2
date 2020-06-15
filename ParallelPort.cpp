@@ -1,5 +1,17 @@
 #include "ParallelPort.hpp"
 
+static ParallelPort * instance = nullptr;
+
+ParallelPort * ParallelPort::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new ParallelPort();
+	}
+
+	return instance;
+}
+
 bool ParallelPort::is_address_for_device(unsigned int address)
 {
 	if (address >= PARALLEL_START && address < PARALLEL_END)

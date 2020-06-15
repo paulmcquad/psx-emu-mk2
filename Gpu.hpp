@@ -34,8 +34,8 @@ public:
 	void save_state(std::stringstream& file);
 	void load_state(std::stringstream& file);
 
-	virtual void sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
-	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
+	virtual void sync_mode_request(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
+	virtual void sync_mode_linked_list(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
 	union gpu_status_union
 	{
@@ -90,6 +90,8 @@ public:
 	unsigned int draw_area_min_y = 0;
 	unsigned int draw_area_max_x = 0;
 	unsigned int draw_area_max_y = 0;
+
+	static Gpu * get_instance();
 
 private:
 	static const unsigned int VRAM_SIZE = FRAME_WIDTH * FRAME_HEIGHT;

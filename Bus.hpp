@@ -84,19 +84,11 @@ public:
 	void set_halfword(unsigned int address, unsigned short value);
 	void set_word(unsigned int address, unsigned int value);
 
-	bool is_address_to_ignore(unsigned int address);
-
-	bool suppress_exceptions = false;
-
-	unsigned int address_to_pause_on = 0x0;
-	bool enable_pause_on_address_access = false;
-	bool request_pause = false;
-
-	// debug only
-	bool currently_accessing_peripheral = false;
-	BusDevice::bus_device_type device_being_accessed = BusDevice::bus_device_type::UNKNOWN;
+	static Bus* get_instance();
 
 private:
+
+	Bus() = default;
 
 	BusDevice * get_bus_device_for_address(unsigned int address);
 

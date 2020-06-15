@@ -10,6 +10,8 @@
 class Cdrom : public Bus::BusDevice, public SystemControlCoprocessor::SystemControlInterface
 {
 public:
+	static Cdrom * get_instance();
+
 	bool trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode) final;
 
 	virtual bus_device_type get_bus_device_type() final { return bus_device_type::CDROM; }
@@ -86,7 +88,6 @@ public:
 	};
 
 	void init();
-	~Cdrom();
 
 	void save_state(std::stringstream& file);
 	void load_state(std::stringstream& file);
@@ -232,5 +233,9 @@ public:
 	static const unsigned int PARAMETER_FIFO_SIZE = 16;
 	// double check
 	static const unsigned int DATA_FIFO_SIZE = 4096;
+private:
+
+	Cdrom() = default;
+	~Cdrom();
 	
 };

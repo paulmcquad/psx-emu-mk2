@@ -134,9 +134,9 @@ enum class DMA_channel_type
 class DMA_interface
 {
 public:
-	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
-	virtual void sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
-	virtual void sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_manual(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_request(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
+	virtual void sync_mode_linked_list(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) { throw std::logic_error("not supported"); }
 };
 
 class Dma : public DMA_interface, public Bus::BusDevice, public SystemControlCoprocessor::SystemControlInterface
@@ -148,19 +148,20 @@ public:
 	virtual unsigned char get_byte(unsigned int address) final;
 	virtual void set_byte(unsigned int address, unsigned char value) final;
 
-	void init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu);
+	void init();
 	void reset();
 	void tick();
 	void save_state(std::stringstream& file);
 	void load_state(std::stringstream& file);
 
 	// for OTC channel - since its basically DMA to ram
-	virtual void sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
+	virtual void sync_mode_manual(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 
 	DMA_interface* devices[7] = { nullptr };
 	DMA_interrupt_register interrupt_register;
-private:
 
+	static Dma * get_instance();
+private:
 	static const unsigned int NUM_CHANNELS = 7;
 
 	static const unsigned int DMA_SIZE = 128;
@@ -172,8 +173,6 @@ private:
 	static const unsigned int DMA_CONTROL_REGISTER_START = 0x1F8010F0;
 	static const unsigned int DMA_INTERRUPT_REGISTER_START = 0x1F8010F4;
 	static const unsigned int DMA_GARBAGE_START = 0x1F8010F8;
-
-	std::shared_ptr<Bus> bus = nullptr;
 
 	unsigned char dma_registers[128] = { 0 };
 	unsigned int * base_address_registers[7] = { nullptr };

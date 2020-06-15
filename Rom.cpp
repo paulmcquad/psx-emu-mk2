@@ -3,6 +3,18 @@
 #include <iostream>
 #include <string>
 
+static Rom * instance = nullptr;
+
+Rom * Rom::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Rom();
+	}
+
+	return instance;
+}
+
 bool Rom::is_address_for_device(unsigned int address)
 {
 	if (address >= 0x1FC00000 && address < 0x1FC00000 + BIOS_SIZE)

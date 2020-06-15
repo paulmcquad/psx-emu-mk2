@@ -13,36 +13,31 @@ void CpuMenu::draw_in_category(menubar_category category)
 	{
 		ImGui::Checkbox("Show Cpu", &is_visible);
 	}
-	else if (category == menubar_category::OPTIONS)
-	{
-		ImGui::Checkbox("Break on register load delay overwritten", &psx->cpu->register_file.break_on_overwrite);
-	}
 }
 
 void CpuMenu::draw_menu()
 {
 	if (is_visible == false) return;
 
+	Cpu * cpu = Cpu::get_instance();
+
 	ImGui::Begin("CPU Registers");
 
 	{
 		std::stringstream current_pc_text;
-		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_pc;
+		current_pc_text << "PC: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_pc;
 		ImGui::Text(current_pc_text.str().c_str());
 	}
 
 	{
 		std::stringstream current_instr_text;
-		current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << psx->cpu->current_instruction;
+		current_instr_text << "Instr: 0x" << std::hex << std::setfill('0') << std::setw(8) << cpu->current_instruction;
 		ImGui::Text(current_instr_text.str().c_str());
 		ImGui::Separator();
 	}
 
 	if (ImGui::TreeNode("Registers"))
 	{	
-		ImGui::InputInt("Only pause on" , &psx->cpu->register_file.pause_on_value, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-		ImGui::Checkbox("Only pause on specific value", &psx->cpu->register_file.only_pause_on_value);
-		ImGui::Separator();
 		for (int idx = 0; idx < 32; idx++)
 		{
 			// add register names
@@ -71,27 +66,9 @@ void CpuMenu::draw_menu()
 			{
 				ImGui::Text("Pointers");
 			}
-
-			bool overwrite_during_load_delay_detected = psx->cpu->register_file.overwrites[idx] != 0;
-			if (overwrite_during_load_delay_detected)
-			{
-				ImGui::Separator();
-				static ImVec4 red = { 1, 0, 0, 1 };
-				ImGui::TextColored(red, std::to_string(psx->cpu->register_file.overwrites[idx]).c_str());
-				ImGui::SameLine();
-			}
-
 			std::string reg_name = MipsToString::register_to_string(idx);
-			ImGui::Checkbox(std::string("##" + reg_name).c_str(), &psx->cpu->register_file.break_on_change[idx]);
-			ImGui::SameLine();
-			// register contents
-			int * reg_ref = reinterpret_cast<int*>(psx->cpu->register_file.get_register_ref(idx));
+			int * reg_ref = reinterpret_cast<int*>(cpu->register_file.get_register_ref(idx));
 			ImGui::InputInt(reg_name.c_str(), reg_ref, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-
-			if (overwrite_during_load_delay_detected)
-			{
-				ImGui::Separator();
-			}
 		}
 
 		ImGui::TreePop();
@@ -99,90 +76,92 @@ void CpuMenu::draw_menu()
 
 	if (ImGui::TreeNode("Coprocessor 0"))
 	{
+		SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
+
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ0_VBLANK;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ0_VBLANK;
+			bool enabled = cop0->interrupt_mask_register.IRQ0_VBLANK;
+			bool irq = cop0->interrupt_status_register.IRQ0_VBLANK;
 			text << "IRQ0_VBLANK: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ1_GPU;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ1_GPU;
+			bool enabled = cop0->interrupt_mask_register.IRQ1_GPU;
+			bool irq = cop0->interrupt_status_register.IRQ1_GPU;
 			text << "IRQ1_GPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ2_CDROM;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ2_CDROM;
+			bool enabled = cop0->interrupt_mask_register.IRQ2_CDROM;
+			bool irq = cop0->interrupt_status_register.IRQ2_CDROM;
 			text << "IRQ2_CDROM: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ3_DMA;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ3_DMA;
+			bool enabled = cop0->interrupt_mask_register.IRQ3_DMA;
+			bool irq = cop0->interrupt_status_register.IRQ3_DMA;
 			text << "IRQ3_DMA: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ4_TMR0;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ4_TMR0;
+			bool enabled = cop0->interrupt_mask_register.IRQ4_TMR0;
+			bool irq = cop0->interrupt_status_register.IRQ4_TMR0;
 			text << "IRQ4_TMR0: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ5_TMR1;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ5_TMR1;
+			bool enabled = cop0->interrupt_mask_register.IRQ5_TMR1;
+			bool irq = cop0->interrupt_status_register.IRQ5_TMR1;
 			text << "IRQ5_TMR1: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ6_TMR2;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ6_TMR2;
+			bool enabled = cop0->interrupt_mask_register.IRQ6_TMR2;
+			bool irq = cop0->interrupt_status_register.IRQ6_TMR2;
 			text << "IRQ6_TMR2: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
+			bool enabled = cop0->interrupt_mask_register.IRQ7_CTRL_MEM_CRD;
+			bool irq = cop0->interrupt_status_register.IRQ7_CTRL_MEM_CRD;
 			text << "IRQ7_CTRL_MEM_CRD: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ8_SIO;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ8_SIO;
+			bool enabled = cop0->interrupt_mask_register.IRQ8_SIO;
+			bool irq = cop0->interrupt_status_register.IRQ8_SIO;
 			text << "IRQ8_SIO: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ9_SPU;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ9_SPU;
+			bool enabled = cop0->interrupt_mask_register.IRQ9_SPU;
+			bool irq = cop0->interrupt_status_register.IRQ9_SPU;
 			text << "IRQ9_SPU: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
 
 		{
 			std::stringstream text;
-			bool enabled = psx->cpu->cop0->interrupt_mask_register.IRQ10_LIGHTPEN;
-			bool irq = psx->cpu->cop0->interrupt_status_register.IRQ10_LIGHTPEN;
+			bool enabled = cop0->interrupt_mask_register.IRQ10_LIGHTPEN;
+			bool irq = cop0->interrupt_status_register.IRQ10_LIGHTPEN;
 			text << "IRQ10_LIGHTPEN: " << (enabled ? "Enabled " : "Disabled ") << "- " << (irq ? "IRQ" : "No IRQ");
 			ImGui::Text(text.str().c_str());
 		}
@@ -190,10 +169,12 @@ void CpuMenu::draw_menu()
 		ImGui::TreePop();
 	}
 
+	Dma * dma = Dma::get_instance();
+
 	if (ImGui::TreeNode("DMA"))
 	{
 		ImGui::TreePop();
-		DMA_interrupt_register reg = psx->dma->interrupt_register;
+		DMA_interrupt_register reg = dma->interrupt_register;
 
 		{
 			std::stringstream text;

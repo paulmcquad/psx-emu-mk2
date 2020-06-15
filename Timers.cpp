@@ -1,5 +1,17 @@
 #include "Timers.hpp"
 
+static Timers * instance = nullptr;
+
+Timers * Timers::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Timers();
+	}
+
+	return instance;
+}
+
 bool Timers::is_address_for_device(unsigned int address)
 {
 	if (address >= TIMER_START && address < TIMER_END)

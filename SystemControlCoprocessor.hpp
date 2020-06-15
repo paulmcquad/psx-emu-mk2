@@ -11,6 +11,8 @@ class Cpu;
 class SystemControlCoprocessor : public Cop, public Bus::BusDevice {
 public:
 
+	static SystemControlCoprocessor * get_instance();
+
 	class SystemControlInterface
 	{
 	public:
@@ -76,8 +78,6 @@ public:
 		set_control_register(system_control::register_names::CAUSE, value.raw);
 	}
 
-	SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu);
-
 	void save_state(std::stringstream& file) override;
 	void load_state(std::stringstream& file) override;
 
@@ -95,6 +95,9 @@ public:
 	}
 
 private:
+	SystemControlCoprocessor();
+	~SystemControlCoprocessor() = default;
+
 	// I_STAT_SIZE and I_MASK_SIZE only use the first 2 bytes
 	// and the next 2 in both are considered garbage areas
 	static const unsigned int I_STAT_START = 0x1F801070;

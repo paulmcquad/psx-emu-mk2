@@ -88,7 +88,7 @@ int main(int num_args, char ** args )
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	GLFWwindow* window = glfwCreateWindow(psx->gpu->FRAME_WIDTH, psx->gpu->FRAME_HEIGHT, "PSX-EMU-MK2", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(Gpu::FRAME_WIDTH, Gpu::FRAME_HEIGHT, "PSX-EMU-MK2", nullptr, nullptr);
 	if (!window)
 	{
 		std::cerr << "Failed to create window\n";
@@ -179,88 +179,6 @@ int main(int num_args, char ** args )
 		{
 			psx->tick();
 			debug_menu->tick();
-
-			// allow debug menu to pause on address access
-			bool exception_pause_request = (debug_menu->pause_on_enter_exit_exception && psx->cpu->currently_entering_exiting_exeception);
-			bool device_pause_request = (debug_menu->pause_on_access_perhipheral && psx->bus->currently_accessing_peripheral);
-			
-			bool register_pause_request = false;
-			if (psx->cpu->register_file.register_just_changed)
-			{
-				int idx = psx->cpu->register_file.index_of_register_changed;
-				if (psx->cpu->register_file.break_on_change[idx])
-				{
-					if (psx->cpu->register_file.only_pause_on_value)
-					{
-						if (psx->cpu->register_file.value_of_register_changed == (unsigned int)psx->cpu->register_file.pause_on_value)
-						{
-							register_pause_request = true;
-							psx->cpu->register_file.register_just_changed = false;
-						}
-					}
-					else
-					{
-						register_pause_request = true;
-						psx->cpu->register_file.register_just_changed = false;
-					}
-				}
-			}
-
-			// cancel pause request if the device is being ignored,
-			// we don't want it stopping on every device access, it would take forever to get anywhere
-			if (device_pause_request)
-			{
-				switch (psx->bus->device_being_accessed)
-				{
-					case Bus::BusDevice::bus_device_type::GPU:
-					{
-						if (debug_menu->ignore_pause_on_access_gpu)
-						{
-							device_pause_request = false;
-						}
-					} break;
-
-					case Bus::BusDevice::bus_device_type::SPU:
-					{
-						if (debug_menu->ignore_pause_on_access_spu)
-						{
-							device_pause_request = false;
-						}
-					} break;
-
-					case Bus::BusDevice::bus_device_type::CDROM:
-					{
-						if (debug_menu->ignore_pause_on_access_cdrom)
-						{
-							device_pause_request = false;
-						}
-					} break;
-
-					case Bus::BusDevice::bus_device_type::INTERRUPT_CONTROL:
-					{
-						if (debug_menu->ignore_pause_on_interrupt_control)
-						{
-							device_pause_request = false;
-						}
-					} break;
-
-					default:
-					{
-						// do nothing
-					}
-				}
-			}
-			psx->bus->currently_accessing_peripheral = false;
-
-			bool overwrite_request_pause = psx->cpu->register_file.break_on_overwrite && psx->cpu->register_file.register_just_overwritten;
-			psx->cpu->register_file.register_just_overwritten = false;
-
-			if (psx->bus->request_pause || exception_pause_request || device_pause_request || register_pause_request || overwrite_request_pause)
-			{
-				debug_menu->paused_requested = true;
-				psx->bus->request_pause = false;
-			}
-
 			ticks_per_frame++;
 		}
 
@@ -298,7 +216,7 @@ int main(int num_args, char ** args )
 
 		if (current_frame_time >= FRAME_TIME_SECS)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, psx->gpu->width, psx->gpu->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, psx->gpu->video_ram);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Gpu::get_instance()->width, Gpu::get_instance()->height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, Gpu::get_instance()->video_ram);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);

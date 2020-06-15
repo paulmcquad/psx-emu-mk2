@@ -4,6 +4,16 @@
 #include <iostream>
 #include <fstream>
 
+static Dma * instance = nullptr;
+Dma * Dma::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Dma();
+	}
+	return instance;
+}
+
 bool Dma::is_address_for_device(unsigned int address)
 {
 	if (address >= DMA_START && address < DMA_END)
@@ -52,10 +62,8 @@ void Dma::set_byte(unsigned int address, unsigned char value)
 	dma_registers[address - DMA_START] = value;
 }
 
-void Dma::init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared_ptr<Spu> _spu)
+void Dma::init()
 {
-	bus = _bus;
-
 	for (int chan_idx = 0; chan_idx < NUM_CHANNELS; chan_idx++)
 	{
 		base_address_registers[chan_idx] = reinterpret_cast<unsigned int*>(&dma_registers[(DMA_BASE_ADDRESS_START - DMA_START) + (chan_idx*16)]);
@@ -66,8 +74,8 @@ void Dma::init(std::shared_ptr<Bus> _bus, std::shared_ptr<Gpu> _gpu, std::shared
 	control_register = reinterpret_cast<unsigned int*>(&dma_registers[DMA_CONTROL_REGISTER_START - DMA_START]);
 
 	devices[static_cast<unsigned int>(DMA_channel_type::OTC)] = this;
-	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = _gpu.get();
-	devices[static_cast<unsigned int>(DMA_channel_type::SPU)] = _spu.get();
+	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = Gpu::get_instance();
+	devices[static_cast<unsigned int>(DMA_channel_type::SPU)] = Spu::get_instance();
 	
 	reset();
 }
@@ -111,7 +119,7 @@ void Dma::tick()
 					if (channel_control.start_trigger == 1)
 					{
 						channel_control.start_trigger = 0;
-						device->sync_mode_manual(bus, base_address, block_control, channel_control);
+						device->sync_mode_manual(base_address, block_control, channel_control);
 						channel_control.start_busy = 0;
 						dma_complete = true;
 					}
@@ -120,7 +128,7 @@ void Dma::tick()
 				case DMA_sync_mode::request:
 				{
 					channel_control.start_trigger = 0;
-					device->sync_mode_request(bus, base_address, block_control, channel_control);
+					device->sync_mode_request(base_address, block_control, channel_control);
 					channel_control.start_busy = 0;
 					dma_complete = true;
 				} break;
@@ -128,7 +136,7 @@ void Dma::tick()
 				case DMA_sync_mode::linked_list:
 				{
 					channel_control.start_trigger = 0;
-					device->sync_mode_linked_list(bus, base_address, block_control, channel_control);
+					device->sync_mode_linked_list(base_address, block_control, channel_control);
 					channel_control.start_busy = 0;
 					dma_complete = true;
 				} break;
@@ -184,7 +192,7 @@ void Dma::load_state(std::stringstream& file)
 	file.read(reinterpret_cast<char*>(interrupt_register.byte_value), sizeof(unsigned char) * 4);
 }
 
-void Dma::sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Dma::sync_mode_manual(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	//std::cout << "Starting OTC manual DMA\n";
 	unsigned int num_words = block_control.BC;
@@ -198,11 +206,11 @@ void Dma::sync_mode_manual(std::shared_ptr<Bus> bus, DMA_base_address& base_addr
 		num_words--;
 		if (num_words == 0)
 		{
-			bus->set_word(addr, 0xffffffff);
+			Bus::get_instance()->set_word(addr, 0xffffffff);
 		}
 		else
 		{
-			bus->set_word(addr, (addr - 4) & 0x1fffff);
+			Bus::get_instance()->set_word(addr, (addr - 4) & 0x1fffff);
 		}
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);

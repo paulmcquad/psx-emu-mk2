@@ -19,7 +19,6 @@ void RegisterFile::reset()
 	memset(stage_1_registers, 0, sizeof(unsigned int)*32);
 	memset(stage_2_registers, 0, sizeof(unsigned int) * 32);
 	memset(stage_3_registers, 0, sizeof(unsigned int) * 32);
-	memset(overwrites, 0, sizeof(unsigned int) * 32);
 }
 
 void RegisterFile::tick()
@@ -42,11 +41,6 @@ unsigned int RegisterFile::get_register(unsigned int index, bool ignore_load_del
 
 void RegisterFile::set_register(unsigned int index, unsigned int value, bool load_delay)
 {
-	// debug use
-	register_just_changed = true;
-	index_of_register_changed = index;
-	value_of_register_changed = value;
-
 	if (index != 0)
 	{
 		if (load_delay)
@@ -55,15 +49,6 @@ void RegisterFile::set_register(unsigned int index, unsigned int value, bool loa
 		}
 		else
 		{
-			// debug
-			bool no_load_delays_pending = (stage_1_registers[index] == stage_2_registers[index]) &&
-									      (stage_1_registers[index] == stage_3_registers[index]);
-			if (no_load_delays_pending == false)
-			{
-				overwrites[index]++;
-				register_just_overwritten = true;
-			}
-
 			stage_1_registers[index] = stage_2_registers[index] = stage_3_registers[index] = value;
 		}
 	}

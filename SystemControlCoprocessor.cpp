@@ -7,6 +7,18 @@
 #include "Cpu.hpp"
 #include "Cdrom.hpp"
 
+static SystemControlCoprocessor * instance = nullptr;
+
+SystemControlCoprocessor * SystemControlCoprocessor::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new SystemControlCoprocessor();
+	}
+
+	return instance;
+}
+
 bool SystemControlCoprocessor::is_address_for_device(unsigned int address)
 {
 	if (address >= I_STAT_START && address < I_MASK_END)
@@ -78,8 +90,7 @@ void SystemControlCoprocessor::set_word(unsigned int address, unsigned int value
 	}
 }
 
-SystemControlCoprocessor::SystemControlCoprocessor(std::shared_ptr<Bus> _bus, std::shared_ptr<Cpu> _cpu) :
-	Cop(_bus, _cpu)
+SystemControlCoprocessor::SystemControlCoprocessor()
 {
 	interrupt_status_register.value = 0x0;
 	interrupt_mask_register.value = 0x0;
@@ -118,7 +129,6 @@ void SystemControlCoprocessor::execute(const instruction_union& instruction)
 		switch (func) {
 			case cop0_instructions::RFE:
 			{
-				cpu->currently_entering_exiting_exeception = true;
 				restore_from_exception(instruction);
 			} break;
 			default:
@@ -205,23 +215,23 @@ bool SystemControlCoprocessor::trigger_pending_interrupts(unsigned int & excode)
 // LWCz rt, offset(base)
 void SystemControlCoprocessor::load_word_to_cop(const instruction_union& instr) 
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
-	unsigned int word = bus->get_word(addr);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)Cpu::get_instance()->register_file.get_register(instr.immediate_instruction.rs);
+	unsigned int word = Bus::get_instance()->get_word(addr);
 	set_control_register(instr.immediate_instruction.rt, word);
 }
 
 // SWCz rt, offset(base)
 void SystemControlCoprocessor::store_word_from_cop(const instruction_union& instr)
 {
-	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)cpu->register_file.get_register(instr.immediate_instruction.rs);
+	unsigned int addr = (short)instr.immediate_instruction.immediate + (int)Cpu::get_instance()->register_file.get_register(instr.immediate_instruction.rs);
 	unsigned int control_value = get_control_register(instr.immediate_instruction.rt);
-	bus->set_word(addr, control_value);
+	Bus::get_instance()->set_word(addr, control_value);
 }
 
 // MTCz rt, rd
 void SystemControlCoprocessor::move_to_cop(const instruction_union& instr)
 {
-	unsigned int value = cpu->register_file.get_register(instr.register_instruction.rt);
+	unsigned int value = Cpu::get_instance()->register_file.get_register(instr.register_instruction.rt);
 	set_control_register(instr.register_instruction.rd, value);
 }
 
@@ -229,7 +239,7 @@ void SystemControlCoprocessor::move_to_cop(const instruction_union& instr)
 void SystemControlCoprocessor::move_from_cop(const instruction_union& instr)
 {
 	unsigned int value = get_control_register(instr.register_instruction.rd);
-	cpu->register_file.set_register(instr.register_instruction.rt, value);
+	Cpu::get_instance()->register_file.set_register(instr.register_instruction.rt, value);
 }
 
 // CTCz rt, rd

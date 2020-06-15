@@ -9,6 +9,18 @@
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
 
+static Gpu * instance = nullptr;
+
+Gpu * Gpu::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Gpu();
+	}
+	
+	return instance;
+}
+
 bool Gpu::is_address_for_device(unsigned int address)
 {
 	if (address >= GPU_START && address < GPU_END)
@@ -164,7 +176,7 @@ void Gpu::load_state(std::stringstream& file)
 	}
 }
 
-void Gpu::sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Gpu::sync_mode_request(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	if (channel_control.transfer_direction == 0)
 	{
@@ -179,13 +191,13 @@ void Gpu::sync_mode_request(std::shared_ptr<Bus> bus, DMA_base_address& base_add
 	{
 		num_words--;
 
-		unsigned int word = bus->get_word(addr);
+		unsigned int word = Bus::get_instance()->get_word(addr);
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
 }
 
-void Gpu::sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
+void Gpu::sync_mode_linked_list(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control)
 {
 	if (channel_control.transfer_direction == 0)
 	{
@@ -195,14 +207,14 @@ void Gpu::sync_mode_linked_list(std::shared_ptr<Bus> bus, DMA_base_address& base
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
 	while (true)
 	{
-		unsigned int header = bus->get_word(addr);
+		unsigned int header = Bus::get_instance()->get_word(addr);
 		unsigned int num_words = header >> 24;
 
 		while (num_words > 0)
 		{
 			addr = (addr + 4) & 0x1ffffc;
 
-			unsigned int command = bus->get_word(addr);
+			unsigned int command = Bus::get_instance()->get_word(addr);
 			add_gp0_command(command, true);
 
 			num_words--;

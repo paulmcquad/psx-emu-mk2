@@ -3,6 +3,18 @@
 #include <fstream>
 #include "Cdrom.hpp"
 
+static Cdrom * instance = nullptr;
+
+Cdrom * Cdrom::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Cdrom();
+	}
+
+	return instance;
+}
+
 bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode)
 {
 	// interrupt active and no unacknowledged interrupts

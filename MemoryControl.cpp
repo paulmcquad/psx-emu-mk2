@@ -1,5 +1,17 @@
 #include "MemoryControl.hpp"
 
+static MemoryControl * instance = nullptr;
+
+MemoryControl * MemoryControl::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new MemoryControl();
+	}
+
+	return instance;
+}
+
 bool MemoryControl::is_address_for_device(unsigned int address)
 {
 	if (address >= MEMORY_CONTROL_1_START && address < MEMORY_CONTROL_1_END)

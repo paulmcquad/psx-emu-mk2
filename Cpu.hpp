@@ -4,8 +4,6 @@
 #include "InstructionTypes.hpp"
 #include "RegisterFile.hpp"
 
-class SystemControlCoprocessor;
-class GTECoprocessor;
 class Bus;
 
 enum class cpu_instructions : unsigned char;
@@ -19,13 +17,9 @@ enum class cpu_bconds : unsigned char;
 class Cpu : public std::enable_shared_from_this<Cpu>
 {
 public:
-	std::shared_ptr<SystemControlCoprocessor> cop0 = nullptr;
-	std::shared_ptr<GTECoprocessor> cop2 = nullptr;
-	std::shared_ptr<Bus> bus = nullptr;
-
 	RegisterFile register_file;
 
-	void init(std::shared_ptr<Bus> _bus);
+	void init();
 	void reset();
 	void tick();
 
@@ -55,5 +49,8 @@ public:
 	bool pending_exception = false;
 	unsigned int pending_exception_excode = 0;
 
-	bool currently_entering_exiting_exeception = false;
+	static Cpu * get_instance();
+
+private:
+	Cpu() = default;
 };

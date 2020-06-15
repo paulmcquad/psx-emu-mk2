@@ -1,5 +1,4 @@
 #include "AssemblyMenu.hpp"
-#include "Psx.hpp"
 #include "Cpu.hpp"
 #include "Bus.hpp"
 #include "MipsToString.hpp"
@@ -56,24 +55,25 @@ void AssemblyMenu::draw_menu()
 {
 	if (is_visible == false) return;
 
+	Bus * bus = Bus::get_instance();
+	Cpu * cpu = Cpu::get_instance();
+
 	ImGui::Begin("Assembly");
 
-	unsigned int pc = psx->cpu->current_pc;
-
-	psx->bus->suppress_exceptions = true;
+	unsigned int pc = cpu->current_pc;
 
 	for (int idx = -10; idx < 10; idx++)
 	{
 		std::stringstream asm_text;
-		unsigned int pc = psx->cpu->current_pc + static_cast<unsigned int>(idx * 4);
-		instruction_union instruction = psx->bus->get_word(pc);
+		unsigned int pc = cpu->current_pc + static_cast<unsigned int>(idx * 4);
+		instruction_union instruction = bus->get_word(pc);
 		// current instruction
-		if (pc == psx->cpu->current_pc)
+		if (pc == cpu->current_pc)
 		{
 			asm_text << ">>";
 		}
 		// next instruction
-		else if (pc == psx->cpu->next_pc)
+		else if (pc == cpu->next_pc)
 		{
 			asm_text << "->";
 		}
@@ -107,7 +107,6 @@ void AssemblyMenu::draw_menu()
 
 		ImGui::InputText((std::string("##") + std::to_string(idx)).c_str(), buffer, 256);
 	}
-	psx->bus->suppress_exceptions = false;
 
 	ImGui::End();
 }

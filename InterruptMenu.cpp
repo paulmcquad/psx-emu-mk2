@@ -85,8 +85,11 @@ void InterruptMenu::tick()
 		return;
 	}
 
-	system_control::interrupt_register i_stat = psx->cpu->cop0->interrupt_status_register;
-	system_control::interrupt_register i_mask = psx->cpu->cop0->interrupt_mask_register;
+	Cpu * cpu = Cpu::get_instance();
+	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
+
+	system_control::interrupt_register i_stat = cop0->interrupt_status_register;
+	system_control::interrupt_register i_mask = cop0->interrupt_mask_register;
 
 	unsigned int i_stat_bits = i_stat.IRQ_BITS;
 	unsigned int i_mask_bits = i_mask.IRQ_BITS;

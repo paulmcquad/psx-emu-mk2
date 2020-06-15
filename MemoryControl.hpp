@@ -4,6 +4,8 @@
 class MemoryControl : public Bus::BusDevice
 {
 public:
+	static MemoryControl * get_instance();
+
 	virtual bus_device_type get_bus_device_type() final { return bus_device_type::MEMORY_CONTROL; }
 
 	virtual bool is_address_for_device(unsigned int address) final;
@@ -12,6 +14,10 @@ public:
 
 	virtual void set_byte(unsigned int address, unsigned char value) final;
 private:
+
+	MemoryControl() = default;
+	~MemoryControl() = default;
+
 	static const unsigned int MEMORY_CONTROL_1_SIZE = 36;
 	static const unsigned int MEMORY_CONTROL_2_SIZE = 4;
 

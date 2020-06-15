@@ -1,6 +1,19 @@
 #include "Bus.hpp"
 #include <stdexcept>
 #include <iostream>
+#include "apg_console.h"
+
+static Bus * instance = nullptr;
+
+Bus* Bus::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Bus();
+	}
+
+	return instance;
+}
 
 void Bus::register_device(Bus::BusDevice * device)
 {
@@ -70,58 +83,18 @@ void Bus::set_word(unsigned int address, unsigned int value)
 		return;
 	}
 }
-
-bool Bus::is_address_to_ignore(unsigned int address)
-{
-	switch (address)
-	{
-		// POST
-		case 0x1F802041:
-		// JOY_CTRL
-		case 0x1F80104A:
-		// JOY_BAUD
-		case 0x1F80104E:
-		// JOY_MODE
-		case 0x1F801048:
-			return true;
-		
-	}
-	return false;
-}
-
 Bus::BusDevice * Bus::get_bus_device_for_address(unsigned int address)
 {
-	if (enable_pause_on_address_access == true && address_to_pause_on == address)
-	{
-		request_pause = true;
-	}
-
 	for (int idx = 0; idx < num_devices; idx++)
 	{
 		BusDevice * device = bus_devices[idx];
 		if (device->is_address_for_device(address))
 		{
-			device_being_accessed = device->get_bus_device_type();
-			// for debugging use only
-			if (device->is_peripheral())
-			{
-				currently_accessing_peripheral = true;
-			}
-			else
-			{
-				currently_accessing_peripheral = false;
-			}
-
 			return device;
 		}
 	}
 
-	if (suppress_exceptions == false && is_address_to_ignore(address) == false)
-	{
-		std::cerr << std::hex << "Bus address error: " << address << std::endl;
-		request_pause = true;
-		throw std::logic_error("bus device not implemented!");
-	}
+	std::cerr << std::hex << "Bus address error: " << address << std::endl;
 
 	return nullptr;
 }

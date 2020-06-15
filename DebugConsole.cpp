@@ -16,14 +16,15 @@ void DebugConsole::draw_menu()
 	if (is_visible == false) return;
 
 	ImGui::Begin("Console");
-	static char input_field[256] = "\0";
+	static char input_buffer[256] = "\0";
 	static char output_buffer[1024] = "\0";
 
 	ImGui::Text("Input");
-	if (ImGui::InputText("##console_input", input_field, 255, ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::InputText("##console_input", input_buffer, 255, ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		apg_c_append_user_entered_text((std::string(input_field) + "\n").c_str());
-		memset(input_field, 0, 256);
+		apg_c_append_user_entered_text((std::string(input_buffer) + "\n").c_str());
+		memset(input_buffer, 0, 256);
+		memset(output_buffer, 0, 1024);
 		apg_c_dump_to_buffer(output_buffer, 1024);
 	}
 

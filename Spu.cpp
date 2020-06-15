@@ -1,6 +1,18 @@
 #include <stdexcept>
 #include "Spu.hpp"
 
+static Spu * instance = nullptr;
+
+Spu * Spu::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Spu();
+	}
+
+	return instance;
+}
+
 bool Spu::init()
 {
 	spu_ram = new unsigned char[SPU_RAM_SIZE];
