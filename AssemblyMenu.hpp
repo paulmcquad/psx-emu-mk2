@@ -4,7 +4,7 @@
 class AssemblyMenu : public DebugMenu
 {
 public:
-	AssemblyMenu(std::shared_ptr<Psx> _psx);
+	AssemblyMenu();
 	~AssemblyMenu();
 
 	virtual void draw_in_category(menubar_category category) final;

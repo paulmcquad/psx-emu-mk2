@@ -7,8 +7,7 @@
 #include <iomanip>
 #include <fstream>
 
-AssemblyMenu::AssemblyMenu(std::shared_ptr<Psx> _psx) :
-	DebugMenu(_psx)
+AssemblyMenu::AssemblyMenu()
 {
 	std::ifstream comment_log("comment_file.txt");
 	if (comment_log.is_open())

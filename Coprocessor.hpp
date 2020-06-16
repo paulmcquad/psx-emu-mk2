@@ -6,7 +6,6 @@
 class Cop
 {
 public:
-
 	virtual void save_state(std::stringstream& file) = 0;
 	virtual void load_state(std::stringstream& file) = 0;
 

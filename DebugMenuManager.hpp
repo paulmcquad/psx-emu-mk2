@@ -1,5 +1,4 @@
 #pragma once
-
 #include <memory>
 #include <map>
 #include <deque>
@@ -10,7 +9,6 @@
 #include "imgui_impl_opengl3.h"
 
 struct GLFWwindow;
-class Psx;
 
 // must be inherited by any menus you want to add
 class DebugMenu
@@ -18,22 +16,18 @@ class DebugMenu
 public:
 	enum class menubar_category { FILE, VIEW, OPTIONS };
 
-	DebugMenu(std::shared_ptr<Psx> _psx) { psx = _psx; };
-
 	// let's you add different entries into the main menu to control this
 	virtual void draw_in_category(menubar_category category) = 0;
 	// draw the full menu
 	virtual void draw_menu() = 0;
 	// called every frame - in case the menu needs to do some logic
 	virtual void tick() = 0;
-
-	std::shared_ptr<Psx> psx = nullptr;
 };
 
 class DebugMenuManager
 {
 public:
-	void init(GLFWwindow* window, std::shared_ptr<Psx> _psx);
+	void init(GLFWwindow* window);
 	void uninit();
 	void draw();
 	void tick();
@@ -74,8 +68,6 @@ private:
 	std::vector <std::shared_ptr<DebugMenu>> menus;
 
 	void draw_main_menu();
-
-	std::shared_ptr<Psx> psx = nullptr;
 
 	bool step_forward_requested = false;
 

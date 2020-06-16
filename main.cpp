@@ -67,7 +67,7 @@ int main(int num_args, char ** args )
 	std::string bin_file(args[2]);
 	std::string cue_file(args[3]);
 
-	std::shared_ptr<Psx> psx = std::make_unique<Psx>();
+	Psx * psx = Psx::get_instance();
 	if (psx->init(bios_file) == false)
 	{
 		std::cerr << "Unable to initialise PSX\n";
@@ -165,7 +165,7 @@ int main(int num_args, char ** args )
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
 	std::shared_ptr<DebugMenuManager> debug_menu = std::make_shared<DebugMenuManager>();
-	debug_menu->init(window, psx);
+	debug_menu->init(window);
 
 	std::cout << "Running!\n";
 	double current_frame_time = 0.0;

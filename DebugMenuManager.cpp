@@ -12,7 +12,7 @@
 #include <iostream>
 #include <sstream>
 
-void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
+void DebugMenuManager::init(GLFWwindow* window)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -22,15 +22,13 @@ void DebugMenuManager::init(GLFWwindow* window, std::shared_ptr<Psx> _psx)
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(nullptr);
 
-	psx = _psx;
-
-	menus.push_back(std::make_shared<AssemblyMenu>(psx));
-	menus.push_back(std::make_shared<MemoryMenu>(psx));
-	menus.push_back(std::make_shared<CpuMenu>(psx));
-	menus.push_back(std::make_shared<GpuMenu>(psx));
-	menus.push_back(std::make_shared<CdromMenu>(psx));
-	menus.push_back(std::make_shared<InterruptMenu>(psx));
-	menus.push_back(std::make_shared<DebugConsole>(psx));
+	menus.push_back(std::make_shared<AssemblyMenu>());
+	menus.push_back(std::make_shared<MemoryMenu>());
+	menus.push_back(std::make_shared<CpuMenu>());
+	menus.push_back(std::make_shared<GpuMenu>());
+	menus.push_back(std::make_shared<CdromMenu>());
+	menus.push_back(std::make_shared<InterruptMenu>());
+	menus.push_back(std::make_shared<DebugConsole>());
 }
 
 void DebugMenuManager::uninit()
@@ -75,7 +73,7 @@ void DebugMenuManager::tick()
 		}
 
 		std::stringstream * state = new std::stringstream();
-		psx->save_state(*state);
+		Psx::get_instance()->save_state(*state);
 		backward_states.push_back(state);
 	}
 
@@ -90,7 +88,7 @@ void DebugMenuManager::draw_main_menu()
 	ImGui::BeginMainMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
-		if (ImGui::MenuItem("Reset")) { psx->reset(); }
+		if (ImGui::MenuItem("Reset")) { Psx::get_instance()->reset(); }
 		if (ImGui::MenuItem("Save state")) { save_state_requested = true; }
 		if (ImGui::MenuItem("Load state")) { load_state_requested = true; }
 
@@ -140,7 +138,7 @@ void DebugMenuManager::draw_main_menu()
 	// step backwards
 	if (ImGui::MenuItem("<-", nullptr, nullptr, backward_states.empty() == false)) {
 		std::stringstream * state = backward_states.back();
-		psx->load_state(*state);
+		Psx::get_instance()->load_state(*state);
 		delete state;
 		backward_states.pop_back();
 	}

@@ -1,10 +1,9 @@
 #include "InterruptMenu.hpp"
 #include "implot.h"
 #include "SystemControlCoprocessor.hpp"
-#include "Psx.hpp"
 #include "Cpu.hpp"
 
-InterruptMenu::InterruptMenu(std::shared_ptr<Psx> _psx) : DebugMenu(_psx)
+InterruptMenu::InterruptMenu()
 {
 	for (int idx = 0; idx < NUM_IRQS; idx++)
 	{

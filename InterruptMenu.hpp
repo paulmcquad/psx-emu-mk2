@@ -5,7 +5,7 @@
 class InterruptMenu : public DebugMenu
 {
 public:
-	InterruptMenu(std::shared_ptr<Psx> _psx);
+	InterruptMenu();
 	virtual ~InterruptMenu();
 
 	virtual void draw_in_category(menubar_category category) final;

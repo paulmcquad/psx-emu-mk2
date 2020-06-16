@@ -18,6 +18,18 @@
 #include <iostream>
 #include <fstream>
 
+static Psx * instance = nullptr;
+
+Psx * Psx::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new Psx();
+	}
+
+	return instance;
+}
+
 bool Psx::init(std::string bios_path)
 {
 	Dma * dma = Dma::get_instance();

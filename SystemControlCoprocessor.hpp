@@ -1,12 +1,8 @@
 #pragma once
-
 #include "Coprocessor.hpp"
 #include "Bus.hpp"
 #include "SystemControlTypes.hpp"
 #include <sstream>
-
-class Ram;
-class Cpu;
 
 class SystemControlCoprocessor : public Cop, public Bus::BusDevice {
 public:

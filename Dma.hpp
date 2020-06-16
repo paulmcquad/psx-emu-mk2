@@ -5,9 +5,6 @@
 #include "Bus.hpp"
 #include "SystemControlCoprocessor.hpp"
 
-class Gpu;
-class Spu;
-
 union DMA_base_address
 {
 	unsigned int int_value;
