@@ -145,6 +145,10 @@ void DebugMenuManager::draw_main_menu()
 		recording_states = !recording_states;
 		if (recording_states == false)
 		{
+			for (auto iter : backward_states)
+			{
+				delete iter;
+			}
 			backward_states.clear();
 		}
 	}
