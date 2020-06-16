@@ -119,13 +119,6 @@ void DebugMenuManager::draw_main_menu()
 			max_saved_states = 0;
 		}
 
-		ImGui::Checkbox("Pause on enter/exit interrupt", &pause_on_enter_exit_exception);
-		ImGui::Checkbox("Pause on access peripheral", &pause_on_access_perhipheral);
-		ImGui::Checkbox("Ignore GPU Access", &ignore_pause_on_access_gpu);
-		ImGui::Checkbox("Ignore SPU Access", &ignore_pause_on_access_spu);
-		ImGui::Checkbox("Ignore CDROM Access", &ignore_pause_on_access_cdrom);
-		ImGui::Checkbox("Ignore Interrupt Control Access", &ignore_pause_on_interrupt_control);
-
 		for (auto& iter : menus)
 		{
 			iter->draw_in_category(DebugMenu::menubar_category::OPTIONS);

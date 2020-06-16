@@ -54,13 +54,6 @@ public:
 
 	bool paused_requested = true;
 	bool recording_states = false;
-	bool pause_on_enter_exit_exception = false;
-	bool pause_on_access_perhipheral = false;
-
-	bool ignore_pause_on_access_gpu = true;
-	bool ignore_pause_on_access_spu = true;
-	bool ignore_pause_on_access_cdrom = true;
-	bool ignore_pause_on_interrupt_control = true;
 
 	int max_saved_states = 100;
 
