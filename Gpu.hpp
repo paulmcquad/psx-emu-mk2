@@ -31,8 +31,8 @@ public:
 	void init();
 	void reset();
 	void tick();
-	void save_state(std::stringstream& file);
-	void load_state(std::stringstream& file);
+	void save_state(std::stringstream& file, bool ignore_vram = false);
+	void load_state(std::stringstream& file, bool ignore_vram = false);
 
 	virtual void sync_mode_request(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;
 	virtual void sync_mode_linked_list(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) override;

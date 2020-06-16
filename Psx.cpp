@@ -108,19 +108,19 @@ void Psx::reset()
 	Dma::get_instance()->reset();
 }
 
-void Psx::save_state(std::stringstream& state_stream)
+void Psx::save_state(std::stringstream& state_stream, bool ignore_vram)
 {
 	Cpu::get_instance()->save_state(state_stream);
-	Gpu::get_instance()->save_state(state_stream);
+	Gpu::get_instance()->save_state(state_stream, ignore_vram);
 	Dma::get_instance()->save_state(state_stream);
 	Ram::get_instance()->save_state(state_stream);
 	Cdrom::get_instance()->save_state(state_stream);
 }
 
-void Psx::load_state(std::stringstream& state_stream)
+void Psx::load_state(std::stringstream& state_stream, bool ignore_vram)
 {
 	Cpu::get_instance()->load_state(state_stream);
-	Gpu::get_instance()->load_state(state_stream);
+	Gpu::get_instance()->load_state(state_stream, ignore_vram);
 	Dma::get_instance()->load_state(state_stream);
 	Ram::get_instance()->load_state(state_stream);
 	Cdrom::get_instance()->load_state(state_stream);

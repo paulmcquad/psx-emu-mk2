@@ -54,6 +54,7 @@ public:
 
 	bool paused_requested = true;
 	bool recording_states = false;
+	bool ignore_vram_when_recording = false;
 
 	int max_saved_states = 100;
 

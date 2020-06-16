@@ -13,8 +13,8 @@ public:
 	void tick();
 	void reset();
 
-	void save_state(std::stringstream& state_stream);
-	void load_state(std::stringstream& state_stream);
+	void save_state(std::stringstream& state_stream, bool ignore_vram = false);
+	void load_state(std::stringstream& state_stream, bool ignore_vram = false);
 
 private:
 	Psx() = default;

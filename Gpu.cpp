@@ -139,10 +139,14 @@ void Gpu::tick()
 {
 }
 
-void Gpu::save_state(std::stringstream& file)
+void Gpu::save_state(std::stringstream& file, bool ignore_vram)
 {
 	file.write(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
-	file.write(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
+
+	if (ignore_vram == false)
+	{
+		file.write(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
+	}
 
 	std::vector<unsigned int> commands;
 	while (gp0_fifo->get_current_size() > 0)
@@ -156,10 +160,14 @@ void Gpu::save_state(std::stringstream& file)
 	file.write(reinterpret_cast<char*>(commands.data()), sizeof(unsigned int)*num_commands);
 }
 
-void Gpu::load_state(std::stringstream& file)
+void Gpu::load_state(std::stringstream& file, bool ignore_vram)
 {
 	file.read(reinterpret_cast<char*>(&gpu_status.int_value), sizeof(unsigned int));
-	file.read(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
+
+	if (ignore_vram == false)
+	{
+		file.read(reinterpret_cast<char*>(video_ram), sizeof(unsigned short)*VRAM_SIZE);
+	}
 
 	unsigned int num_commands = 0;
 	file.read(reinterpret_cast<char*>(&num_commands), sizeof(unsigned int));

@@ -73,7 +73,7 @@ void DebugMenuManager::tick()
 		}
 
 		std::stringstream * state = new std::stringstream();
-		Psx::get_instance()->save_state(*state);
+		Psx::get_instance()->save_state(*state, ignore_vram_when_recording);
 		backward_states.push_back(state);
 	}
 
@@ -113,6 +113,7 @@ void DebugMenuManager::draw_main_menu()
 	if (ImGui::BeginMenu("Options"))
 	{
 		ImGui::InputInt("Number of backward steps to record", &max_saved_states);
+		ImGui::Checkbox("Ignore VRAM when recording", &ignore_vram_when_recording);
 
 		if (max_saved_states < 0)
 		{
@@ -131,7 +132,7 @@ void DebugMenuManager::draw_main_menu()
 	// step backwards
 	if (ImGui::MenuItem("<-", nullptr, nullptr, backward_states.empty() == false)) {
 		std::stringstream * state = backward_states.back();
-		Psx::get_instance()->load_state(*state);
+		Psx::get_instance()->load_state(*state, ignore_vram_when_recording);
 		delete state;
 		backward_states.pop_back();
 	}
