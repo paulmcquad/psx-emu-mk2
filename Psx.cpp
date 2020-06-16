@@ -77,14 +77,10 @@ bool Psx::init(std::string bios_path)
 	Cpu * cpu = Cpu::get_instance();
 	cpu->init();
 
-	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
-	cop0->register_system_control_device(cdrom);
 	GTECoprocessor::get_instance();
-
-	bus->register_device(cop0);
+	bus->register_device(SystemControlCoprocessor::get_instance());
 
 	dma->init();
-	cop0->register_system_control_device(dma);
 
 	return true;
 }

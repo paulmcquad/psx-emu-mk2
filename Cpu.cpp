@@ -93,10 +93,6 @@ void Cpu::tick()
 	{
 		instruction_union instr(current_instruction);
 		execute(instr);
-		if (pending_exception == false)
-		{
-			pending_exception = SystemControlCoprocessor::get_instance()->trigger_pending_interrupts(pending_exception_excode);
-		}
 
 		if (pending_exception)
 		{

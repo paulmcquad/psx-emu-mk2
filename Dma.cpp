@@ -87,7 +87,6 @@ void Dma::reset()
 	// according to problem kaputt documentation
 	*control_register = 0x07654321;
 	interrupt_register.value = 0x0;
-	trigger_interrupt = false;
 }
 
 void Dma::tick()
@@ -176,7 +175,7 @@ void Dma::tick()
 
 	if (previous_interrupt_master_flag_value == false && interrupt_register.irq_master_flag == true)
 	{
-		trigger_interrupt = true;
+		throw std::logic_error("not implemented");
 	}
 }
 
@@ -215,20 +214,4 @@ void Dma::sync_mode_manual(DMA_base_address& base_address, DMA_block_control& bl
 
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
-}
-
-bool Dma::trigger_pending_interrupts(SystemControlCoprocessor * system_control_processor, unsigned int & excode)
-{
-	if (system_control_processor->interrupt_mask_register.IRQ3_DMA == true &&
-		system_control_processor->interrupt_status_register.IRQ3_DMA == false)
-	{
-		if (trigger_interrupt)
-		{
-			trigger_interrupt = false;
-			system_control_processor->interrupt_status_register.IRQ3_DMA = true;
-			excode = static_cast<unsigned int>(system_control::excode::INT);
-			return true;
-		}
-	}
-	return false;
 }

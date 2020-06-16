@@ -15,31 +15,6 @@ Cdrom * Cdrom::get_instance()
 	return instance;
 }
 
-bool Cdrom::trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode)
-{
-	// interrupt active and no unacknowledged interrupts
-	if (system_control_processor->interrupt_mask_register.IRQ2_CDROM == true &&
-		system_control_processor->interrupt_status_register.IRQ2_CDROM == false &&
-		awaiting_acknowledgement == false)
-	{
-		// if interrupt queued and delay time has passed
-		if (response_interrupt_queue.empty() == false)
-		{
-			auto & top_response = response_interrupt_queue.front();
-			// delay passed and current response matches
-			if (top_response.first == 0)
-			{
-				response_interrupt_queue.pop_front();
-				system_control_processor->interrupt_mask_register.IRQ2_CDROM = true;
-				excode = static_cast<unsigned int>(system_control::excode::INT);
-				awaiting_acknowledgement = true;
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 bool Cdrom::is_address_for_device(unsigned int address)
 {
 	if (address >= CDROM_START && address < CDROM_END)
@@ -86,14 +61,7 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
-	if (response_interrupt_queue.empty() == false && awaiting_acknowledgement == false)
-	{
-		auto & top_response = response_interrupt_queue.front();
-		if (top_response.first > 0)
-		{
-			top_response.first--;
-		}
-	}
+
 }
 
 void Cdrom::reset()
@@ -101,7 +69,6 @@ void Cdrom::reset()
 	response_fifo->clear();
 	data_fifo->clear();
 	parameter_fifo->clear();
-	response_interrupt_queue.clear();
 
 	register_index = 0;
 	current_response_received = 0;
@@ -237,17 +204,7 @@ unsigned char Cdrom::get(unsigned int address)
 {
 	if (address == STATUS_REGISTER)
 	{
-		status_register_read response;
-
-		response.INDEX = register_index;
-		response.ADPBUSY = false; // not implemented yet
-		response.PRMEMPT = parameter_fifo->is_empty();
-		response.PRMWRDY = parameter_fifo->is_full() == false;
-		response.RSLRRDY = response_fifo->is_empty() == false;
-		response.DRQSTS = data_fifo->is_empty() == false;
-		response.BUSYSTS = response_interrupt_queue.empty() == false;
-
-		return response.raw;
+		throw std::logic_error("not implemented");
 	}
 	else
 	{
@@ -313,11 +270,7 @@ unsigned char Cdrom::get_index1(unsigned int address)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			interrupt_flag_register_read response = 0x0;
-			response.response_received = static_cast<unsigned int>(current_response_received);
-			// TODO more work is probably needed here
-
-			return response.raw;
+			throw std::logic_error("not implemented");
 		} break;
 
 		case DATA_FIFO_REGISTER:
@@ -398,28 +351,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 	{
 		case INTERRUPT_FLAG_REGISTER:
 		{
-			interrupt_flag_register_write ack = value;
-
-			// reset response
-			current_response_received = 0;
-			awaiting_acknowledgement = false;
-
-			if (response_interrupt_queue.empty() == false)
-			{
-				unsigned int type = response_interrupt_queue.front().second;
-				response_interrupt_queue.pop_front();
-
-				// if we have any more interrupts in the queue, set the next one as the current response
-				if (response_interrupt_queue.empty() == false)
-				{
-					current_response_received = static_cast<unsigned int>(response_interrupt_queue.front().second);
-				}
-			}
-			
-			if (ack.reset_param_fifo)
-			{
-				parameter_fifo->clear();
-			}
+			throw std::logic_error("not implemented");
 
 		} break;
 
@@ -488,64 +420,21 @@ void Cdrom::execute_command(unsigned char command)
 
 void Cdrom::execute_test_command()
 {
-	// the test to run is determined by the subfunction on the parameter fifo
-	// however, the ps1 only uses 0x20 which returns the cd rom bios version
-	// so no need to implement anything but that
-	unsigned char sub_function = parameter_fifo->pop();
-	if (sub_function == 0x20)
-	{
-		// push the cd rom bios version onto the response fifo
-		response_fifo->push(0x94);
-		response_fifo->push(0x11);
-		response_fifo->push(0x18);
-		response_fifo->push(0xC0);
-
-		current_response_received = static_cast<unsigned int>(cdrom_response_interrupts::FIRST_RESPONSE);
-		unsigned int delay = static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY);
-
-		response_interrupt_queue.push_back(std::make_pair(delay, current_response_received));
-	}
-	else
-	{
-		throw std::logic_error("not implemented");
-	}
+	throw std::logic_error("not implemented");
 }
 
 void Cdrom::execute_getstat_command()
 {
-	// treated like a nop
-	// 0x2 means the motor is on
-	response_fifo->push(0x2);
-	current_response_received = static_cast<unsigned int>(cdrom_response_interrupts::FIRST_RESPONSE);
-	unsigned int delay = static_cast<unsigned int>(cdrom_response_timings::FIRST_RESPONSE_DELAY);
-
-	response_interrupt_queue.push_back(std::make_pair(delay, current_response_received));
+	throw std::logic_error("not implemented");
 }
 
 void Cdrom::execute_getid_command()
 {
-	execute_getstat_command();
-
-	response_fifo->push(0x02);
-	response_fifo->push(0x00);
-	response_fifo->push(0x20);
-	response_fifo->push(0x00);
-
-	// report as licenced cd
-	response_fifo->push(0x53); // S
-	response_fifo->push(0x43); // C
-	response_fifo->push(0x45); // E
-	response_fifo->push(0x41); // A
-
-	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
-		static_cast<unsigned int>(cdrom_response_interrupts::SECOND_RESPONSE)));
+	throw std::logic_error("not implemented");
 }
 
 // this command seems a bit pointless
 void Cdrom::execute_read_toc_command()
 {
-	execute_getstat_command();
-	response_fifo->push(0x02);
-	response_interrupt_queue.push_back(std::make_pair(static_cast<unsigned int>(cdrom_response_timings::SECOND_REPONSE_DELAY),
-		static_cast<unsigned int>(cdrom_response_interrupts::SECOND_RESPONSE)));
+	throw std::logic_error("not implemented");
 }

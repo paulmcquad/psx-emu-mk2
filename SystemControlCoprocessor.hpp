@@ -9,12 +9,6 @@ public:
 
 	static SystemControlCoprocessor * get_instance();
 
-	class SystemControlInterface
-	{
-	public:
-		virtual bool trigger_pending_interrupts(SystemControlCoprocessor* system_control_processor, unsigned int & excode) = 0;
-	};
-
 	virtual bool is_peripheral() final { return true;  }
 
 	virtual bus_device_type get_bus_device_type() final { return bus_device_type::INTERRUPT_CONTROL; }
@@ -25,7 +19,6 @@ public:
 	virtual void set_byte(unsigned int address, unsigned char value) final;
 	virtual unsigned int get_word(unsigned int address) final;
 	virtual void set_word(unsigned int address, unsigned int value) final;
-
 
 	system_control::interrupt_register interrupt_status_register, interrupt_mask_register;
 
@@ -82,14 +75,6 @@ public:
 	unsigned int get_control_register(system_control::register_names register_name);
 	void set_control_register(system_control::register_names register_name, unsigned int value);
 
-	bool trigger_pending_interrupts(unsigned int & excode);
-
-	void register_system_control_device(SystemControlInterface * interface)
-	{
-		system_control_devices[num_system_control_devices] = interface;
-		num_system_control_devices++;
-	}
-
 private:
 	SystemControlCoprocessor();
 	~SystemControlCoprocessor() = default;
@@ -116,7 +101,4 @@ private:
 	void restore_from_exception(const instruction_union& instr);
 	
 	unsigned int control_registers[32] = { 0 };
-
-	unsigned int num_system_control_devices = 0;
-	SystemControlInterface * system_control_devices[7] = { nullptr };
 };

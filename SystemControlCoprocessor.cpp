@@ -184,34 +184,6 @@ void SystemControlCoprocessor::set_control_register(unsigned int index, unsigned
 	control_registers[index] = value;
 }
 
-bool SystemControlCoprocessor::trigger_pending_interrupts(unsigned int & excode)
-{
-	unsigned int cause_register = get_control_register(system_control::register_names::CAUSE);
-
-	if (interrupt_mask_register.value & interrupt_status_register.value)
-	{
-		// set bit 10
-		cause_register |= 0x1 << 10;
-	}
-	else
-	{
-		// clear bit 10
-		cause_register &= ~(0x1 << 10);
-	}
-
-	set_control_register(system_control::register_names::CAUSE, cause_register);
-
-	for (unsigned int idx = 0; idx < num_system_control_devices; idx++)
-	{
-		if (system_control_devices[idx]->trigger_pending_interrupts(this, excode))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 // LWCz rt, offset(base)
 void SystemControlCoprocessor::load_word_to_cop(const instruction_union& instr) 
 {

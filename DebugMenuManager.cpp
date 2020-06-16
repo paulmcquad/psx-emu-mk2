@@ -8,6 +8,7 @@
 #include "CdromMenu.hpp"
 #include "InterruptMenu.hpp"
 #include "DebugConsole.hpp"
+#include "CircularBuffer.hpp"
 
 #include <iostream>
 #include <sstream>

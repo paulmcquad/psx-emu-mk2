@@ -96,6 +96,7 @@ set(source_files
 		Gpu.cpp
 		Spu.hpp
 		Spu.cpp
+		CdromEnums.hpp
 		Cdrom.hpp
 		Cdrom.cpp
 		Bus.hpp
