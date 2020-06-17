@@ -244,11 +244,11 @@ void SystemControlCoprocessor::move_from_cp0(const instruction_union& instr)
 
 void SystemControlCoprocessor::restore_from_exception(const instruction_union& instr)
 {
-	system_control::status_register sr = get<system_control::status_register>();
+	system_control::status_register sr = get_control_register(system_control::register_names::SR);
 
 	unsigned int mode = sr.raw & 0x3f;
 	sr.raw &= ~0x3f;
 	sr.raw |= mode >> 2;
 
-	set<system_control::status_register>(sr);
+	set_control_register(system_control::register_names::SR, sr.raw);
 }

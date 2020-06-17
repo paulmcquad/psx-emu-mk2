@@ -9,10 +9,6 @@ public:
 
 	static SystemControlCoprocessor * get_instance();
 
-	virtual bool is_peripheral() final { return true;  }
-
-	virtual bus_device_type get_bus_device_type() final { return bus_device_type::INTERRUPT_CONTROL; }
-
 	virtual bool is_address_for_device(unsigned int address) final;
 
 	virtual unsigned char get_byte(unsigned int address) final;
@@ -21,51 +17,6 @@ public:
 	virtual void set_word(unsigned int address, unsigned int value) final;
 
 	system_control::interrupt_register interrupt_status_register, interrupt_mask_register;
-
-	// convenience getter/setters as I was getting sick
-	// of getting unsigned int from the registers, setting the union struct
-	// altering it and then setting the register again with the struct.raw member variable
-	template <class T>
-	T get()
-	{
-		throw std::logic_error("unsupported");
-	}
-
-	template <class T>
-	void set(T value)
-	{
-		throw std::logic_error("unsupported");
-	}
-
-	// status register - get and set
-	template <>
-	system_control::status_register get<system_control::status_register>()
-	{
-		system_control::status_register result;
-		result.raw = get_control_register(system_control::register_names::SR);
-		return result;
-	}
-
-	template<>
-	void set<system_control::status_register>(system_control::status_register value)
-	{
-		set_control_register(system_control::register_names::SR, value.raw);
-	}
-
-	// cause register - get and set
-	template <>
-	system_control::cause_register get<system_control::cause_register>()
-	{
-		system_control::cause_register result;
-		result.raw = get_control_register(system_control::register_names::CAUSE);
-		return result;
-	}
-
-	template<>
-	void set<system_control::cause_register>(system_control::cause_register value)
-	{
-		set_control_register(system_control::register_names::CAUSE, value.raw);
-	}
 
 	void save_state(std::stringstream& file) override;
 	void load_state(std::stringstream& file) override;

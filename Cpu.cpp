@@ -36,7 +36,7 @@ void Cpu::reset()
 void Cpu::execute_mips_exception(unsigned int excode)
 {
 	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
-	system_control::cause_register cause = cop0->get<system_control::cause_register>();
+	system_control::cause_register cause = cop0->get_control_register(system_control::register_names::CAUSE);
 	
 	if (in_delay_slot) {
 		cause.BD = true;
@@ -50,7 +50,7 @@ void Cpu::execute_mips_exception(unsigned int excode)
 	//TODO check does the interrupt pending field need to be set in the cause register
 	// I have read that there is only 1 interrupt field implement for the playstation but I can't recall the number
 
-	system_control::status_register sr = cop0->get<system_control::status_register>();
+	system_control::status_register sr = cop0->get_control_register(system_control::register_names::SR);
 	if (sr.BEV == 0)
 	{
 		next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV0);
@@ -69,11 +69,11 @@ void Cpu::execute_mips_exception(unsigned int excode)
 
 	sr.IEc = sr.KUc = 0;
 
-	cop0->set<system_control::status_register>(sr);
+	cop0->set_control_register(system_control::register_names::SR, sr.raw);
 
 	cause.Excode = excode;
 
-	cop0->set<system_control::cause_register>(cause);
+	cop0->set_control_register(system_control::register_names::CAUSE, cause.raw);
 
 	// dump the next instruction
 	next_instruction = 0x0;
@@ -282,44 +282,28 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned char value = bus->get_byte(addr);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				register_file.set_register(instr.immediate_instruction.rt, value, true);
-			}
+			register_file.set_register(instr.immediate_instruction.rt, value, true);
 		} break;
 
 		case cpu_instructions::LBU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (char)bus->get_byte(addr);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				register_file.set_register(instr.immediate_instruction.rt, value, true);
-			}
+			register_file.set_register(instr.immediate_instruction.rt, value, true);
 		} break;
 
 		case cpu_instructions::LH:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			int value = (short)bus->get_halfword(addr);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				register_file.set_register(instr.immediate_instruction.rt, value, true);
-			}
+			register_file.set_register(instr.immediate_instruction.rt, value, true);
 		} break;
 
 		case cpu_instructions::LHU:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned short value = bus->get_halfword(addr);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				register_file.set_register(instr.immediate_instruction.rt, value, true);
-			}
+			register_file.set_register(instr.immediate_instruction.rt, value, true);
 		} break;
 
 		case cpu_instructions::LUI:
@@ -332,11 +316,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = bus->get_word(addr);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				register_file.set_register(instr.immediate_instruction.rt, value, true);
-			}
+			register_file.set_register(instr.immediate_instruction.rt, value, true);
 		} break;
 
 		// LWR is always called after LWL
@@ -379,9 +359,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0x00ffffff >> ((3 - alignment) * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set << (alignment * 8));
-			if (cop0->get<system_control::status_register>().Isc == false) {
-				bus->set_word(addr_aligned, new_value);
-			}
+			bus->set_word(addr_aligned, new_value);
 		} break;
 
 		// SWR is always called AFTER SWL
@@ -396,9 +374,7 @@ void Cpu::execute(const instruction_union& instr)
 			unsigned int mask = 0xffffff00 << (alignment * 8);
 
 			unsigned int new_value = (aligned_value & mask) | (value_to_set >> ((3 - alignment) * 8));
-			if (cop0->get<system_control::status_register>().Isc == false) {
-				bus->set_word(addr_aligned, new_value);
-			}
+			bus->set_word(addr_aligned, new_value);
 		} break;
 
 		case cpu_instructions::ORI:
@@ -412,29 +388,20 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				bus->set_byte(addr, value);
-			}
+			bus->set_byte(addr, value);
 		} break;
 
 		case cpu_instructions::SH:
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				bus->set_halfword(addr, value);
-			}
+			bus->set_halfword(addr, value);
 		} break;
 
 		case cpu_instructions::SLTI:
 		{
 			int rs_value = register_file.get_register(instr.immediate_instruction.rs);
 			int immediate_value = (short)instr.immediate_instruction.immediate;
-
 			register_file.set_register(instr.immediate_instruction.rt, rs_value < immediate_value ? 1 : 0);
 		} break;
 
@@ -442,7 +409,6 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int rs_value = register_file.get_register(instr.immediate_instruction.rs);
 			int immediate_value = (short)instr.immediate_instruction.immediate;
-
 			register_file.set_register(instr.immediate_instruction.rt, rs_value < (unsigned int)immediate_value ? 1 : 0);
 		} break;
 
@@ -455,11 +421,7 @@ void Cpu::execute(const instruction_union& instr)
 		{
 			unsigned int addr = get_immediate_base_addr(instr);
 			unsigned int value = register_file.get_register(instr.immediate_instruction.rt);
-
-			if (cop0->get<system_control::status_register>().Isc == false)
-			{
-				bus->set_word(addr, value);
-			}
+			bus->set_word(addr, value);
 		} break;
 
 		case cpu_instructions::XORI:

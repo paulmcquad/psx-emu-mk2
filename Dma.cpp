@@ -1,6 +1,7 @@
 #include "Dma.hpp"
 #include "Gpu.hpp"
 #include "Spu.hpp"
+#include "SystemControlCoprocessor.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -160,7 +161,6 @@ void Dma::tick()
 
 	// setup the interrupts, failing to setup this stuff
 	// caused 1.5 months of stalled progress in this project
-
 	bool previous_interrupt_master_flag_value = interrupt_register.irq_master_flag;
 
 	bool irq_active = (interrupt_register.irq_enable & interrupt_register.irq_flags);
@@ -175,7 +175,7 @@ void Dma::tick()
 
 	if (previous_interrupt_master_flag_value == false && interrupt_register.irq_master_flag == true)
 	{
-		throw std::logic_error("not implemented");
+		SystemControlCoprocessor::get_instance()->interrupt_status_register.IRQ3_DMA = true;
 	}
 }
 

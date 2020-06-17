@@ -8,14 +8,6 @@ public:
 	class BusDevice
 	{
 	public:
-		enum class bus_device_type {GPU, SPU, RAM, ROM, CDROM, PARALLEL_PORT, MEMORY_CONTROL, TIMERS, DMA, CACHE_CONTROL, INTERRUPT_CONTROL, POST, UNKNOWN};
-
-		virtual bus_device_type get_bus_device_type() = 0;
-
-		virtual bool is_peripheral() {
-			return false;
-		}
-
 		virtual bool is_address_for_device(unsigned int address) = 0;
 
 		virtual unsigned char get_byte(unsigned int address)
@@ -74,6 +66,8 @@ public:
 		}
 	};
 
+	static Bus* get_instance();
+
 	void register_device(BusDevice * device);
 
 	unsigned char get_byte(unsigned int address);
@@ -84,11 +78,10 @@ public:
 	void set_halfword(unsigned int address, unsigned short value);
 	void set_word(unsigned int address, unsigned int value);
 
-	static Bus* get_instance();
-
 private:
 
 	Bus() = default;
+	~Bus() = default;
 
 	BusDevice * get_bus_device_for_address(unsigned int address);
 

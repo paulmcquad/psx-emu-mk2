@@ -85,13 +85,14 @@ bool Psx::init(std::string bios_path)
 	return true;
 }
 
-
 void Psx::tick()
 {
 	Cpu::get_instance()->tick();
 	Dma::get_instance()->tick();
 	Gpu::get_instance()->tick();
 	Cdrom::get_instance()->tick();
+
+	tick_count++;
 }
 
 void Psx::reset()

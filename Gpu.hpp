@@ -16,10 +16,6 @@ class Gpu : public DMA_interface, public Bus::BusDevice
 public:
 	static const unsigned int FRAME_WIDTH = 1024;
 	static const unsigned int FRAME_HEIGHT = 512;
-	
-	virtual bus_device_type get_bus_device_type() final { return bus_device_type::GPU; }
-
-	virtual bool is_peripheral() final { return true; }
 
 	virtual bool is_address_for_device(unsigned int address) final;
 

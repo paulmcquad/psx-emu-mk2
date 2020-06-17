@@ -91,6 +91,16 @@ namespace system_control
 			// COP3 enable (not used)
 			unsigned int CU3 : 1;
 		};
+
+		status_register(unsigned int value)
+		{
+			raw = value;
+		}
+
+		status_register()
+		{
+			raw = 0;
+		}
 	};
 
 
@@ -116,6 +126,16 @@ namespace system_control
 			// last exception points to exception
 			unsigned int BD : 1;
 		};
+
+		cause_register(unsigned int value)
+		{
+			raw = value;
+		}
+
+		cause_register()
+		{
+			raw = 0;
+		}
 	};
 
 	enum class excode : unsigned int

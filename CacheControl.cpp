@@ -21,13 +21,12 @@ bool CacheControl::is_address_for_device(unsigned int address)
 	return false;
 }
 
-unsigned char CacheControl::get_byte(unsigned int address)
+unsigned int CacheControl::get_word(unsigned int address)
 {
-	// TODO
-	return 0;
+	return cache_control_register.raw;
 }
 
-void CacheControl::set_byte(unsigned int address, unsigned char value)
+void CacheControl::set_word(unsigned int address, unsigned int value)
 {
-	// TODO
+	cache_control_register.raw = value;
 }

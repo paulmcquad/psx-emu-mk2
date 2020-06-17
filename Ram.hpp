@@ -10,8 +10,6 @@ class Ram : public Bus::BusDevice {
 public:
 	static Ram * get_instance();
 
-	virtual bus_device_type get_bus_device_type() final { return bus_device_type::RAM; }
-
 	virtual bool is_address_for_device(unsigned int address) final;
 	virtual unsigned char get_byte(unsigned int address) final;
 	virtual void set_byte(unsigned int address, unsigned char value) final;
@@ -27,4 +25,7 @@ private:
 	static const unsigned int MAIN_MEMORY_SIZE = 1024 * 512 * 4;
 	// four SRAM chips of 512KB
 	unsigned char memory[MAIN_MEMORY_SIZE] = { 0 };
+
+	static const unsigned int SCRATCHPAD_SIZE = 1024;
+	unsigned char scratchpad[SCRATCHPAD_SIZE];
 };
