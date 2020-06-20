@@ -61,7 +61,31 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
+	if (pending_response.empty() == false)
+	{
+		int delay = pending_response.front().delay;
+		if (delay != -1) // -1 means this delay is actually waiting for an ack
+		{
+			delay--;
+			if (delay == 0)
+			{
+				pending_response_data data = pending_response.front();
+				pending_response.pop_front();
 
+				current_int = data.int_type;
+				for (auto & iter : data.responses)
+				{
+					response_fifo->push(iter);
+				}
+
+				SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
+			}
+			else
+			{
+				pending_response.front().delay = delay;
+			}
+		}
+	}
 }
 
 void Cdrom::reset()
@@ -447,8 +471,6 @@ void Cdrom::execute_command(unsigned char command)
 		default:
 			throw std::logic_error("not implemented");
 	}
-
-	SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
 }
 
 void Cdrom::execute_test_command()
@@ -459,13 +481,19 @@ void Cdrom::execute_test_command()
 	unsigned char sub_function = parameter_fifo->pop();
 	if (sub_function == 0x20)
 	{
-		// push the cd rom bios version onto the response fifo
-		response_fifo->push(0x94);
-		response_fifo->push(0x11);
-		response_fifo->push(0x18);
-		response_fifo->push(0xC0);
+		pending_response_data data;
 
-		current_int = cdrom_response_interrupts::FIRST_RESPONSE;
+		data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
+
+		data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
+
+		// push the cd rom bios version onto the response fifo
+		data.responses.push_back(0x94);
+		data.responses.push_back(0x11);
+		data.responses.push_back(0x18);
+		data.responses.push_back(0xC0);
+
+		pending_response.push_back(data);
 	}
 	else
 	{
@@ -475,13 +503,30 @@ void Cdrom::execute_test_command()
 
 void Cdrom::execute_getstat_command()
 {
-	response_fifo->push(0x2);
-	current_int = cdrom_response_interrupts::FIRST_RESPONSE;
+	pending_response_data data;
+
+	data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
+	data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
+	data.responses.push_back(0x2);
+
+	pending_response.push_back(data);
 }
 
 void Cdrom::execute_getid_command()
 {
-	throw std::logic_error("not implemented");
+	execute_getstat_command();
+
+	pending_response_data data;
+
+	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
+
+	data.responses.push_back(0x53); // S
+	data.responses.push_back(0x43); // C
+	data.responses.push_back(0x45); // E
+	data.responses.push_back(0x41); // A
+
+	pending_response.push_back(data);
+
 }
 
 // this command seems a bit pointless
