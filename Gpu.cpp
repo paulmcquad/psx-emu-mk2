@@ -188,7 +188,8 @@ void Gpu::sync_mode_request(DMA_base_address& base_address, DMA_block_control& b
 {
 	if (channel_control.transfer_direction == 0)
 	{
-		throw std::logic_error("have not implemented gpu to ram transfer");
+		// todo
+		//throw std::logic_error("have not implemented gpu to ram transfer");
 	}
 
 	unsigned int num_words = block_control.BS * block_control.BC;
@@ -201,6 +202,8 @@ void Gpu::sync_mode_request(DMA_base_address& base_address, DMA_block_control& b
 
 		unsigned int word = Bus::get_instance()->get_word(addr);
 
+		// todo implement
+
 		addr += (step == DMA_address_step::increment ? 4 : -4);
 	}
 }
@@ -209,7 +212,8 @@ void Gpu::sync_mode_linked_list(DMA_base_address& base_address, DMA_block_contro
 {
 	if (channel_control.transfer_direction == 0)
 	{
-		throw std::logic_error("have not implemented gpu to ram transfer");
+		// todo
+		//throw std::logic_error("have not implemented gpu to ram transfer");
 	}
 
 	unsigned int addr = base_address.memory_address & 0x1ffffc;
