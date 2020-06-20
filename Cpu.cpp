@@ -52,7 +52,7 @@ void Cpu::tick()
 	{
 		instruction_union instr(current_instruction);
 		execute(instr);
-		SystemControlCoprocessor::get_instance()->trigger_pending_interrupts();
+		SystemControlCoprocessor::get_instance()->trigger_interrupts();
 	}
 	catch (...)
 	{
@@ -123,7 +123,7 @@ void Cpu::execute(const instruction_union& instr)
 				if ((signed_imm >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_imm < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->generate_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -406,7 +406,7 @@ void Cpu::execute_special(const instruction_union& instr)
 				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->generate_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -433,7 +433,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::BREAK:
 		{
-			SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::BP);
+			SystemControlCoprocessor::get_instance()->generate_interrupt(system_control::excode::BP);
 		} break;
 
 		case cpu_special_funcs::DIV:
@@ -627,7 +627,7 @@ void Cpu::execute_special(const instruction_union& instr)
 				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->generate_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -645,7 +645,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::SYSCALL:
 		{
-			SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Syscall);
+			SystemControlCoprocessor::get_instance()->generate_interrupt(system_control::excode::Syscall);
 		} break;
 
 		case cpu_special_funcs::XOR:

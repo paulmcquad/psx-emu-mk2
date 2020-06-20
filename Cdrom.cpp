@@ -71,8 +71,7 @@ void Cdrom::reset()
 	parameter_fifo->clear();
 
 	register_index = 0;
-	current_response_received = 0;
-	awaiting_acknowledgement = false;
+	current_int = cdrom_response_interrupts::NO_RESPONSE;
 
 	interrupt_enable_register = 0x0;
 }
@@ -113,9 +112,8 @@ void Cdrom::save_state(std::stringstream& file)
 	}
 
 	file.write(reinterpret_cast<char*>(&register_index), sizeof(unsigned int));
-	file.write(reinterpret_cast<char*>(&current_response_received), sizeof(unsigned int));
+	file.write(reinterpret_cast<char*>(&current_int), sizeof(cdrom_response_interrupts));
 	file.write(reinterpret_cast<char*>(&interrupt_enable_register), sizeof(unsigned int));
-	file.write(reinterpret_cast<char*>(&awaiting_acknowledgement), sizeof(bool));
 }
 
 void Cdrom::load_state(std::stringstream& file)
@@ -169,9 +167,8 @@ void Cdrom::load_state(std::stringstream& file)
 	}
 
 	file.read(reinterpret_cast<char*>(&register_index), sizeof(unsigned int));
-	file.read(reinterpret_cast<char*>(&current_response_received), sizeof(unsigned int));
+	file.read(reinterpret_cast<char*>(&current_int), sizeof(cdrom_response_interrupts));
 	file.read(reinterpret_cast<char*>(&interrupt_enable_register), sizeof(unsigned int));
-	file.read(reinterpret_cast<char*>(&awaiting_acknowledgement), sizeof(bool));
 }
 
 bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
@@ -202,9 +199,18 @@ bool Cdrom::load(std::string bin_file, std::string /*cue_file*/)
 
 unsigned char Cdrom::get(unsigned int address)
 {
-	if (address == STATUS_REGISTER)
+	if (address == 0x1F801800)
 	{
-		throw std::logic_error("not implemented");
+		status_register status;
+		status.INDEX = register_index;
+		status.ADPBUSY = false; // todo
+		status.PRMEMPT = parameter_fifo->is_empty();
+		status.PRMWRDY = parameter_fifo->is_full() == false;
+		status.RSLRRDY = response_fifo->is_empty() == false;
+		status.DRQSTS = data_fifo->is_empty() == false;
+		status.BUSYSTS = false; // todo
+
+		return status.raw;
 	}
 	else
 	{
@@ -226,7 +232,7 @@ unsigned char Cdrom::get(unsigned int address)
 
 void Cdrom::set(unsigned int address, unsigned char value)
 {
-	if (address == STATUS_REGISTER)
+	if (address == 0x1F801800)
 	{
 		// only the index value is writable
 		register_index = 0x03 & value;
@@ -249,12 +255,12 @@ unsigned char Cdrom::get_index0(unsigned int address)
 {
 	switch (address)
 	{
-		case DATA_FIFO_REGISTER:
+		case 0x1F801802:
 		{
 			return get_next_data_byte();
 		} break;
 
-		case RESPONSE_FIFO_REGISTER:
+		case 0x1F801801:
 		{
 			return get_next_response_byte();
 		} break;
@@ -268,19 +274,21 @@ unsigned char Cdrom::get_index1(unsigned int address)
 {
 	switch (address)
 	{
-		case INTERRUPT_FLAG_REGISTER:
-		{
-			throw std::logic_error("not implemented");
-		} break;
-
-		case DATA_FIFO_REGISTER:
+		case 0x1F801802:
 		{
 			return get_next_data_byte();
 		} break;
 
-		case RESPONSE_FIFO_REGISTER:
+		case 0x1F801801:
 		{
 			return get_next_response_byte();
+		} break;
+
+		case 0x1F801803:
+		{
+			interrupt_flag_register_read irq_reg;
+			irq_reg.response_received = static_cast<unsigned int>(current_int);
+			return irq_reg.raw;
 		} break;
 
 		default:
@@ -292,12 +300,12 @@ unsigned char Cdrom::get_index2(unsigned int address)
 {
 	switch (address)
 	{
-		case DATA_FIFO_REGISTER:
+		case 0x1F801802:
 		{
 			return get_next_data_byte();
 		} break;
 
-		case RESPONSE_FIFO_REGISTER:
+		case 0x1F801801:
 		{
 			return get_next_response_byte();
 		} break;
@@ -311,12 +319,12 @@ unsigned char Cdrom::get_index3(unsigned int address)
 {
 	switch (address)
 	{
-		case DATA_FIFO_REGISTER:
+		case 0x1F801802:
 		{
 			return get_next_data_byte();
 		} break;
 
-		case RESPONSE_FIFO_REGISTER:
+		case 0x1F801801:
 		{
 			return get_next_response_byte();
 		} break;
@@ -330,12 +338,12 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 {
 	switch (address)
 	{
-		case COMMAND_REGISTER:
+		case 0x1F801801:
 		{
 			execute_command(value);
 		} break;
 
-		case PARAMETER_FIFO_REGISTER:
+		case 0x1F801802:
 		{
 			parameter_fifo->push(value);
 		} break;
@@ -349,15 +357,38 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 {
 	switch (address)
 	{
-		case INTERRUPT_FLAG_REGISTER:
-		{
-			throw std::logic_error("not implemented");
-
-		} break;
-
-		case INTERRUPT_ENABLE_REGISTER_WRITE:
+		case 0x1f801802:
 		{
 			interrupt_enable_register = value;
+		} break;
+
+		case 0x1f801803:
+		{
+			interrupt_flag_register_write irq_rg = value;
+
+			if (irq_rg.ack_int1_7 == static_cast<unsigned int>(current_int))
+			{
+				current_int = cdrom_response_interrupts::NO_RESPONSE;
+
+				if (pending_response.empty() == false)
+				{
+					pending_response_data data = pending_response.front();
+					pending_response.pop_front();
+
+					current_int = data.int_type;
+					for (auto & iter : data.responses)
+					{
+						response_fifo->push(iter);
+					}
+
+					SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
+				}
+			}
+
+			if (irq_rg.reset_param_fifo)
+			{
+				parameter_fifo->clear();
+			}
 		} break;
 
 		default:
@@ -416,16 +447,36 @@ void Cdrom::execute_command(unsigned char command)
 		default:
 			throw std::logic_error("not implemented");
 	}
+
+	SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
 }
 
 void Cdrom::execute_test_command()
 {
-	throw std::logic_error("not implemented");
+	// the test to run is determined by the subfunction on the parameter fifo
+	// however, the ps1 only uses 0x20 which returns the cd rom bios version
+	// so no need to implement anything but that
+	unsigned char sub_function = parameter_fifo->pop();
+	if (sub_function == 0x20)
+	{
+		// push the cd rom bios version onto the response fifo
+		response_fifo->push(0x94);
+		response_fifo->push(0x11);
+		response_fifo->push(0x18);
+		response_fifo->push(0xC0);
+
+		current_int = cdrom_response_interrupts::FIRST_RESPONSE;
+	}
+	else
+	{
+		throw std::logic_error("not implemented");
+	}
 }
 
 void Cdrom::execute_getstat_command()
 {
-	throw std::logic_error("not implemented");
+	response_fifo->push(0x2);
+	current_int = cdrom_response_interrupts::FIRST_RESPONSE;
 }
 
 void Cdrom::execute_getid_command()

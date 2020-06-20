@@ -20,7 +20,7 @@ void CdromMenu::draw_menu()
 
 	ImGui::Begin("Cdrom");
 
-	unsigned char cdrom_status_register = Cdrom::get_instance()->get_byte(Cdrom::STATUS_REGISTER);
+	unsigned char cdrom_status_register = Cdrom::get_instance()->get_byte(0x1F801800);
 
 	std::stringstream text;
 	text << "Status Register: 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)cdrom_status_register;

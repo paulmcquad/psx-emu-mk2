@@ -55,9 +55,3 @@ enum class cdrom_response_interrupts : unsigned char
 	INT6 = 6,
 	INT7 = 7
 };
-
-enum class cdrom_response_timings : unsigned int
-{
-	FIRST_RESPONSE_DELAY = 0xC4E1,
-	SECOND_REPONSE_DELAY = 0x4a00
-};

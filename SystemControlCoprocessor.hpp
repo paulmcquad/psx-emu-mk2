@@ -2,9 +2,7 @@
 #include "Coprocessor.hpp"
 #include "Bus.hpp"
 #include "SystemControlTypes.hpp"
-#include "Fifo.hpp"
 #include <sstream>
-#include <deque>
 
 class SystemControlCoprocessor : public Cop, public Bus::BusDevice {
 public:
@@ -28,8 +26,9 @@ public:
 	unsigned int get_control_register(system_control::register_names register_name);
 	void set_control_register(system_control::register_names register_name, unsigned int value);
 
-	void queue_interrupt(system_control::excode excode);
-	void trigger_pending_interrupts();
+	void set_irq_bits(unsigned int irq_bits);
+	void trigger_interrupts();
+	void generate_interrupt(system_control::excode excode);
 
 private:
 	SystemControlCoprocessor();
@@ -57,7 +56,4 @@ private:
 	void restore_from_exception(const instruction_union& instr);
 	
 	unsigned int control_registers[32] = { 0 };
-
-	bool currently_in_interrupt = false;
-	Fifo<system_control::excode> * pending_interrupts = nullptr;
 };

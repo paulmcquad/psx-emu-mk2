@@ -1,5 +1,19 @@
 namespace system_control
 {
+	enum IRQ_BITS
+	{
+		VBLANK_BIT = 0x1,
+		GPU_BIT = 0x1 << 1,
+		CDROM_BIT = 0x1 << 2,
+		DMA_BIT = 0x1 << 3,
+		TMR0_BIT = 0x1 << 4,
+		TMR1_BIT = 0x1 << 5,
+		CTRL_MEM_CRD_BIT = 0x1 << 6,
+		SIO_BIT = 0x1 << 7,
+		SPU_BIT = 0x1 << 8,
+		LIGHTPEN_BIT = 0x1 << 9
+	};
+
 	union interrupt_register
 	{
 		unsigned int value;

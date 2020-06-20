@@ -95,25 +95,21 @@ SystemControlCoprocessor::SystemControlCoprocessor()
 	interrupt_status_register.value = 0x0;
 	interrupt_mask_register.value = 0x0;
 	control_registers[static_cast<unsigned int>(system_control::register_names::PRID)] = 0x00000002;
-	pending_interrupts = new Fifo<system_control::excode>(10); // arbitrary size
 }
 
 SystemControlCoprocessor::~SystemControlCoprocessor()
 {
-	delete pending_interrupts;
 }
 
 void SystemControlCoprocessor::save_state(std::stringstream& file)
 {
 	file.write(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
-	file.write(reinterpret_cast<char*>(&currently_in_interrupt), sizeof(bool));
 	// todo save queue of interrupts
 }
 
 void SystemControlCoprocessor::load_state(std::stringstream& file)
 {
 	file.read(reinterpret_cast<char*>(&control_registers[0]), sizeof(unsigned int) * 32);
-	file.read(reinterpret_cast<char*>(&currently_in_interrupt), sizeof(bool));
 
 	// todo load queue of interrupts
 }
@@ -255,38 +251,46 @@ void SystemControlCoprocessor::move_from_cp0(const instruction_union& instr)
 
 void SystemControlCoprocessor::restore_from_exception(const instruction_union& instr)
 {
-	currently_in_interrupt = false;
-
 	system_control::status_register sr = get_control_register(system_control::register_names::SR);
 
-	unsigned int mode = sr.raw & 0x3f;
-	sr.raw &= ~0x3f;
-	sr.raw |= mode >> 2;
+	// pop back the interrupt mode bits
+	sr.IEc = sr.IEp;
+	sr.KUc = sr.KUp;
+
+	sr.IEp = sr.IEo;
+	sr.KUp = sr.KUo;
 
 	set_control_register(system_control::register_names::SR, sr.raw);
 }
 
-void SystemControlCoprocessor::queue_interrupt(system_control::excode excode)
+void SystemControlCoprocessor::set_irq_bits(unsigned int irq_bits)
 {
-	pending_interrupts->push(excode);
+	interrupt_status_register.IRQ_BITS |= irq_bits;
+	system_control::cause_register cause = get_control_register(system_control::register_names::CAUSE);
+	cause.Ip = 0x4; // apparently the ps1 only uses 1 interrupt line and from looking at the Im of the status register, it appears to be 0x4
+	set_control_register(system_control::register_names::CAUSE, cause.raw);
 }
 
-void SystemControlCoprocessor::trigger_pending_interrupts()
+void SystemControlCoprocessor::trigger_interrupts()
 {
-	if (pending_interrupts->is_empty()) { return; }
-
-	system_control::cause_register cause = get_control_register(system_control::register_names::CAUSE);
 	system_control::status_register sr = get_control_register(system_control::register_names::SR);
-	system_control::excode excode = pending_interrupts->peek();
+	system_control::cause_register cause = get_control_register(system_control::register_names::CAUSE);
 
-	if (excode == system_control::excode::INT && sr.IEc == false)
+	if (cause.Ip == false) { return; }
+
+	if (interrupt_status_register.IRQ_BITS & interrupt_mask_register.IRQ_BITS)
 	{
-		return;
+		cause.Ip = 0;
+		set_control_register(system_control::register_names::CAUSE, cause.raw);
+
+		generate_interrupt(system_control::excode::INT);
 	}
+}
 
-	pending_interrupts->pop();
-
-	currently_in_interrupt = true;
+void SystemControlCoprocessor::generate_interrupt(system_control::excode excode)
+{
+	system_control::status_register sr = get_control_register(system_control::register_names::SR);
+	system_control::cause_register cause = get_control_register(system_control::register_names::CAUSE);
 
 	Cpu * cpu = Cpu::get_instance();
 
@@ -299,9 +303,6 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 		set_control_register(system_control::register_names::EPC, cpu->current_pc);
 	}
 
-	//TODO check does the interrupt pending field need to be set in the cause register
-	// I have read that there is only 1 interrupt field implement for the playstation but I can't recall the number
-	
 	if (sr.BEV == 0)
 	{
 		cpu->next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV0);
@@ -309,12 +310,6 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 	else
 	{
 		cpu->next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV1);
-	}
-
-	// TODO - this probably isn't valid
-	if (excode == system_control::excode::INT)
-	{
-		cause.Ip = sr.Im;
 	}
 
 	// push mode - these kind of act like a stack of exception states o = old, p = previous, c = current
@@ -327,9 +322,6 @@ void SystemControlCoprocessor::trigger_pending_interrupts()
 	sr.IEc = sr.KUc = 0;
 
 	set_control_register(system_control::register_names::SR, sr.raw);
-
-	cause.Excode = static_cast<unsigned int>(excode);
-
 	set_control_register(system_control::register_names::CAUSE, cause.raw);
 
 	// dump the next instruction

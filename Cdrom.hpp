@@ -41,8 +41,6 @@ public:
 	void set_index1(unsigned int address, unsigned char value);
 
 	unsigned int register_index = 0;
-	unsigned int current_response_received = 0;
-	bool awaiting_acknowledgement = false;
 
 	unsigned char interrupt_enable_register = 0x0;
 
@@ -85,10 +83,16 @@ public:
 		{
 			raw = value;
 		}
+
+		interrupt_flag_register_read()
+		{
+			raw = 0x0;
+			na2 = 0b111;
+		}
 	};
 
 	// https://problemkaputt.de/psx-spx.htm#cdromcontrollerioports
-	union status_register_read
+	union status_register
 	{
 		unsigned char raw;
 		struct
@@ -109,12 +113,12 @@ public:
 			unsigned int BUSYSTS : 1;
 		};
 
-		status_register_read()
+		status_register()
 		{
 			raw = 0x0;
 		}
 
-		status_register_read(unsigned int value)
+		status_register(unsigned int value)
 		{
 			raw = value;
 		}
@@ -122,6 +126,16 @@ public:
 
 	unsigned int num_sectors = 0;
 	std::vector<unsigned char> rom_data;
+
+	struct pending_response_data
+	{
+		cdrom_response_interrupts int_type;
+		std::vector<unsigned char> responses;
+	};
+
+	std::deque<pending_response_data> pending_response;
+
+	cdrom_response_interrupts current_int = cdrom_response_interrupts::NO_RESPONSE;
 
 	Fifo<unsigned char> * response_fifo = nullptr;
 	Fifo<unsigned char> * data_fifo = nullptr;
@@ -144,19 +158,6 @@ public:
 	// http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
 	// https://problemkaputt.de/psx-spx.htm#cdromdrive
 	static const unsigned int SECTOR_SIZE = 2352;
-	static const unsigned int STATUS_REGISTER = 0x1F801800;
-
-	// command registers
-	static const unsigned int COMMAND_REGISTER = 0x1F801801;
-	static const unsigned int PARAMETER_FIFO_REGISTER = 0x1F801802;
-	static const unsigned int REQUEST_REGISTER = 0x1F801803;
-
-	static const unsigned int INTERRUPT_FLAG_REGISTER = 0x1F801803;
-	static const unsigned int INTERRUPT_ENABLE_REGISTER_WRITE = 0x1F801802;
-	static const unsigned int INTERRUPT_ENABLE_REGISTER_READ = 0x1F801803;
-
-	static const unsigned int RESPONSE_FIFO_REGISTER = 0x1F801801;
-	static const unsigned int DATA_FIFO_REGISTER = 0x1F801802;
 
 	static const unsigned int RESPONSE_FIFO_SIZE = 16;
 	static const unsigned int PARAMETER_FIFO_SIZE = 16;
