@@ -175,7 +175,9 @@ void Dma::tick()
 
 	if (previous_interrupt_master_flag_value == false && interrupt_register.irq_master_flag == true)
 	{
-		SystemControlCoprocessor::get_instance()->interrupt_status_register.IRQ3_DMA = true;
+		SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
+		cop0->interrupt_status_register.IRQ3_DMA = true;
+		cop0->queue_interrupt(system_control::excode::INT);
 	}
 }
 

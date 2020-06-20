@@ -45,9 +45,6 @@ public:
 
 	bool in_delay_slot = false;
 
-	bool pending_exception = false;
-	unsigned int pending_exception_excode = 0;
-
 	static Cpu * get_instance();
 
 private:

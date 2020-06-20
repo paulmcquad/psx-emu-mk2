@@ -35,48 +35,7 @@ void Cpu::reset()
 
 void Cpu::execute_mips_exception(unsigned int excode)
 {
-	SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
-	system_control::cause_register cause = cop0->get_control_register(system_control::register_names::CAUSE);
 	
-	if (in_delay_slot) {
-		cause.BD = true;
-		cop0->set_control_register(system_control::register_names::EPC, current_pc - 4);
-	}
-	else
-	{
-		cop0->set_control_register(system_control::register_names::EPC, current_pc);
-	}
-
-	//TODO check does the interrupt pending field need to be set in the cause register
-	// I have read that there is only 1 interrupt field implement for the playstation but I can't recall the number
-
-	system_control::status_register sr = cop0->get_control_register(system_control::register_names::SR);
-	if (sr.BEV == 0)
-	{
-		next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV0);
-	}
-	else
-	{
-		next_pc = static_cast<unsigned int>(system_control::exception_vector::GENERAL_BEV1);
-	}
-
-	// push mode - these kind of act like a stack of exception states o = old, p = previous, c = current
-	sr.IEo = sr.IEp;
-	sr.KUo = sr.KUp;
-
-	sr.IEp = sr.IEc;
-	sr.KUp = sr.KUc;
-
-	sr.IEc = sr.KUc = 0;
-
-	cop0->set_control_register(system_control::register_names::SR, sr.raw);
-
-	cause.Excode = excode;
-
-	cop0->set_control_register(system_control::register_names::CAUSE, cause.raw);
-
-	// dump the next instruction
-	next_instruction = 0x0;
 }
 
 void Cpu::tick()
@@ -93,12 +52,7 @@ void Cpu::tick()
 	{
 		instruction_union instr(current_instruction);
 		execute(instr);
-
-		if (pending_exception)
-		{
-			execute_mips_exception(pending_exception_excode);
-			pending_exception = false;
-		}
+		SystemControlCoprocessor::get_instance()->trigger_pending_interrupts();
 	}
 	catch (...)
 	{
@@ -169,8 +123,7 @@ void Cpu::execute(const instruction_union& instr)
 				if ((signed_imm >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_imm < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -453,8 +406,7 @@ void Cpu::execute_special(const instruction_union& instr)
 				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -481,8 +433,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::BREAK:
 		{
-			pending_exception = true;
-			pending_exception_excode = static_cast<unsigned int>(system_control::excode::BP);
+			SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::BP);
 		} break;
 
 		case cpu_special_funcs::DIV:
@@ -676,8 +627,7 @@ void Cpu::execute_special(const instruction_union& instr)
 				if ((signed_rt_value >= 0 && signed_rs_value >= 0 && signed_value < 0) ||
 					(signed_rt_value < 0 && signed_rs_value < 0 && signed_value >= 0))
 				{
-					pending_exception = true;
-					pending_exception_excode = static_cast<unsigned int>(system_control::excode::Ov);
+					SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Ov);
 					return;
 				}
 			}
@@ -695,8 +645,7 @@ void Cpu::execute_special(const instruction_union& instr)
 
 		case cpu_special_funcs::SYSCALL:
 		{
-			pending_exception = true;
-			pending_exception_excode = static_cast<unsigned int>(system_control::excode::Syscall);
+			SystemControlCoprocessor::get_instance()->queue_interrupt(system_control::excode::Syscall);
 		} break;
 
 		case cpu_special_funcs::XOR:
