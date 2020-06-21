@@ -79,7 +79,7 @@ void Cdrom::tick()
 {
 	if (interrupt_enable_register && pending_response.empty() == false)
 	{
-		if (pending_response.front().ready)
+		if (current_int == cdrom_response_interrupts::NO_RESPONSE)
 		{
 			int delay = pending_response.front().delay;
 			if (delay == 0)
@@ -250,7 +250,7 @@ unsigned char Cdrom::get(unsigned int address)
 		status.DRQSTS = data_fifo->is_empty() == false;
 		status.BUSYSTS = pending_response.empty() == false;
 
-		DebugMenuManager::get_instance()->paused_requested = true;
+		//DebugMenuManager::get_instance()->paused_requested = true;
 
 		return status.raw;
 	}
@@ -407,11 +407,10 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 		case 0x1f801803:
 		{
 			interrupt_flag_register_write irq_rg = value;
-			current_int = cdrom_response_interrupts::NO_RESPONSE;
 
-			if (pending_response.empty() == false)
+			if (irq_rg.ack_int1_7)
 			{
-				pending_response.front().ready = true;
+				current_int = cdrom_response_interrupts::NO_RESPONSE;
 			}
 		} break;
 
@@ -483,15 +482,15 @@ void Cdrom::execute_test_command()
 	if (sub_function == 0x20)
 	{
 		pending_response_data data;
-		data.ready = true;
 		data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
 		data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
 
 		// push the cd rom bios version onto the response fifo
-		data.responses.push_back(0x94);
-		data.responses.push_back(0x11);
-		data.responses.push_back(0x18);
 		data.responses.push_back(0xC0);
+		data.responses.push_back(0x18);
+		data.responses.push_back(0x11);
+		data.responses.push_back(0x94);
+
 		pending_response.push_back(data);
 	}
 	else
@@ -503,7 +502,6 @@ void Cdrom::execute_test_command()
 void Cdrom::execute_getstat_command()
 {
 	pending_response_data data;
-	data.ready = true;
 	data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
 	data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
 	data.responses.push_back(0x2);
@@ -517,6 +515,13 @@ void Cdrom::execute_getid_command()
 	pending_response_data data;
 	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
 	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
+
+	data.responses.push_back(0x02); // stat
+	data.responses.push_back(0x00); // flags
+
+	data.responses.push_back(0x20); // type
+	data.responses.push_back(0x00); // atip
+
 	data.responses.push_back(0x53); // S
 	data.responses.push_back(0x43); // C
 	data.responses.push_back(0x45); // E

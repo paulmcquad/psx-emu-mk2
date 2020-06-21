@@ -22,8 +22,6 @@ public:
 	void reset();
 	void tick();
 
-	void execute_mips_exception(unsigned int excode);
-
 	void save_state(std::stringstream& file);
 	void load_state(std::stringstream& file);
 

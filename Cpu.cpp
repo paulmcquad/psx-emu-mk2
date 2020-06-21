@@ -33,11 +33,6 @@ void Cpu::reset()
 	register_file.reset();
 }
 
-void Cpu::execute_mips_exception(unsigned int excode)
-{
-	
-}
-
 void Cpu::tick()
 {
 	Bus * bus = Bus::get_instance();
