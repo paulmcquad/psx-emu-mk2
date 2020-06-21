@@ -27,6 +27,8 @@ public:
 class DebugMenuManager
 {
 public:
+	static DebugMenuManager * get_instance();
+
 	void init(GLFWwindow* window);
 	void uninit();
 	void draw();
@@ -59,6 +61,9 @@ public:
 	int max_saved_states = 100;
 
 private:
+	DebugMenuManager() = default;
+	~DebugMenuManager() = default;
+
 	std::vector <std::shared_ptr<DebugMenu>> menus;
 
 	void draw_main_menu();

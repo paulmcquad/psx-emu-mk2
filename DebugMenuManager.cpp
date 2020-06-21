@@ -13,6 +13,18 @@
 #include <iostream>
 #include <sstream>
 
+static DebugMenuManager * instance = nullptr;
+
+DebugMenuManager * DebugMenuManager::get_instance()
+{
+	if (instance == nullptr)
+	{
+		instance = new DebugMenuManager();
+	}
+
+	return instance;
+}
+
 void DebugMenuManager::init(GLFWwindow* window)
 {
 	IMGUI_CHECKVERSION();

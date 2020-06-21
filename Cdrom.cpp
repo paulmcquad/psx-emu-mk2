@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "Cdrom.hpp"
+#include "DebugMenuManager.hpp"
 
 static Cdrom * instance = nullptr;
 
@@ -26,12 +27,27 @@ bool Cdrom::is_address_for_device(unsigned int address)
 
 unsigned char Cdrom::get_byte(unsigned int address)
 {
-	return get(address);
+	try
+	{
+		return get(address);
+	}
+	catch (...)
+	{
+		std::cerr << "Error get: " << register_index << "-" << std::hex << address << std::endl;
+		return 0;
+	}
 }
 
 void Cdrom::set_byte(unsigned int address, unsigned char value)
 {
-	set(address, value);
+	try
+	{
+		set(address, value);
+	}
+	catch (...)
+	{
+		std::cerr << "Error set: " << register_index << "-" << std::hex << address << std::endl;
+	}	
 }
 
 void Cdrom::init()
@@ -61,12 +77,11 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
-	if (pending_response.empty() == false)
+	if (interrupt_enable_register && pending_response.empty() == false)
 	{
-		int delay = pending_response.front().delay;
-		if (delay != -1) // -1 means this delay is actually waiting for an ack
+		if (pending_response.front().ready)
 		{
-			delay--;
+			int delay = pending_response.front().delay;
 			if (delay == 0)
 			{
 				pending_response_data data = pending_response.front();
@@ -82,6 +97,7 @@ void Cdrom::tick()
 			}
 			else
 			{
+				delay--;
 				pending_response.front().delay = delay;
 			}
 		}
@@ -232,7 +248,9 @@ unsigned char Cdrom::get(unsigned int address)
 		status.PRMWRDY = parameter_fifo->is_full() == false;
 		status.RSLRRDY = response_fifo->is_empty() == false;
 		status.DRQSTS = data_fifo->is_empty() == false;
-		status.BUSYSTS = false; // todo
+		status.BUSYSTS = pending_response.empty() == false;
+
+		DebugMenuManager::get_instance()->paused_requested = true;
 
 		return status.raw;
 	}
@@ -279,14 +297,14 @@ unsigned char Cdrom::get_index0(unsigned int address)
 {
 	switch (address)
 	{
-		case 0x1F801802:
-		{
-			return get_next_data_byte();
-		} break;
-
 		case 0x1F801801:
 		{
 			return get_next_response_byte();
+		} break;
+
+		case 0x1F801802:
+		{
+			return get_next_data_byte();
 		} break;
 
 		default:
@@ -298,14 +316,14 @@ unsigned char Cdrom::get_index1(unsigned int address)
 {
 	switch (address)
 	{
-		case 0x1F801802:
-		{
-			return get_next_data_byte();
-		} break;
-
 		case 0x1F801801:
 		{
 			return get_next_response_byte();
+		} break;
+
+		case 0x1F801802:
+		{
+			return get_next_data_byte();
 		} break;
 
 		case 0x1F801803:
@@ -324,14 +342,14 @@ unsigned char Cdrom::get_index2(unsigned int address)
 {
 	switch (address)
 	{
-		case 0x1F801802:
-		{
-			return get_next_data_byte();
-		} break;
-
 		case 0x1F801801:
 		{
 			return get_next_response_byte();
+		} break;
+
+		case 0x1F801802:
+		{
+			return get_next_data_byte();
 		} break;
 
 		default:
@@ -343,14 +361,14 @@ unsigned char Cdrom::get_index3(unsigned int address)
 {
 	switch (address)
 	{
-		case 0x1F801802:
-		{
-			return get_next_data_byte();
-		} break;
-
 		case 0x1F801801:
 		{
 			return get_next_response_byte();
+		} break;
+
+		case 0x1F801802:
+		{
+			return get_next_data_byte();
 		} break;
 
 	default:
@@ -389,29 +407,11 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 		case 0x1f801803:
 		{
 			interrupt_flag_register_write irq_rg = value;
+			current_int = cdrom_response_interrupts::NO_RESPONSE;
 
-			if (irq_rg.ack_int1_7 == static_cast<unsigned int>(current_int))
+			if (pending_response.empty() == false)
 			{
-				current_int = cdrom_response_interrupts::NO_RESPONSE;
-
-				if (pending_response.empty() == false)
-				{
-					pending_response_data data = pending_response.front();
-					pending_response.pop_front();
-
-					current_int = data.int_type;
-					for (auto & iter : data.responses)
-					{
-						response_fifo->push(iter);
-					}
-
-					SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
-				}
-			}
-
-			if (irq_rg.reset_param_fifo)
-			{
-				parameter_fifo->clear();
+				pending_response.front().ready = true;
 			}
 		} break;
 
@@ -469,6 +469,7 @@ void Cdrom::execute_command(unsigned char command)
 		} break;
 
 		default:
+			std::cerr << "Command: " << std::hex << command << std::endl;
 			throw std::logic_error("not implemented");
 	}
 }
@@ -482,9 +483,8 @@ void Cdrom::execute_test_command()
 	if (sub_function == 0x20)
 	{
 		pending_response_data data;
-
+		data.ready = true;
 		data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
-
 		data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
 
 		// push the cd rom bios version onto the response fifo
@@ -492,7 +492,6 @@ void Cdrom::execute_test_command()
 		data.responses.push_back(0x11);
 		data.responses.push_back(0x18);
 		data.responses.push_back(0xC0);
-
 		pending_response.push_back(data);
 	}
 	else
@@ -504,11 +503,10 @@ void Cdrom::execute_test_command()
 void Cdrom::execute_getstat_command()
 {
 	pending_response_data data;
-
+	data.ready = true;
 	data.delay = cdrom_response_timings::FIRST_RESPONSE_DELAY;
 	data.int_type = cdrom_response_interrupts::FIRST_RESPONSE;
 	data.responses.push_back(0x2);
-
 	pending_response.push_back(data);
 }
 
@@ -517,14 +515,12 @@ void Cdrom::execute_getid_command()
 	execute_getstat_command();
 
 	pending_response_data data;
-
 	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
-
+	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
 	data.responses.push_back(0x53); // S
 	data.responses.push_back(0x43); // C
 	data.responses.push_back(0x45); // E
 	data.responses.push_back(0x41); // A
-
 	pending_response.push_back(data);
 
 }
@@ -532,5 +528,11 @@ void Cdrom::execute_getid_command()
 // this command seems a bit pointless
 void Cdrom::execute_read_toc_command()
 {
-	throw std::logic_error("not implemented");
+	execute_getstat_command();
+
+	pending_response_data data;
+	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
+	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
+	data.responses.push_back(0x02);
+	pending_response.push_back(data);
 }

@@ -164,7 +164,7 @@ int main(int num_args, char ** args )
 
 	// setting up debug menu
 	std::cout << "Setting up imgui debug menu\n";
-	std::shared_ptr<DebugMenuManager> debug_menu = std::make_shared<DebugMenuManager>();
+	DebugMenuManager * debug_menu = DebugMenuManager::get_instance();
 	debug_menu->init(window);
 
 	std::cout << "Running!\n";
@@ -173,7 +173,6 @@ int main(int num_args, char ** args )
 	while (!glfwWindowShouldClose(window))
 	{
 		auto start_time = glfwGetTime();
-
 
 		if (debug_menu->is_paused() == false || debug_menu->is_forward_step_requested() == true)
 		{

@@ -129,7 +129,8 @@ public:
 
 	struct pending_response_data
 	{
-		int delay = -1;
+		int delay = 0;
+		bool ready = false;
 		cdrom_response_interrupts int_type;
 		std::vector<unsigned char> responses;
 	};
