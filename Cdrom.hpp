@@ -153,6 +153,10 @@ public:
 	void execute_getstat_command();
 	void execute_getid_command();
 	void execute_read_toc_command();
+	void execute_set_loc_command();
+	void execute_seek_l_command();
+	void execute_set_mode_command();
+	void execute_read_n_command();
 
 	static const unsigned int CDROM_SIZE = 4;
 	static const unsigned int CDROM_START = 0x1F801800;
@@ -167,6 +171,35 @@ public:
 	static const unsigned int PARAMETER_FIFO_SIZE = 16;
 	// double check
 	static const unsigned int DATA_FIFO_SIZE = 4096;
+
+	struct location_data
+	{
+		unsigned char track = 0xAA;
+		unsigned char index = 0x01;
+		unsigned char mm = 0x00;
+		unsigned char ss = 0x00;
+		unsigned char sect = 0x00;
+		unsigned char amm = 0x00;
+		unsigned char ass = 0x00;
+		unsigned char asect = 0x00;
+	} seek_target, location;
+
+	union
+	{
+		unsigned char raw = 0x0;
+		struct
+		{
+			unsigned int cdda : 1;
+			unsigned int auto_pause : 1;
+			unsigned int report : 1;
+			unsigned int xa_filter : 1;
+			unsigned int ignore_bit : 1;
+			unsigned int sector_size : 1;
+			unsigned int xa_adpcm : 1;
+			unsigned int speed : 1;
+		};
+	} mode;
+
 private:
 
 	Cdrom() = default;

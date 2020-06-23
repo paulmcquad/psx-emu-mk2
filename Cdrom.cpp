@@ -471,6 +471,26 @@ void Cdrom::execute_command(unsigned char command)
 			execute_read_toc_command();
 		} break;
 
+		case cdrom_command::Setloc:
+		{
+			execute_set_loc_command();
+		} break;
+
+		case cdrom_command::SeekL:
+		{
+			execute_seek_l_command();
+		} break;
+
+		case cdrom_command::Setmode:
+		{
+			execute_set_mode_command();
+		} break;
+
+		case cdrom_command::ReadN:
+		{
+			execute_read_n_command();
+		}
+
 		default:
 			std::cerr << "Command: " << std::hex << static_cast<unsigned int>(command) << std::endl;
 			throw std::logic_error("not implemented");
@@ -544,4 +564,39 @@ void Cdrom::execute_read_toc_command()
 	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
 	data.responses.push_back(0x02);
 	pending_response.push_back(data);
+}
+
+void Cdrom::execute_set_loc_command()
+{
+	execute_getstat_command();
+
+	seek_target.amm = parameter_fifo->pop();
+	seek_target.ass = parameter_fifo->pop();
+	seek_target.asect = parameter_fifo->pop();
+}
+
+// this command actually sets the location, the set_loc input
+void Cdrom::execute_seek_l_command()
+{
+	location = seek_target;
+
+	execute_getstat_command();
+
+	pending_response_data data;
+	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
+	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
+	data.responses.push_back(0x02);
+	pending_response.push_back(data);
+}
+
+void Cdrom::execute_set_mode_command()
+{
+	mode.raw = parameter_fifo->pop();
+
+	execute_getstat_command();
+}
+
+void Cdrom::execute_read_n_command()
+{
+	// todo
 }
