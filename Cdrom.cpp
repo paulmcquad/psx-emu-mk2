@@ -77,28 +77,31 @@ Cdrom::~Cdrom()
 
 void Cdrom::tick()
 {
-	if (interrupt_enable_register && pending_response.empty() == false)
+	if (interrupt_enable_register)
 	{
 		if (current_int == cdrom_response_interrupts::NO_RESPONSE)
 		{
-			int delay = pending_response.front().delay;
-			if (delay == 0)
+			if (pending_response.empty() == false)
 			{
 				pending_response_data data = pending_response.front();
 				pending_response.pop_front();
-
 				current_int = data.int_type;
+				time_to_irq = data.delay;
+				interrupt_countdown_active = true;
 				for (auto & iter : data.responses)
 				{
 					response_fifo->push(iter);
 				}
-
-				SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
 			}
-			else
+		}
+
+		if (interrupt_countdown_active)
+		{
+			time_to_irq--;
+			if (time_to_irq <= 0)
 			{
-				delay--;
-				pending_response.front().delay = delay;
+				SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::CDROM_BIT);
+				interrupt_countdown_active = false;
 			}
 		}
 	}
@@ -410,6 +413,7 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 
 			if (irq_rg.ack_int1_7)
 			{
+				interrupt_countdown_active = false;
 				current_int = cdrom_response_interrupts::NO_RESPONSE;
 			}
 		} break;
@@ -468,7 +472,7 @@ void Cdrom::execute_command(unsigned char command)
 		} break;
 
 		default:
-			std::cerr << "Command: " << std::hex << command << std::endl;
+			std::cerr << "Command: " << std::hex << static_cast<unsigned int>(command) << std::endl;
 			throw std::logic_error("not implemented");
 	}
 }

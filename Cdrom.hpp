@@ -138,6 +138,9 @@ public:
 
 	cdrom_response_interrupts current_int = cdrom_response_interrupts::NO_RESPONSE;
 
+	bool interrupt_countdown_active = false;
+	int time_to_irq = 0;
+
 	Fifo<unsigned char> * response_fifo = nullptr;
 	Fifo<unsigned char> * data_fifo = nullptr;
 	Fifo<unsigned char> * parameter_fifo = nullptr;
