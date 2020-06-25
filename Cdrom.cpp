@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "Cdrom.hpp"
+#include "Ram.hpp"
 #include "DebugMenuManager.hpp"
 
 static Cdrom * instance = nullptr;
@@ -48,6 +49,15 @@ void Cdrom::set_byte(unsigned int address, unsigned char value)
 	{
 		std::cerr << "Error set: " << register_index << "-" << std::hex << address << std::endl;
 	}	
+}
+
+void Cdrom::sync_mode_manual(DMA_base_address & base_address, DMA_block_control & block_control, DMA_channel_control & channel_control)
+{
+	Ram * ram = Ram::get_instance();
+	for (int idx = 0; idx < MODE1_USER_DATA_SIZE; idx++)
+	{
+		ram->set_byte(base_address.memory_address + idx, get_next_data_byte());
+	}
 }
 
 void Cdrom::init()
@@ -104,6 +114,8 @@ void Cdrom::tick()
 				interrupt_countdown_active = false;
 			}
 		}
+
+		// todo add read mode repeating int1 interrupt
 	}
 }
 
@@ -310,6 +322,11 @@ unsigned char Cdrom::get_index0(unsigned int address)
 			return get_next_data_byte();
 		} break;
 
+		case 0x1F801803:
+		{
+			return interrupt_enable_register;
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -393,6 +410,11 @@ void Cdrom::set_index0(unsigned int address, unsigned char value)
 			parameter_fifo->push(value);
 		} break;
 
+		case 0x1f801803:
+		{
+			request_register = value;
+		} break;
+
 		default:
 			throw std::logic_error("not implemented");
 	}
@@ -436,6 +458,11 @@ unsigned char Cdrom::get_next_response_byte()
 
 unsigned char Cdrom::get_next_data_byte()
 {
+	if (in_read_mode && data_fifo->is_empty())
+	{
+		read_data();
+	}
+
 	unsigned char data_byte = 0x0;
 	if (data_fifo->is_empty() == false)
 	{
@@ -443,6 +470,20 @@ unsigned char Cdrom::get_next_data_byte()
 	}
 
 	return data_byte;
+}
+
+// note i'm just assuming data cd at this point and also mode 1
+// todo add support for audio and mode 2
+void Cdrom::read_data()
+{
+	data_fifo->clear();
+
+	// 16 is the size of the sync and header part of the sector
+	int sector_offset = (location.asect * SECTOR_SIZE) + 16;
+	for (int byte_idx = 0; byte_idx < MODE1_USER_DATA_SIZE; byte_idx++)
+	{
+		data_fifo->push(rom_data[sector_offset] + byte_idx);
+	}
 }
 
 void Cdrom::execute_command(unsigned char command)
@@ -489,7 +530,12 @@ void Cdrom::execute_command(unsigned char command)
 		case cdrom_command::ReadN:
 		{
 			execute_read_n_command();
-		}
+		} break;
+
+		case cdrom_command::Pause:
+		{
+			execute_pause_command();
+		} break;
 
 		default:
 			std::cerr << "Command: " << std::hex << static_cast<unsigned int>(command) << std::endl;
@@ -598,5 +644,26 @@ void Cdrom::execute_set_mode_command()
 
 void Cdrom::execute_read_n_command()
 {
-	// todo
+	execute_getstat_command();
+
+	pending_response_data data;
+	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE_READ;
+	data.delay = cdrom_response_timings::SECOND_REPONSE_READ_DELAY;
+	data.responses.push_back(0x02);
+	pending_response.push_back(data);
+
+	in_read_mode = true;
+}
+
+void Cdrom::execute_pause_command()
+{
+	in_read_mode = false;
+
+	execute_getstat_command();
+
+	pending_response_data data;
+	data.int_type = cdrom_response_interrupts::SECOND_RESPONSE;
+	data.delay = cdrom_response_timings::SECOND_REPONSE_DELAY;
+	data.responses.push_back(0x02);
+	pending_response.push_back(data);
 }

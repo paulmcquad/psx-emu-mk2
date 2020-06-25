@@ -1,6 +1,7 @@
 #include "Dma.hpp"
 #include "Gpu.hpp"
 #include "Spu.hpp"
+#include "Cdrom.hpp"
 #include "SystemControlCoprocessor.hpp"
 #include <iostream>
 #include <fstream>
@@ -77,6 +78,7 @@ void Dma::init()
 	devices[static_cast<unsigned int>(DMA_channel_type::OTC)] = this;
 	devices[static_cast<unsigned int>(DMA_channel_type::GPU)] = Gpu::get_instance();
 	devices[static_cast<unsigned int>(DMA_channel_type::SPU)] = Spu::get_instance();
+	devices[static_cast<unsigned int>(DMA_channel_type::CDROM)] = Cdrom::get_instance();
 	
 	reset();
 }

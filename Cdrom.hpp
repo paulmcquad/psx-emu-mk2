@@ -7,17 +7,23 @@
 #include "Bus.hpp"
 #include "SystemControlCoprocessor.hpp"
 
+#include "Dma.hpp"
+
 #include "CdromEnums.hpp"
 
-class Cdrom : public Bus::BusDevice
+class Cdrom : public Bus::BusDevice, public DMA_interface
 {
 public:
 	static Cdrom * get_instance();
 
+	// bus device functions
 	virtual bool is_address_for_device(unsigned int address) final;
 
 	virtual unsigned char get_byte(unsigned int address) final;
 	virtual void set_byte(unsigned int address, unsigned char value) final;
+
+	// DMA interface functions
+	virtual void sync_mode_manual(DMA_base_address& base_address, DMA_block_control& block_control, DMA_channel_control& channel_control) final;
 
 	void init();
 
@@ -42,6 +48,7 @@ public:
 
 	unsigned int register_index = 0;
 
+	unsigned char request_register = 0x0;
 	unsigned char interrupt_enable_register = 0x0;
 
 	union interrupt_flag_register_write
@@ -140,6 +147,8 @@ public:
 
 	bool interrupt_countdown_active = false;
 	int time_to_irq = 0;
+	// keep throwing int1 until pause sent
+	bool in_read_mode = false;
 
 	Fifo<unsigned char> * response_fifo = nullptr;
 	Fifo<unsigned char> * data_fifo = nullptr;
@@ -147,6 +156,8 @@ public:
 
 	unsigned char get_next_response_byte();
 	unsigned char get_next_data_byte();
+
+	void read_data();
 
 	void execute_command(unsigned char command);
 	void execute_test_command();
@@ -157,6 +168,7 @@ public:
 	void execute_seek_l_command();
 	void execute_set_mode_command();
 	void execute_read_n_command();
+	void execute_pause_command();
 
 	static const unsigned int CDROM_SIZE = 4;
 	static const unsigned int CDROM_START = 0x1F801800;
@@ -165,7 +177,9 @@ public:
 	// https://en.wikipedia.org/wiki/CD-ROM
 	// http://rveach.romhack.org/PSXInfo/psx%20hardware%20info.txt
 	// https://problemkaputt.de/psx-spx.htm#cdromdrive
+    // https://byuu.net/compact-discs/structure
 	static const unsigned int SECTOR_SIZE = 2352;
+	static const unsigned int MODE1_USER_DATA_SIZE = 2048;
 
 	static const unsigned int RESPONSE_FIFO_SIZE = 16;
 	static const unsigned int PARAMETER_FIFO_SIZE = 16;

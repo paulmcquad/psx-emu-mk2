@@ -59,5 +59,6 @@ enum class cdrom_response_interrupts : unsigned char
 enum cdrom_response_timings
 {
 	FIRST_RESPONSE_DELAY = 0xC4E1,
-	SECOND_REPONSE_DELAY = 0x4a00
+	SECOND_REPONSE_DELAY = 0x4a00,
+	SECOND_REPONSE_READ_DELAY = 0x6e1cd
 };
