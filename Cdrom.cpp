@@ -54,6 +54,7 @@ void Cdrom::set_byte(unsigned int address, unsigned char value)
 void Cdrom::sync_mode_manual(DMA_base_address & base_address, DMA_block_control & block_control, DMA_channel_control & channel_control)
 {
 	Ram * ram = Ram::get_instance();
+	assert(block_control.BC == MODE1_USER_DATA_SIZE);
 	for (int idx = 0; idx < MODE1_USER_DATA_SIZE; idx++)
 	{
 		ram->set_byte(base_address.memory_address + idx, get_next_data_byte());
@@ -437,6 +438,12 @@ void Cdrom::set_index1(unsigned int address, unsigned char value)
 			{
 				interrupt_countdown_active = false;
 				current_int = cdrom_response_interrupts::NO_RESPONSE;
+				response_fifo->clear();
+			}
+
+			if (irq_rg.reset_param_fifo)
+			{
+				parameter_fifo->clear();
 			}
 		} break;
 

@@ -276,7 +276,9 @@ void SystemControlCoprocessor::trigger_interrupts()
 	system_control::status_register sr = get_control_register(system_control::register_names::SR);
 	system_control::cause_register cause = get_control_register(system_control::register_names::CAUSE);
 
-	if (cause.Ip == false) { return; }
+	if (cause.Ip == false) { 
+		return; 
+	}
 
 	if (interrupt_status_register.IRQ_BITS & interrupt_mask_register.IRQ_BITS)
 	{

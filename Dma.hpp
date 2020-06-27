@@ -21,12 +21,15 @@ union DMA_block_control
 	unsigned char byte_value[4];
 	struct
 	{
+		// number of words
 		unsigned int BC : 16;
 		unsigned int na : 16;
 	};
 	struct
 	{
+		// block size
 		unsigned int BS : 16;
+		// amount of blocks
 		unsigned int BA : 16;
 	};
 };

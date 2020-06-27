@@ -176,7 +176,6 @@ void Dma::tick()
 
 	if (previous_interrupt_master_flag_value == false && interrupt_register.irq_master_flag == true)
 	{
-		SystemControlCoprocessor * cop0 = SystemControlCoprocessor::get_instance();
 		SystemControlCoprocessor::get_instance()->set_irq_bits(system_control::DMA_BIT);
 	}
 }
