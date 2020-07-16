@@ -149,9 +149,9 @@ void Gpu::save_state(std::stringstream& file, bool ignore_vram)
 	}
 
 	std::vector<unsigned int> commands;
-	while (gp0_fifo->get_current_size() > 0)
+	for (int idx = 0; idx < gp0_fifo->get_current_size(); idx++)
 	{
-		commands.push_back(gp0_fifo->pop());
+		commands.push_back(gp0_fifo->peek(idx));
 	}
 
 	unsigned int num_commands = commands.size();
