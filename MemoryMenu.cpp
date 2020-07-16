@@ -79,18 +79,16 @@ void MemoryMenu::draw_menu()
 
 	ImGui::End();
 
-	if (ImGui::Begin("Cache Control"))
-	{
-		ImGui::Text(CacheControl::get_instance()->cache_control_register.scratch_pad_enable1 ?
-			"Scratchpad Enable 1: Enabled" : "Scratchpad Enable 1: Disabled");
-		ImGui::Text(CacheControl::get_instance()->cache_control_register.scratch_pad_enable2 ?
-			"Scratchpad Enable 2: Enabled" : "Scratchpad Enable 2: Disabled");
-		ImGui::Text(CacheControl::get_instance()->cache_control_register.crash ?
-			"Crash: Enabled" : "Crash: Disabled");
-		ImGui::Text(CacheControl::get_instance()->cache_control_register.code_cache_enable ?
-			"Code Cache: Enabled" : "Code Cache: Disabled");
-		ImGui::End();
-	}
+	ImGui::Begin("Cache Control");
+	ImGui::Text(CacheControl::get_instance()->cache_control_register.scratch_pad_enable1 ?
+		"Scratchpad Enable 1: Enabled" : "Scratchpad Enable 1: Disabled");
+	ImGui::Text(CacheControl::get_instance()->cache_control_register.scratch_pad_enable2 ?
+		"Scratchpad Enable 2: Enabled" : "Scratchpad Enable 2: Disabled");
+	ImGui::Text(CacheControl::get_instance()->cache_control_register.crash ?
+		"Crash: Enabled" : "Crash: Disabled");
+	ImGui::Text(CacheControl::get_instance()->cache_control_register.code_cache_enable ?
+		"Code Cache: Enabled" : "Code Cache: Disabled");
+	ImGui::End();
 }
 
 void MemoryMenu::tick()
